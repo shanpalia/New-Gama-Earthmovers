@@ -3,15 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>New Gama Earthmovers | Heavy Equipment Spare Parts</title>
   <meta name="description" content="New Gama Earthmovers - Heavy Equipment Spare Parts & Solutions.">
-
-  <!-- New Gama Earthmovers logo used as favicon -->
   <link rel="icon" type="image/png" href="new-gama-logo.png">
 
   <style>
-    :root{--yellow:#f5b400;--dark:#181818;--white:#fff;--light:#f6f6f6;--muted:#707070}
+    :root{--yellow:#f5b400;--dark:#181818;--light:#f6f6f6;--muted:#707070}
     *{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
     body{font-family:Arial,Helvetica,sans-serif;background:var(--light);color:#222}
@@ -20,7 +17,7 @@
     header{background:#fff;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px #0001}
     nav{max-width:1200px;margin:auto;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:20px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px;color:var(--dark)}
-    .brand img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
+    .brand-logo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow);cursor:pointer;user-select:none;-webkit-user-drag:none}
     .brand span{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:3px}
     .links{display:flex;gap:20px;font-weight:bold;font-size:14px}
     .links a:hover{color:#a87800}
@@ -35,9 +32,7 @@
     .search{max-width:850px;margin:-30px auto 0;background:white;padding:12px;display:flex;gap:10px;box-shadow:0 8px 25px #0002;border-radius:8px}
     input{flex:1;padding:14px;border:1px solid #ddd;border-radius:5px;font-size:15px}
     button{background:var(--yellow);border:0;padding:0 24px;font-weight:bold;border-radius:5px;cursor:pointer}
-    .title{text-align:center;margin-bottom:30px}
-    .title h2{font-size:34px}
-    .title p{color:var(--muted)}
+    .title{text-align:center;margin-bottom:30px}.title h2{font-size:34px}.title p{color:var(--muted)}
     .empty{background:white;border:1px dashed #ccc;border-radius:10px;padding:45px;text-align:center;color:var(--muted)}
     .empty strong{color:#222}
     .contact{background:var(--dark);color:white}
@@ -45,14 +40,9 @@
     .card{background:#272727;padding:18px;margin-bottom:10px;border-left:4px solid var(--yellow);border-radius:5px}
     footer{background:#0b0b0b;color:#aaa;text-align:center;padding:25px;font-size:13px}
     @media(max-width:650px){
-      .links{display:none}
-      .brand{font-size:15px}
-      .brand img{width:45px;height:45px}
-      .hero{min-height:460px}
-      .search{margin:-25px 12px 0;flex-direction:column}
-      .search button{padding:14px}
-      .contact .container{grid-template-columns:1fr}
-      .btn.outline{margin:10px 0 0}
+      .links{display:none}.brand{font-size:15px}.brand-logo{width:45px;height:45px}
+      .hero{min-height:460px}.search{margin:-25px 12px 0;flex-direction:column}
+      .search button{padding:14px}.contact .container{grid-template-columns:1fr}.btn.outline{margin:10px 0 0}
     }
   </style>
 </head>
@@ -61,10 +51,13 @@
 
   <header>
     <nav>
-      <a href="#" class="brand">
-        <img src="new-gama-logo.png" alt="New Gama Earthmovers Logo">
-        <div>NEW GAMA EARTHMOVERS<span>Heavy Equipment Spare Parts</span></div>
-      </a>
+      <div class="brand">
+        <img id="ownerTrigger" class="brand-logo" src="new-gama-logo.png" alt="New Gama Earthmovers Logo">
+        <a href="#home">
+          <div>NEW GAMA EARTHMOVERS<span>Heavy Equipment Spare Parts</span></div>
+        </a>
+      </div>
+
       <div class="links">
         <a href="#parts">Parts</a>
         <a href="#categories">Categories</a>
@@ -74,7 +67,7 @@
   </header>
 
   <main>
-    <section class="hero">
+    <section class="hero" id="home">
       <div>
         <img class="hero-logo" src="new-gama-logo.png" alt="New Gama Earthmovers">
         <div class="badge">HEAVY EQUIPMENT PARTS</div>
@@ -119,12 +112,35 @@
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
+
     function searchParts(){
-      const q=document.getElementById('searchInput').value.trim();
-      document.getElementById('result').innerHTML=q
-        ? '<strong>Search: '+q.replace(/</g,'&lt;')+'</strong><br>Real parts search will be connected when the database is added.'
+      const q = document.getElementById('searchInput').value.trim();
+      document.getElementById('result').innerHTML = q
+        ? '<strong>Search: ' + q.replace(/</g,'&lt;') + '</strong><br>Real parts search will be connected when the database is added.'
         : '<strong>Please enter a Part Name or Part Number.</strong>';
     }
+
+    // Hidden Owner/Admin Panel trigger:
+    // Click the header PNG logo 5 times within 3 seconds.
+    let ownerClicks = 0;
+    let ownerClickTimer = null;
+
+    const ownerTrigger = document.getElementById('ownerTrigger');
+
+    ownerTrigger.addEventListener('click', function () {
+      ownerClicks++;
+      clearTimeout(ownerClickTimer);
+
+      if (ownerClicks >= 5) {
+        ownerClicks = 0;
+        window.location.href = 'owner.html';
+        return;
+      }
+
+      ownerClickTimer = setTimeout(function () {
+        ownerClicks = 0;
+      }, 3000);
+    });
   </script>
 </body>
 </html>

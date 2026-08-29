@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Owner Admin | New Gama Earthmovers</title>
+  <link rel="icon" type="image/png" href="new-gama-logo.png">
+  <style>
+    :root{--yellow:#f5b400;--dark:#181818}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;color:#222}
+    .top{height:70px;background:var(--dark);color:#fff;display:flex;align-items:center;padding:0 25px;gap:12px}
+    .top img{width:42px;height:42px;border-radius:50%;object-fit:cover}
+    .top small{display:block;color:#aaa;margin-top:3px}
+    main{max-width:1100px;margin:35px auto;padding:0 20px}
+    .notice{background:#fff3cd;border-left:4px solid var(--yellow);padding:15px;margin-bottom:20px;border-radius:6px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+    .panel{background:#fff;border-radius:10px;padding:25px;box-shadow:0 5px 20px #00000010}
+    h2{margin-bottom:18px;font-size:21px}
+    label{display:block;font-size:13px;font-weight:bold;margin:14px 0 6px}
+    input,textarea,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font:inherit}
+    textarea{min-height:100px;resize:vertical}
+    button{margin-top:18px;background:var(--yellow);border:0;padding:13px 22px;border-radius:6px;font-weight:bold;cursor:pointer}
+    .full{grid-column:1/-1}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <img src="new-gama-logo.png" alt="Logo">
+    <div><b>NEW GAMA EARTHMOVERS</b><small>Owner Admin Panel</small></div>
+  </div>
+
+  <main>
+    <div class="notice">
+      <b>Admin Panel Ready.</b> This is the hidden panel opened by clicking the website PNG logo 5 times.
+      Database saving and secure owner authentication will be connected in the next phase.
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Shop Information</h2>
+        <label>Shop Name</label>
+        <input value="New Gama Earthmovers">
+        <label>Shop Address</label>
+        <textarea placeholder="Enter complete shop address"></textarea>
+        <label>Country</label>
+        <select><option>India</option><option>Nepal</option></select>
+      </section>
+
+      <section class="panel">
+        <h2>Contact Information</h2>
+        <label>Contact Number</label>
+        <input type="tel" placeholder="Enter contact number">
+        <label>WhatsApp Number</label>
+        <input type="tel" placeholder="Enter WhatsApp number">
+        <label>Email Address</label>
+        <input type="email" placeholder="Enter email address">
+      </section>
+
+      <section class="panel full">
+        <h2>Currency Settings</h2>
+        <label>Default Currency</label>
+        <select><option>Indian Rupee (₹ INR)</option><option>Nepalese Rupee (रु NPR)</option></select>
+        <button type="button" onclick="alert('Database connection will be added next.');">Save Changes</button>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
