@@ -65,6 +65,75 @@ footer{background:#181818;color:#ddd;text-align:center;padding:25px;margin-top:4
   .form-grid{grid-template-columns:1fr}
   nav{padding:9px 14px}
 }
+
+/* ===== PREMIUM PRODUCT PAGE UI ===== */
+:root{--yellow:#ffb300;--yellow2:#ffd15a;--ink:#111722;--panel:#18202c;--line:#2b3544;--text:#eef3f8;--muted:#a9b2bf;--green:#36c878}
+body{background:#0d121a;color:var(--text)}
+.top{background:#070b10;color:#b9c2cc;border-bottom:1px solid #1c2530}
+header{background:#101721;box-shadow:none;border-bottom:1px solid #263140}
+.back{background:#1a2430;color:#eef3f8;border:1px solid #2d3948}
+.page{max-width:1500px;padding:24px 18px 60px}
+.breadcrumb{color:#9aa5b1}
+.breadcrumb a{color:#ffd15a}
+.product-layout{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(380px,.82fr);gap:28px;background:#111924;border:1px solid #273243;border-radius:22px;padding:20px;box-shadow:0 16px 50px #0005}
+.gallery-side{display:grid;grid-template-columns:120px minmax(0,1fr);gap:18px;min-width:0}
+.thumb-column{display:flex;flex-direction:column;gap:12px;max-height:680px;overflow-y:auto;padding-right:4px}
+.thumb-column::-webkit-scrollbar{width:6px}.thumb-column::-webkit-scrollbar-thumb{background:#364252;border-radius:10px}
+.thumb-btn{width:108px;height:92px;padding:4px;border:1px solid #303b4a;border-radius:12px;background:#18212d;cursor:pointer;flex:0 0 auto}
+.thumb-btn.active{border:2px solid var(--yellow);box-shadow:0 0 0 2px #ffb30022}
+.thumb-btn img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
+.gallery-main{height:min(680px,65vw);min-height:480px;background:#0b1017;border:1px solid #293544;border-radius:18px;position:relative;overflow:hidden;cursor:zoom-in}
+.gallery-main img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .25s ease}
+.gallery-main:hover img{transform:scale(1.015)}
+.zoom-hint{position:absolute;right:16px;top:16px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#111a25e8;border:1px solid #3b4757;color:#fff;font-size:24px}
+.image-count{position:absolute;left:16px;top:16px;background:#101722d9;border:1px solid #344153;border-radius:10px;padding:8px 12px;font-weight:800}
+.gallery-note{grid-column:1/-1;text-align:center;color:#aeb8c4;font-size:14px;margin-top:-4px}
+.product-info{padding:8px 2px}
+.category{background:#ffbf21;color:#111;padding:7px 13px}
+h1{font-size:clamp(34px,4vw,58px);color:#f7f9fb}
+.part{color:#aeb8c4;font-size:16px}
+.price{font-size:42px;color:#ffbd24;border-bottom:1px solid #2a3442;padding-bottom:20px}
+.description{color:#b8c1cc;border-color:#2a3442}
+.buy-box{background:#151f2b;border:1px solid #2c3848;border-radius:18px;padding:22px}
+.buy-box h3{letter-spacing:.5px;text-transform:uppercase}
+.qty-row{margin-bottom:16px}
+.qty-control{border-color:#3a4656}
+.qty-control button{background:#1c2734;color:#fff}
+.qty-control input{background:#121923;color:#fff}
+.order-total{background:#1a2029;border-color:#ffbd2455;color:#d7dee7}
+.order-total strong{color:#ffbf24;font-size:30px}
+.pickup-strip{margin:16px 0;padding:16px;border-radius:14px;background:#0f2b22;border:1px solid #1f7756;color:#dff8eb}
+.pickup-strip strong{color:#58d89b;display:block;font-size:17px;margin-bottom:5px}
+.payment-mini{display:flex;gap:10px;margin:12px 0 18px}
+.payment-mini span{border:1px solid #354153;border-radius:10px;padding:9px 12px;color:#c6d0dc;background:#121a25;font-size:13px}
+.full-order-wrap{grid-column:1/-1;border-top:1px solid #293442;padding-top:20px;margin-top:2px}
+.full-order-btn{width:100%;border:0;border-radius:14px;padding:20px;background:linear-gradient(90deg,#ffad00,#ffc42c);color:#111;font-size:22px;font-weight:900;letter-spacing:.5px;cursor:pointer}
+.full-order-btn:hover{filter:brightness(1.05)}
+.trust-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #293442;padding-top:18px;gap:10px}
+.trust-item{padding:8px 14px;border-right:1px solid #293442}
+.trust-item:last-child{border-right:0}.trust-item b{display:block;color:#fff}.trust-item span{font-size:13px;color:#9ea9b7}
+.section{background:#111924;color:#eef3f8;border:1px solid #273243;box-shadow:none}
+.review{background:#151f2b;border-color:#2b3746}.review-date,.review-form input,.review-form select,.review-form textarea{background:#101722;color:#eef3f8;border-color:#354152}
+#zoomModal{position:fixed;inset:0;background:#000d;display:none;z-index:9999;align-items:center;justify-content:center;padding:22px}
+#zoomModal.show{display:flex}
+.zoom-card{width:min(1100px,100%);height:min(90vh,850px);background:#0d131b;border:1px solid #344152;border-radius:18px;position:relative;padding:18px}
+.zoom-card img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-out}
+.zoom-close{position:absolute;right:16px;top:16px;width:44px;height:44px;border-radius:50%;border:1px solid #485568;background:#111a25;color:#fff;font-size:25px;cursor:pointer;z-index:2}
+@media(max-width:900px){
+  .product-layout{grid-template-columns:1fr}
+  .gallery-side{grid-template-columns:1fr}
+  .thumb-column{order:2;flex-direction:row;max-height:none;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}
+  .thumb-btn{width:90px;height:76px}
+  .gallery-main{min-height:360px;height:65vw}
+  .trust-row{grid-template-columns:1fr 1fr}.trust-item:nth-child(2){border-right:0}
+}
+@media(max-width:560px){
+  .page{padding:14px 8px 40px}.product-layout{padding:10px;gap:16px}
+  .gallery-main{min-height:290px}.price{font-size:34px}
+  .trust-row{grid-template-columns:1fr}.trust-item{border-right:0;border-bottom:1px solid #293442}
+  .full-order-btn{font-size:18px;padding:17px}
+}
+
 </style>
 </head>
 <body>
@@ -107,6 +176,14 @@ footer{background:#181818;color:#ddd;text-align:center;padding:25px;margin-top:4
     </form>
   </section>
 </main>
+
+
+<div id="zoomModal" aria-hidden="true">
+  <div class="zoom-card">
+    <button type="button" class="zoom-close" id="zoomClose">×</button>
+    <img id="zoomImage" src="" alt="Zoomed product image">
+  </div>
+</div>
 
 <div class="modal" id="orderModal">
   <div class="modal-card">
@@ -260,24 +337,33 @@ function totalPriceText() {
 }
 function renderProduct() {
   const root = document.getElementById("productRoot");
-  const images = (Array.isArray(product._gallery_images) && product._gallery_images.length) ? product._gallery_images : imagesOf(product);
-  console.log("New Gama product images found:", images.length, images);
+  const images = (Array.isArray(product._gallery_images) && product._gallery_images.length)
+    ? product._gallery_images : imagesOf(product);
   const mainImage = images[0] || "new-gama-logo.png";
   const cat = categoryOf(product);
+
   document.title = (product.name || "Product") + " | New Gama Earthmovers";
   document.getElementById("crumb").textContent = product.name || "Product Details";
 
   root.innerHTML = `
     <section class="product-layout">
-      <div>
-        <div class="gallery-main"><img id="mainImage" src="${esc(mainImage)}" alt="${esc(product.name)}" onerror="this.src='new-gama-logo.png'"></div>
-        ${images.length > 1 ? `
-        <div class="gallery-label">More Product Images</div>
-        <div class="thumbs" id="thumbs">
-          ${images.map((src,i)=>`<img class="${i===0?"active":""}" src="${esc(src)}" data-src="${esc(src)}" alt="Product image ${i+1}" title="View image ${i+1}">`).join("")}
-        </div>` : ""}
+      <div class="gallery-side">
+        <div class="thumb-column" id="thumbs">
+          ${images.map((src,i)=>`
+            <button class="thumb-btn ${i===0?'active':''}" type="button" data-index="${i}" data-src="${esc(src)}" aria-label="View product image ${i+1}">
+              <img src="${esc(src)}" alt="Product image ${i+1}" onerror="this.closest('button').style.display='none'">
+            </button>`).join("")}
+        </div>
+
+        <div class="gallery-main" id="galleryMain" title="Click to zoom">
+          <div class="image-count"><span id="currentImageNo">1</span> / ${images.length || 1}</div>
+          <img id="mainImage" src="${esc(mainImage)}" alt="${esc(product.name || 'Product image')}" onerror="this.src='new-gama-logo.png'">
+          <div class="zoom-hint">⌕</div>
+        </div>
+        <div class="gallery-note">Click any image on the left to view it • Click the large image to zoom</div>
       </div>
-      <div>
+
+      <div class="product-info">
         ${cat?`<span class="category">${esc(cat)}</span>`:""}
         <h1>${esc(product.name || "Product")}</h1>
         ${product.part_number?`<div class="part">Part No: <strong>${esc(product.part_number)}</strong></div>`:""}
@@ -292,43 +378,76 @@ function renderProduct() {
               <input id="qty" value="1" inputmode="numeric">
               <button type="button" id="plusQty">+</button>
             </div>
-            <span style="color:#777">Quantity</span>
+            <span style="color:#aeb8c4">Quantity</span>
           </div>
+
           <div class="order-total">
             <span>Total Amount</span>
             <strong id="totalAmount">${priceOf(product)}</strong>
           </div>
-          <button class="primary" id="buyNow" type="button">Order This Product</button>
-          <div class="note">Your order request will be sent to New Gama Earthmovers.</div>
+
+          <div class="pickup-strip">
+            <strong>🏪 SHOP PICKUP ONLY</strong>
+            Customer will collect this product directly from the shop.
+          </div>
+
+          <div class="payment-mini">
+            <span>💵 Cash Available</span>
+            <span>📱 UPI Available</span>
+          </div>
         </div>
+      </div>
+
+      <div class="full-order-wrap">
+        <button class="full-order-btn" id="buyNow" type="button">🛒 ORDER THIS PRODUCT</button>
+      </div>
+
+      <div class="trust-row">
+        <div class="trust-item"><b>✓ 100% Genuine Parts</b><span>Original & authentic</span></div>
+        <div class="trust-item"><b>★ Best Quality</b><span>Tested & verified</span></div>
+        <div class="trust-item"><b>🔒 Secure Ordering</b><span>Safe & secure process</span></div>
+        <div class="trust-item"><b>🎧 Customer Support</b><span>We are here to help</span></div>
       </div>
     </section>`;
 
-  document.querySelectorAll("#thumbs img").forEach(t => t.addEventListener("click", function() {
-    document.getElementById("mainImage").src = this.dataset.src;
-    document.querySelectorAll("#thumbs img").forEach(x=>x.classList.remove("active"));
-    this.classList.add("active");
-  }));
+  const main = document.getElementById("mainImage");
+  const setImage = function(btn) {
+    main.src = btn.dataset.src;
+    document.querySelectorAll(".thumb-btn").forEach(x => x.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("currentImageNo").textContent = Number(btn.dataset.index) + 1;
+  };
+
+  document.querySelectorAll(".thumb-btn").forEach(btn => {
+    btn.addEventListener("click", () => setImage(btn));
+  });
+
+  document.getElementById("galleryMain").addEventListener("click", () => {
+    const zoomImg = document.getElementById("zoomImage");
+    zoomImg.src = main.src;
+    zoomImg.alt = main.alt;
+    document.getElementById("zoomModal").classList.add("show");
+  });
 
   const qtyInput = document.getElementById("qty");
   function setQty(v) {
-    quantity = Math.max(1, Math.min(999, Number(v)||1));
+    quantity = Math.max(1, Math.min(999, Number(v) || 1));
     qtyInput.value = quantity;
     const totalEl = document.getElementById("totalAmount");
     if (totalEl) totalEl.textContent = totalPriceText();
   }
-  document.getElementById("minusQty").onclick=()=>setQty(quantity-1);
-  document.getElementById("plusQty").onclick=()=>setQty(quantity+1);
-  qtyInput.onchange=()=>setQty(qtyInput.value);
 
-  document.getElementById("buyNow").onclick=()=>{
+  document.getElementById("minusQty").onclick = () => setQty(quantity - 1);
+  document.getElementById("plusQty").onclick = () => setQty(quantity + 1);
+  qtyInput.onchange = () => setQty(qtyInput.value);
+
+  document.getElementById("buyNow").onclick = () => {
     document.getElementById("orderProductText").textContent =
       (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
     updateOrderOptions();
     document.getElementById("orderModal").classList.add("show");
   };
 }
-
 async function loadReviews() {
   const list = document.getElementById("reviewList");
   try {
@@ -438,6 +557,15 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
     msg.textContent = "Order could not be sent. Please update the orders table SQL.";
     console.error(err);
   }
+});
+
+
+document.getElementById("zoomClose").onclick = () => document.getElementById("zoomModal").classList.remove("show");
+document.getElementById("zoomModal").addEventListener("click", function(e) {
+  if (e.target === this || e.target.id === "zoomImage") this.classList.remove("show");
+});
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") document.getElementById("zoomModal").classList.remove("show");
 });
 
 async function init() {
