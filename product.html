@@ -343,6 +343,7 @@ function totalPriceText() {
   return symbol + totalPrice().toLocaleString("en-IN");
 }
 function renderProduct() {
+  window.__ngCurrentProduct = product;
   const root = document.getElementById("productRoot");
   const images = (Array.isArray(product._gallery_images) && product._gallery_images.length)
     ? product._gallery_images : imagesOf(product);
@@ -622,7 +623,7 @@ init();
   }catch(e){console.error(e);alert('Order could not be sent: '+e.message)}
  }
  window.NGCheckout={
-  addCurrentProduct(){const p=window.product;if(!p)return alert('Product is still loading.');const q=Math.max(1,Number(document.getElementById('qty')?.value||1));const id=String(p.id||location.search);let x=cart.find(a=>a.id===id);if(x)x.quantity+=q;else cart.push({id,name:p.name||'Product',price:Number(p.price||0),quantity:q});save();open()},
+  addCurrentProduct(){const p=window.__ngCurrentProduct || window.product;if(!p)return alert('Product is still loading. Please wait a moment and try again.');const q=Math.max(1,Number(document.getElementById('qty')?.value||window.quantity||1));const id=String(p.id||location.search);let x=cart.find(a=>a.id===id);if(x)x.quantity+=q;else cart.push({id,name:p.name||'Product',price:Number(p.price||0),quantity:q});save();open()},
   close(){document.getElementById('ngCheckoutModal').classList.remove('show')},cart:cartStep,billing,buyMore(){location.href='index.html'},place,
   change(i,d){cart[i].quantity=Math.max(1,cart[i].quantity+d);save();render()},remove(i){cart.splice(i,1);save();render()}
  };
