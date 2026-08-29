@@ -124,9 +124,9 @@ async function loadOrders(filter='all'){
  if(filter==='pending') rows=rows.filter(x=>String(x.status||'new').toLowerCase()!=='completed');
  if(filter==='completed') rows=rows.filter(x=>String(x.status||'').toLowerCase()==='completed');
  if(!rows.length){box.innerHTML='<p>No orders found.</p>';return;}
- box.innerHTML=rows.map(o=>`<div onclick="location.href='order.html?order=${encodeURIComponent(o.id)}'" style="cursor:pointer;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">
+ box.innerHTML='<p style="color:#666;margin-bottom:14px"><b>'+rows.length+'</b> order(s) found</p>'+rows.map(o=>`<div onclick="location.href='order.html?order=${encodeURIComponent(o.id)}'" style="cursor:pointer;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">
    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>${o.customer_name||'Customer'}</b><b>${String(o.status||'new').toUpperCase()}</b></div>
-   <div style="margin-top:8px">${o.product_name||''}</div>
+   <div style="margin-top:8px;color:#666;font-size:13px">📅 ${o.created_at ? new Date(o.created_at).toLocaleString() : 'Date unavailable'}</div><div style="margin-top:8px">${o.product_name||''}</div>
    <div style="margin-top:8px">Qty: ${o.quantity||''} · Total: ₹${o.total_amount||0} · ${o.payment_method==='upi'?'UPI':'Cash'}</div>
  </div>`).join('');
 }

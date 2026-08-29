@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>User Login | New Gama Earthmovers</title>
+<link rel="icon" type="image/png" href="new-gama-logo.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--yellow:#f5b400;--dark:#171717;--muted:#777}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f6f7;color:#222}
+.wrap{min-height:100vh;display:grid;place-items:center;padding:20px}
+.box{width:min(430px,100%);background:#fff;border:1px solid #e6e6e6;border-radius:18px;padding:28px;box-shadow:0 15px 45px rgba(0,0,0,.10)}
+.brand{text-align:center;margin-bottom:22px}
+.brand img{width:76px;height:76px;object-fit:cover;border-radius:50%;border:3px solid var(--yellow)}
+.brand h1{font-size:22px;margin:12px 0 5px}.brand p{margin:0;color:var(--muted);font-size:14px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:20px 0}
+.tabs button{border:1px solid #ddd;background:#f7f7f7;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
+.tabs button.active{background:var(--yellow);border-color:var(--yellow)}
+label{display:block;font-size:13px;font-weight:bold;margin:14px 0 6px}
+input{width:100%;padding:13px;border:1px solid #ddd;border-radius:8px;font-size:15px}
+.primary{width:100%;margin-top:20px;padding:14px;border:0;border-radius:8px;background:var(--yellow);font-weight:bold;font-size:15px;cursor:pointer}
+.msg{display:none;margin-top:14px;padding:11px;border-radius:8px;font-size:13px}
+.msg.error{display:block;background:#fff0ef;color:#b42318}.msg.ok{display:block;background:#ecfdf3;color:#027a48}
+.back{display:block;text-align:center;margin-top:18px;color:#555;text-decoration:none;font-size:14px}
+.note{font-size:12px;color:#777;line-height:1.5;margin-top:16px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="box">
+    <div class="brand">
+      <img src="new-gama-logo.png" alt="New Gama Earthmovers">
+      <h1>User Account</h1>
+      <p>Login or create your account</p>
+    </div>
+
+    <div class="tabs">
+      <button id="loginTab" class="active" onclick="setMode('login')">Login</button>
+      <button id="signupTab" onclick="setMode('signup')">Create Account</button>
+    </div>
+
+    <form id="authForm">
+      <div id="nameWrap" style="display:none">
+        <label>Full Name</label>
+        <input id="fullName" placeholder="Enter your name">
+      </div>
+      <label>Email</label>
+      <input id="email" type="email" required placeholder="Enter email">
+
+      <label>Password</label>
+      <input id="password" type="password" required minlength="6" placeholder="Minimum 6 characters">
+
+      <button class="primary" id="submitBtn" type="submit">Login</button>
+      <div id="msg" class="msg"></div>
+    </form>
+
+    <a class="back" href="index.html">← Back to Homepage</a>
+    <div class="note">This page is for users. Admin dashboard access is separate.</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://gozvchqatiyebpnycubl.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let mode='login';
+
+function setMode(m){
+  mode=m;
+  document.getElementById('loginTab').classList.toggle('active',m==='login');
+  document.getElementById('signupTab').classList.toggle('active',m==='signup');
+  document.getElementById('nameWrap').style.display=m==='signup'?'block':'none';
+  document.getElementById('submitBtn').textContent=m==='signup'?'Create Account':'Login';
+  clearMsg();
+}
+function showMsg(text,type){
+  const el=document.getElementById('msg');
+  el.textContent=text; el.className='msg '+type;
+}
+function clearMsg(){
+  const el=document.getElementById('msg'); el.textContent=''; el.className='msg';
+}
+document.getElementById('authForm').addEventListener('submit',async e=>{
+  e.preventDefault(); clearMsg();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='Please wait...';
+
+  try{
+    if(mode==='signup'){
+      const fullName=document.getElementById('fullName').value.trim();
+      const {error}=await sb.auth.signUp({
+        email,password,
+        options:{data:{full_name:fullName}}
+      });
+      if(error) throw error;
+      showMsg('Account created successfully. Please verify your email if verification is enabled.','ok');
+      btn.textContent='Create Account';
+    }else{
+      const {error}=await sb.auth.signInWithPassword({email,password});
+      if(error) throw error;
+      showMsg('Login successful. Redirecting...','ok');
+      setTimeout(()=>location.href='index.html',700);
+    }
+  }catch(err){
+    showMsg(err.message || 'Authentication failed.','error');
+  }finally{
+    btn.disabled=false;
+    if(mode==='login') btn.textContent='Login';
+    else btn.textContent='Create Account';
+  }
+});
+</script>
+</body>
+</html>

@@ -96,6 +96,13 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 .ng-order-status{display:inline-block;padding:4px 9px;border-radius:20px;background:#fff3c9;font-size:12px;font-weight:800}
 </style>
 
+
+<style id="ng-total-orders-card-style">
+.order-stat-card{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.order-stat-card:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,0,0,.10)}
+.order-stat-card small{display:block;color:#777;margin-top:6px;font-size:11px}
+</style>
+
 </head>
 <body>
 
@@ -139,7 +146,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
   <div class="stats">
     <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
     <div class="stat"><span>Total Categories</span><b id="categoryCount">0</b></div>
-    <div class="stat"><span>Total Orders</span><b>0</b></div>
+    <div class="stat order-stat-card" id="totalOrdersCard" title="Click to view all orders">
+        <span>Total Orders</span><b id="orderCount">0</b>
+        <small>Click to view orders</small>
+      </div>
     <div class="stat"><span>Store Status</span><b style="font-size:18px;color:#159447">Active</b></div>
   </div>
   <div class="card">
@@ -1007,5 +1017,34 @@ document.addEventListener('DOMContentLoaded', function () {
  document.addEventListener('DOMContentLoaded',init);
 })();
 </script>
+
+<script id="ng-dashboard-total-order-count">
+(function(){
+  const URL='https://gozvchqatiyebpnycubl.supabase.co';
+  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+
+  async function updateTotalOrders(){
+    const countEl=document.getElementById('orderCount');
+    if(!countEl || !window.supabase || !window.supabase.createClient) return;
+    try{
+      const sb=window.__ngDashboardCountSB || (window.__ngDashboardCountSB=
+        window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})
+      );
+      const {count,error}=await sb
+        .from('new_gama_orders')
+        .select('*',{count:'exact',head:true});
+      if(!error) countEl.textContent=count || 0;
+    }catch(e){ console.error('Total order count error',e); }
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    const card=document.getElementById('totalOrdersCard');
+    if(card) card.addEventListener('click',()=>location.href='orders.html');
+    updateTotalOrders();
+    setInterval(updateTotalOrders,30000);
+  });
+})();
+</script>
+
 </body>
 </html>
