@@ -398,10 +398,8 @@
 
     grid.querySelectorAll(".customer-card").forEach(function (card) {
       card.addEventListener("click", function () {
-        const product = homepageProducts.find(function (p) {
-          return String(p.id) === String(card.dataset.productId);
-        });
-        if (product) openProduct(product);
+        const productId = card.dataset.productId;
+        window.location.href = "product.html?id=" + encodeURIComponent(productId);
       });
     });
   }
