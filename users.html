@@ -20,8 +20,8 @@ button.submit{width:100%;border:0;background:#f5b400;padding:14px;border-radius:
 </form><a class="back" href="index.html">← Back to Homepage</a></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL='REPLACE_WITH_YOUR_SUPABASE_URL';
-const SUPABASE_KEY='REPLACE_WITH_YOUR_PUBLISHABLE_OR_ANON_KEY';
+const SUPABASE_URL='https://gozvchqatiyebpnycubl.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
 let client=null,mode='login';
 function show(t,kind){const m=document.getElementById('msg');m.className='msg '+kind;m.textContent=t;m.style.display='block'}
 function validConfig(){return !SUPABASE_URL.startsWith('REPLACE_')&&!SUPABASE_KEY.startsWith('REPLACE_')}
@@ -29,9 +29,22 @@ function setMode(m){mode=m;document.getElementById('loginTab').classList.toggle(
 document.getElementById('loginTab').onclick=()=>setMode('login');document.getElementById('signupTab').onclick=()=>setMode('signup');
 window.addEventListener('pageshow',()=>{document.getElementById('email').value='';document.getElementById('password').value='';});
 document.getElementById('authForm').onsubmit=async e=>{e.preventDefault();if(!validConfig())return show('Supabase URL and Publishable/anon key users.html me replace karein.','err');try{
-client=client||window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+client=client||window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
 const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value,name=document.getElementById('name').value.trim();
 if(mode==='signup'){const r=await client.auth.signUp({email,password,options:{data:{full_name:name}}});if(r.error)throw r.error;show('Account created. Email confirmation enabled ho to inbox confirm karein, phir login karein.','ok');}
 else {const r=await client.auth.signInWithPassword({email,password});if(r.error)throw r.error;location.href='index.html';}
 }catch(err){show(err.message||'Login failed','err')}};
-</script></body></html>
+</script>
+<script id="ng-login-session-check">
+(async function(){
+  try{
+    const c=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const {error}=await c.auth.getSession();
+    if(error) await c.auth.signOut();
+  }catch(e){}
+})();
+</script>
+
+</body></html>

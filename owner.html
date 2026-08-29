@@ -1025,16 +1025,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-<script id="ng-owner-page-guard">
+
+
+
+<script id="ng-owner-session-guard-v2">
 (async function(){
- const URL='REPLACE_WITH_YOUR_SUPABASE_URL', KEY='REPLACE_WITH_YOUR_PUBLISHABLE_OR_ANON_KEY';
- if(URL.startsWith('REPLACE_')||KEY.startsWith('REPLACE_')) return;
- if(!window.supabase) return;
- const c=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- const {data:{user}}=await c.auth.getUser();
- if(!user){location.replace('users.html');return;}
- const {data:p,error}=await c.from('profiles').select('role').eq('id',user.id).maybeSingle();
- if(error || (p?.role||'customer').toLowerCase()!=='owner'){location.replace('index.html');}
+  try{
+    const c=window.NG_SUPABASE || window.supabase.createClient('https://gozvchqatiyebpnycubl.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40',{
+      auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+    });
+    window.NG_SUPABASE=c;
+    const {data:sd,error:se}=await c.auth.getSession();
+    if(se || !sd?.session){location.replace('users.html');return;}
+    const {data:p,error}=await c.from('profiles').select('role').eq('id',sd.session.user.id).maybeSingle();
+    if(error || String(p?.role||'customer').toLowerCase()!=='owner') location.replace('index.html');
+  }catch(e){location.replace('users.html');}
 })();
 </script>
 

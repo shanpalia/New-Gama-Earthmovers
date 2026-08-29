@@ -198,14 +198,17 @@ function initials(v){
 }
 
 async function fetchOrders(){
-  const {data:{user}, error:userError} = await ngSupabase.auth.getUser();
+  // Read the browser session first. This avoids getUser() throwing
+  // "Auth session missing" when an old/invalid browser token exists.
+  const {data:sessionData, error:sessionError} = await ngSupabase.auth.getSession();
 
-  if(userError) throw userError;
-
-  if(!user){
-    location.href='users.html';
-    throw new Error('Please login as shop owner.');
+  if(sessionError || !sessionData || !sessionData.session){
+    await ngSupabase.auth.signOut().catch(()=>{});
+    location.replace('users.html?next=orders');
+    return [];
   }
+
+  const user = sessionData.session.user;
 
   const {data:profile, error:profileError} = await ngSupabase
     .from('profiles')
@@ -216,8 +219,8 @@ async function fetchOrders(){
   if(profileError) throw profileError;
 
   if(!profile || String(profile.role).toLowerCase() !== 'owner'){
-    location.href='index.html';
-    throw new Error('Only the shop owner can view orders.');
+    location.replace('index.html');
+    return [];
   }
 
   const {data, error} = await ngSupabase
@@ -302,7 +305,7 @@ async function loadOrders(){
   }catch(err){
     console.error('Orders error:',err);
     box.innerHTML='<div class="error"><b>Orders could not be loaded.</b><br>'+esc(err.message||'Unknown error')+
-      '<br><br><small>The owner account must have permission to read <code>new_gama_orders</code>. Run the included SQL fix once in Supabase SQL Editor.</small></div>';
+      '<br><br><small>Please verify the owner role and run the included RLS SQL once. If you just uploaded this update, login again once as the shop owner.</small></div>';
     document.getElementById('listInfo').textContent='Unable to load orders';
   }
 }
