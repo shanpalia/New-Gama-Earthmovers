@@ -349,7 +349,7 @@
     const thumbs = document.getElementById("galleryThumbs");
 
     document.getElementById("modalCategory").textContent =
-      categoryMap[product.category_id] || product.category || "";
+      categoryMap[product.categroy_id] || product.category || "";
     document.getElementById("modalName").textContent =
       product.name || "Product";
     document.getElementById("modalPart").textContent =
@@ -399,7 +399,7 @@
       const images = getImages(product);
       const image = images[0] || "new-gama-logo.png";
       const category =
-        categoryMap[product.category_id] || product.category || "";
+        categoryMap[product.categroy_id] || product.category || "";
 
       return `
         <article class="customer-card" data-product-id="${esc(product.id)}">
