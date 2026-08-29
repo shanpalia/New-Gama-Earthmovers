@@ -905,6 +905,27 @@ document.addEventListener('DOMContentLoaded', function () {
         if(insert.error) throw insert.error;
 
         alert('Product saved to Supabase successfully.');
+
+        // Immediately reload products from Supabase and update the Dashboard.
+        const fresh = await sb.from('new_gama_products').select('*').order('created_at',{ascending:false});
+        const cats = await sb.from('new_gama_categories').select('*');
+        if (fresh.error) throw fresh.error;
+        if (cats.error) throw cats.error;
+
+        const catMap = Object.fromEntries((cats.data||[]).map(c=>[c.id,c.name]));
+        items = (fresh.data||[]).map(p=>({
+          id:p.id,
+          name:p.name||'',
+          part:p.part_number||'',
+          category_id:p.category_id||'',
+          category:catMap[p.category_id]||'',
+          price:p.price??0,
+          currency:p.currency||'INR',
+          description:p.description||'',
+          images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+        }));
+        if(typeof renderItems==='function') renderItems();
+
         if(typeof clearProductForm==='function') clearProductForm();
         if(typeof openPage==='function') openPage('dashboard');
       }catch(err){

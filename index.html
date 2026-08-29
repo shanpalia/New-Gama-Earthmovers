@@ -478,5 +478,52 @@
 })();
 </script>
 
+
+<script>
+/* Reliable homepage product loader */
+(async function(){
+  const URL="https://gozvchqatiyebpnycubl.supabase.co";
+  const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  function esc(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
+  async function reloadProducts(){
+    const list=document.getElementById('customerProductList');
+    if(!list || !window.supabase) return;
+    try{
+      const sb=window.supabase.createClient(URL,KEY);
+      const [pr,cr]=await Promise.all([
+        sb.from('new_gama_products').select('*').order('created_at',{ascending:false}),
+        sb.from('new_gama_categories').select('id,name')
+      ]);
+      if(pr.error) throw pr.error;
+      if(cr.error) throw cr.error;
+      const cm=Object.fromEntries((cr.data||[]).map(c=>[c.id,c.name]));
+      const rows=pr.data||[];
+      if(!rows.length){
+        list.innerHTML='<div class="customer-empty">No products available yet.</div>';
+        return;
+      }
+      list.innerHTML=rows.map((p,i)=>{
+        const image=p.main_image_url||p.image_2_url||p.image_3_url||p.image_4_url||p.image_5_url||'new-gama-logo.png';
+        const symbol=String(p.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ';
+        return `<article class="customer-card" data-cloud-index="${i}">
+          <img src="${image}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='new-gama-logo.png'">
+          <div class="customer-card-body">
+            <span class="customer-badge">${esc(cm[p.category_id]||'')}</span>
+            <h3>${esc(p.name)}</h3>
+            ${p.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(p.part_number)}</div>`:''}
+            <div class="customer-price">${symbol}${p.price??0}</div>
+          </div>
+        </article>`;
+      }).join('');
+    }catch(err){
+      console.error('Homepage Supabase error:',err);
+      if(list) list.innerHTML='<div class="customer-empty">Products could not be loaded. Please refresh the page.</div>';
+    }
+  }
+  document.addEventListener('DOMContentLoaded',reloadProducts);
+  window.addEventListener('pageshow',reloadProducts);
+})();
+</script>
+
 </body>
 </html>
