@@ -120,7 +120,9 @@
 
     <section id="parts" class="container">
       <div class="title"><h2>Spare Parts</h2><p>Search and browse available parts.</p></div>
-      <div class="empty" id="result"><strong>No parts available yet.</strong><br>Parts added by the shop owner will appear here.</div>
+      <div class="customer-grid" id="customerProductList">
+        <div class="customer-empty">Loading products...</div>
+      </div>
     </section>
 
     <section id="categories" class="container">
@@ -144,7 +146,6 @@
   </main>
 
   <footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
-  </div>
 
 
   <div class="security-modal" id="securityModal" role="dialog" aria-modal="true">
@@ -171,12 +172,6 @@
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    function searchParts(){
-      const q = document.getElementById('searchInput').value.trim();
-      document.getElementById('result').innerHTML = q
-        ? '<strong>Search: ' + q.replace(/</g,'&lt;') + '</strong><br>Real parts search will be connected when the database is added.'
-        : '<strong>Please enter a Part Name or Part Number.</strong>';
-    }
 
     const SECURITY_KEY = 'newGamaOwnerPinHash';
     const modal = document.getElementById('securityModal');
@@ -258,12 +253,6 @@
 
 
 
-<section class="store-products" id="storeProducts">
-  <h2>Our Parts & Products</h2>
-  <p>Browse available parts. Click any product to view all 5 images and complete details.</p>
-  <div class="customer-grid" id="customerProductList"></div>
-</section>
-
 <div class="product-modal" id="productModal">
   <div class="product-modal-box">
     <button class="product-close" id="productClose">×</button>
@@ -295,14 +284,15 @@
 
 
 
+
+
+
 <script>
-/* =========================================================
-   NEW GAMA EARTHMOVERS - HOMEPAGE SUPABASE PRODUCT LOADER
-   Single loader only. LocalStorage product rendering removed.
-   ========================================================= */
-(function() {
+/* NEW GAMA EARTHMOVERS - FINAL HOMEPAGE SUPABASE LOADER */
+(function () {
   const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+
   let homepageProducts = [];
   let categoryMap = {};
 
@@ -312,103 +302,93 @@
     return div.innerHTML;
   }
 
-  async function supabaseGet(path) {
+  async function getTable(path) {
     const response = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
+      method: "GET",
       headers: {
         "apikey": SUPABASE_ANON_KEY,
-        "Authorization": "Bearer " + SUPABASE_ANON_KEY
+        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+        "Accept": "application/json"
       }
     });
 
+    const raw = await response.text();
+
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error("HTTP " + response.status + ": " + text);
+      throw new Error(
+        "Supabase " + response.status + ": " + raw
+      );
     }
 
-    return response.json();
+    return raw ? JSON.parse(raw) : [];
   }
 
   function getImages(product) {
-    return [
+    const candidates = [
       product.main_image_url,
+      product.image_1_url,
       product.image_2_url,
       product.image_3_url,
       product.image_4_url,
-      product.image_5_url
-    ].filter(Boolean);
+      product.image_5_url,
+      product.image1_url,
+      product.image2_url,
+      product.image3_url,
+      product.image4_url,
+      product.image5_url,
+      product.image_url,
+      product.product_image,
+      product.photo_url
+    ];
+
+    return candidates.filter(function (url) {
+      return typeof url === "string" && url.trim() !== "";
+    });
   }
 
   function formatPrice(product) {
     const currency = String(product.currency || "INR").toUpperCase();
-    return (currency === "NPR" ? "रु " : "₹ ") + (product.price ?? 0);
+    return (currency === "NPR" ? "रु " : "₹ ") +
+      (product.price == null ? 0 : product.price);
   }
 
-  function openProduct(product) {
-    const images = getImages(product);
-    const main = document.getElementById("galleryMain");
-    const thumbs = document.getElementById("galleryThumbs");
-
-    document.getElementById("modalCategory").textContent =
-      categoryMap[product.categroy_id] || product.category || "";
-    document.getElementById("modalName").textContent =
-      product.name || "Product";
-    document.getElementById("modalPart").textContent =
-      product.part_number ? "Part No: " + product.part_number : "";
-    document.getElementById("modalPrice").textContent =
-      formatPrice(product);
-    document.getElementById("modalDescription").textContent =
-      product.description || "";
-
-    const fallback = "new-gama-logo.png";
-    main.src = images[0] || fallback;
-
-    thumbs.innerHTML = images.map(function(src, index) {
-      return '<img src="' + esc(src) + '" data-index="' + index +
-        '" class="' + (index === 0 ? "active" : "") +
-        '" alt="Product image ' + (index + 1) + '">';
-    }).join("");
-
-    thumbs.querySelectorAll("img").forEach(function(img) {
-      img.addEventListener("click", function() {
-        const index = Number(this.dataset.index);
-        main.src = images[index] || fallback;
-        thumbs.querySelectorAll("img").forEach(function(x) {
-          x.classList.remove("active");
-        });
-        this.classList.add("active");
-      });
-    });
-
-    document.getElementById("productModal").classList.add("show");
+  function categoryName(product) {
+    // IMPORTANT: actual database column is spelled "categroy_id".
+    return categoryMap[product.categroy_id] ||
+      categoryMap[product.category_id] ||
+      product.category ||
+      "";
   }
 
   function renderProducts(products) {
     const grid = document.getElementById("customerProductList");
+
     if (!grid) {
-      console.error("New Gama: #customerProductList not found");
+      console.error("New Gama: customerProductList not found.");
       return;
     }
 
-    if (!products.length) {
+    if (!Array.isArray(products) || products.length === 0) {
       grid.innerHTML =
-        '<div class="customer-empty">No products available yet.</div>';
+        '<div class="customer-empty"><strong>No parts available yet.</strong><br>Parts added by the shop owner will appear here.</div>';
       return;
     }
 
-    grid.innerHTML = products.map(function(product) {
+    grid.innerHTML = products.map(function (product) {
       const images = getImages(product);
       const image = images[0] || "new-gama-logo.png";
-      const category =
-        categoryMap[product.categroy_id] || product.category || "";
+      const category = categoryName(product);
 
       return `
         <article class="customer-card" data-product-id="${esc(product.id)}">
-          <img src="${esc(image)}"
-               alt="${esc(product.name)}"
-               onerror="this.onerror=null;this.src='new-gama-logo.png'">
+          <img
+            src="${esc(image)}"
+            alt="${esc(product.name || "Product")}"
+            onerror="this.onerror=null;this.src='new-gama-logo.png'"
+          >
           <div class="customer-card-body">
             ${category ? `<span class="customer-badge">${esc(category)}</span>` : ""}
-            <h3>${esc(product.name)}</h3>
+            <h3>${esc(product.name || "Unnamed Product")}</h3>
             ${product.part_number ? `<div style="color:#777;font-size:13px">Part No: ${esc(product.part_number)}</div>` : ""}
             <div class="customer-price">${formatPrice(product)}</div>
           </div>
@@ -416,21 +396,56 @@
       `;
     }).join("");
 
-    grid.querySelectorAll(".customer-card").forEach(function(card) {
-      card.addEventListener("click", function() {
-        const id = this.dataset.productId;
-        const product = homepageProducts.find(function(p) {
-          return String(p.id) === String(id);
+    grid.querySelectorAll(".customer-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        const product = homepageProducts.find(function (p) {
+          return String(p.id) === String(card.dataset.productId);
         });
         if (product) openProduct(product);
       });
     });
   }
 
+  function openProduct(product) {
+    const images = getImages(product);
+    const main = document.getElementById("galleryMain");
+    const thumbs = document.getElementById("galleryThumbs");
+
+    document.getElementById("modalCategory").textContent = categoryName(product);
+    document.getElementById("modalName").textContent = product.name || "Product";
+    document.getElementById("modalPart").textContent =
+      product.part_number ? "Part No: " + product.part_number : "";
+    document.getElementById("modalPrice").textContent = formatPrice(product);
+    document.getElementById("modalDescription").textContent =
+      product.description || product.descri || "";
+
+    main.src = images[0] || "new-gama-logo.png";
+
+    thumbs.innerHTML = images.map(function (src, index) {
+      return '<img src="' + esc(src) + '" data-index="' + index +
+        '" class="' + (index === 0 ? "active" : "") +
+        '" alt="Product image ' + (index + 1) + '">';
+    }).join("");
+
+    thumbs.querySelectorAll("img").forEach(function (thumb) {
+      thumb.addEventListener("click", function () {
+        const index = Number(thumb.dataset.index);
+        main.src = images[index] || "new-gama-logo.png";
+        thumbs.querySelectorAll("img").forEach(function (item) {
+          item.classList.remove("active");
+        });
+        thumb.classList.add("active");
+      });
+    });
+
+    document.getElementById("productModal").classList.add("show");
+  }
+
   async function loadHomepageProducts() {
     const grid = document.getElementById("customerProductList");
+
     if (!grid) {
-      console.error("New Gama: #customerProductList not found");
+      console.error("New Gama: #customerProductList is missing.");
       return;
     }
 
@@ -438,34 +453,35 @@
       '<div class="customer-empty">Loading products...</div>';
 
     try {
-      // Products are required.
-      homepageProducts = await supabaseGet(
-        "new_gama_products?select=*&order=created_at.desc"
+      // No created_at ordering here. This works even if that column does not exist.
+      homepageProducts = await getTable(
+        "new_gama_products?select=*"
       );
 
-      // Categories are optional. A category RLS issue must not stop products.
+      // Category failure must never block products.
       categoryMap = {};
       try {
-        const categories = await supabaseGet(
+        const categories = await getTable(
           "new_gama_categories?select=id,name"
         );
-        (categories || []).forEach(function(category) {
-          categoryMap[category.id] = category.name;
+        categories.forEach(function (category) {
+          categoryMap[String(category.id)] = category.name;
         });
       } catch (categoryError) {
-        console.warn("Categories could not be loaded:", categoryError);
+        console.warn("New Gama categories warning:", categoryError);
       }
 
       console.log(
-        "New Gama Homepage: loaded",
-        homepageProducts.length,
-        "products from Supabase"
+        "New Gama Homepage: loaded " +
+        homepageProducts.length +
+        " products from Supabase"
       );
 
       renderProducts(homepageProducts);
 
     } catch (error) {
       console.error("New Gama Homepage Supabase Error:", error);
+
       grid.innerHTML =
         '<div class="customer-empty"><strong>Products could not be loaded.</strong><br>' +
         esc(error.message) +
@@ -473,42 +489,46 @@
     }
   }
 
-  // Close product modal.
-  document.getElementById("productClose").addEventListener("click", function() {
-    document.getElementById("productModal").classList.remove("show");
-  });
-
-  document.getElementById("productModal").addEventListener("click", function(event) {
-    if (event.target === this) {
-      this.classList.remove("show");
-    }
-  });
-
-  // Replace the old demo search with real Supabase-loaded product search.
-  window.searchParts = function() {
+  window.searchParts = function () {
     const query = (
       document.getElementById("searchInput").value || ""
     ).trim().toLowerCase();
 
-    if (!query) {
-      renderProducts(homepageProducts);
-      document.getElementById("parts").scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-
-    const filtered = homepageProducts.filter(function(product) {
-      return String(product.name || "").toLowerCase().includes(query) ||
-             String(product.part_number || "").toLowerCase().includes(query);
+    const filtered = homepageProducts.filter(function (product) {
+      return (
+        String(product.name || "").toLowerCase().includes(query) ||
+        String(product.part_number || "").toLowerCase().includes(query) ||
+        String(categoryName(product)).toLowerCase().includes(query)
+      );
     });
 
-    renderProducts(filtered);
-    document.getElementById("storeProducts").scrollIntoView({
-      behavior: "smooth"
+    renderProducts(query ? filtered : homepageProducts);
+    document.getElementById("parts").scrollIntoView({
+      behavior: "smooth",
+      block: "start"
     });
   };
 
-  document.addEventListener("DOMContentLoaded", loadHomepageProducts, { once: true });
-  window.addEventListener("pageshow", loadHomepageProducts);
+  const closeButton = document.getElementById("productClose");
+  const modal = document.getElementById("productModal");
+
+  if (closeButton) {
+    closeButton.addEventListener("click", function () {
+      modal.classList.remove("show");
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) {
+        modal.classList.remove("show");
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    loadHomepageProducts();
+  }, { once: true });
 
   window.loadNewGamaProducts = loadHomepageProducts;
 })();
