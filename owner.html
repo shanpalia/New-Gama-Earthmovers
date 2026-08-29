@@ -790,5 +790,132 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
+
+<script>
+/* FINAL Supabase save override - replaces legacy localStorage button listeners */
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.supabase) return;
+
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  const BUCKET = "new-gama-product-images";
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function getCategories() {
+    const r = await sb.from('new_gama_categories').select('*').order('name');
+    if (r.error) throw r.error;
+    return r.data || [];
+  }
+
+  async function refreshCategorySelect() {
+    const cats = await getCategories();
+    const select = document.getElementById('category');
+    const current = select.value;
+    select.innerHTML = '<option value="">Select category</option>' +
+      cats.map(c => '<option value="'+c.id+'">'+String(c.name).replace(/</g,'&lt;')+'</option>').join('');
+    if (current) select.value=current;
+
+    const chips=document.getElementById('categoryChips');
+    if(chips) chips.innerHTML=cats.length ? cats.map(c=>'<span class="chip">'+String(c.name).replace(/</g,'&lt;')+'</span>').join('') : '<span style="color:#777;font-size:13px">No categories created yet.</span>';
+    const count=document.getElementById('categoryCount');
+    if(count) count.textContent=cats.length;
+  }
+
+  // Replace legacy category button completely.
+  const oldCatBtn=document.getElementById('addCategoryBtn');
+  if(oldCatBtn){
+    const catBtn=oldCatBtn.cloneNode(true);
+    oldCatBtn.replaceWith(catBtn);
+    catBtn.addEventListener('click', async function(){
+      const input=document.getElementById('newCategory');
+      const name=input.value.trim();
+      if(!name) return alert('Please enter a category name.');
+      try{
+        const r=await sb.from('new_gama_categories').insert({name}).select().single();
+        if(r.error) throw r.error;
+        input.value='';
+        await refreshCategorySelect();
+        document.getElementById('category').value=r.data.id;
+        alert('Category created successfully.');
+      }catch(err){
+        console.error(err);
+        alert('Category save error: '+(err.message||'Unknown error'));
+      }
+    });
+  }
+
+  // Replace legacy Add Product button completely.
+  const oldBtn=document.getElementById('addItemBtn');
+  if(oldBtn){
+    const btn=oldBtn.cloneNode(true);
+    oldBtn.replaceWith(btn);
+
+    btn.addEventListener('click', async function(){
+      const name=document.getElementById('itemName').value.trim();
+      const part=document.getElementById('partNumber').value.trim();
+      const category_id=document.getElementById('category').value;
+      const price=document.getElementById('price').value.trim();
+      const currency=document.getElementById('currency').value;
+      const description=document.getElementById('description').value.trim();
+      const images=(window.selectedImages||[]);
+
+      if(!name) return alert('Please enter Product / Part Name.');
+      if(!category_id) return alert('Please create or select a category.');
+      if(images.length!==5 || images.some(x=>!x)) return alert('Please upload all 5 product images.');
+
+      btn.disabled=true;
+      btn.textContent='Saving...';
+
+      try{
+        const productId=crypto.randomUUID();
+        const urls=[];
+
+        for(let i=0;i<5;i++){
+          const response=await fetch(images[i]);
+          const blob=await response.blob();
+          const path='products/'+productId+'/'+(i+1)+'.jpg';
+          const up=await sb.storage.from(BUCKET).upload(path,blob,{
+            upsert:true,
+            contentType:'image/jpeg'
+          });
+          if(up.error) throw up.error;
+          const pub=sb.storage.from(BUCKET).getPublicUrl(path);
+          urls.push(pub.data.publicUrl);
+        }
+
+        const insert=await sb.from('new_gama_products').insert({
+          id:productId,
+          name:name,
+          part_number:part||null,
+          category_id:category_id,
+          price:Number(price||0),
+          currency:currency,
+          description:description||null,
+          main_image_url:urls[0],
+          image_2_url:urls[1],
+          image_3_url:urls[2],
+          image_4_url:urls[3],
+          image_5_url:urls[4]
+        }).select();
+
+        if(insert.error) throw insert.error;
+
+        alert('Product saved to Supabase successfully.');
+        if(typeof clearProductForm==='function') clearProductForm();
+        if(typeof openPage==='function') openPage('dashboard');
+      }catch(err){
+        console.error('SUPABASE PRODUCT SAVE ERROR:',err);
+        alert('Supabase save error: '+(err.message||JSON.stringify(err)));
+      }finally{
+        btn.disabled=false;
+        btn.textContent='Add Product';
+      }
+    });
+  }
+
+  refreshCategorySelect().catch(console.error);
+});
+</script>
+
 </body>
 </html>
