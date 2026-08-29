@@ -41,6 +41,14 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 .preview-title{font-size:22px;margin-bottom:8px;word-break:break-word}.preview-part{font-size:13px;color:var(--muted);margin-bottom:12px}
 .preview-price{font-size:26px;font-weight:bold;margin:10px 0}.preview-description{color:#666;font-size:14px;white-space:pre-wrap}
 .image-upload-box{border:2px dashed #d2d2d2;border-radius:9px;padding:18px;background:#fafafa}.image-help{font-size:12px;color:#777;margin-top:8px}
+    .multi-image-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+    .multi-image-thumb{aspect-ratio:1;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:#fafafa;position:relative}
+    .multi-image-thumb img{width:100%;height:100%;object-fit:cover}
+    .thumb-remove{position:absolute;right:3px;top:3px;border:0;background:#fff;color:#c33;width:22px;height:22px;border-radius:50%;font-weight:bold}
+    .manage-actions{display:flex;gap:8px;margin-top:12px}
+    .edit{border:0;background:#fff3c9;padding:9px 12px;border-radius:6px;font-weight:bold}
+    .save-edit{background:var(--yellow);border:0;border-radius:7px;padding:13px 22px;font-weight:bold;margin-top:18px}
+    .gallery-note{font-size:12px;color:#777;margin-top:8px}
 .item-list{display:grid;gap:12px}.item-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:16px;border:1px solid var(--border);border-radius:9px}
 .item-row small{display:block;color:var(--muted);margin-top:4px}.remove{border:0;background:#fff0ef;color:#c73b2d;padding:9px 12px;border-radius:6px}
 .category-box{display:flex;gap:10px;align-items:center}.category-box input{flex:1}.category-box button{margin:0;padding:12px 18px}
@@ -71,9 +79,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-title">OWNER MENU</div>
-  <button class="nav-item" data-page="home"><span class="nav-icon">⌂</span> Home</button>
+  <button class="nav-item" id="homeRedirect"><span class="nav-icon">⌂</span> Home</button>
   <button class="nav-item active" data-page="dashboard"><span class="nav-icon">▦</span> Dashboard</button>
   <button class="nav-item" data-page="add-items"><span class="nav-icon">＋</span> Add Items</button>
+  <button class="nav-item" data-page="manage-items"><span class="nav-icon">☷</span> Manage Items</button>
   <button class="nav-item" data-page="manage-profile"><span class="nav-icon">⚙</span> Manage Profile</button>
   <button class="nav-item logout" id="logoutBtn"><span class="nav-icon">↪</span> Logout</button>
 </aside>
@@ -106,7 +115,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
   <div class="page-header"><h1>Add New Product</h1><p>Create your own machine/brand categories and add products with live preview.</p></div>
 
   <div class="card" style="margin-bottom:22px">
-    <h2>Create / Manage Categories</h2>
+    <h2>Category (Create Once, Reuse for Products)</h2>
     <div class="category-box">
       <input id="newCategory" placeholder="Example: JCB, Terex, L&T, Tractor, Komatsu">
       <button class="primary" id="addCategoryBtn" style="margin:0">Create Category</button>
@@ -121,8 +130,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 
       <label>Product Image</label>
       <div class="image-upload-box">
-        <input id="productImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
-        <div class="image-help">Upload product image. Live preview appears on the right.</div>
+        <input id="productImage" type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif">
+        <div class="image-help">Upload 4 to 5 product images. The first image will be the main store image.</div><div id="multiImagePreview" class="multi-image-preview"></div><div class="gallery-note">0 / 5 images selected</div>
       </div>
 
       <label>Item / Part Name</label>
@@ -170,6 +179,18 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
   </div>
 </section>
 
+<section class="page" id="manage-items">
+  <div class="page-header">
+    <h1>Manage Items</h1>
+    <p>View, edit or delete products added by the owner.</p>
+  </div>
+  <div class="card">
+    <div class="product-card-grid" id="manageItemList">
+      <div class="empty">No products have been added yet.</div>
+    </div>
+  </div>
+</section>
+
 <section class="page" id="manage-profile">
   <div class="page-header"><h1>Manage Profile</h1><p>Update the details customers will see.</p></div>
   <div class="grid">
@@ -201,21 +222,54 @@ function openPage(id){
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
 document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Owner Dashboard?'))window.location.href='index.html'});
 
-const categories=[];
-const items=[];
-let selectedImageData='';
+const STORAGE_KEY='newGamaStoreDataV2';
+
+let categories=[];
+let items=[];
+let selectedImages=[];
+let editingIndex=null;
+
+function loadData(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    categories=Array.isArray(saved.categories)?saved.categories:[];
+    items=Array.isArray(saved.items)?saved.items:[];
+  }catch(e){categories=[];items=[]}
+}
+function saveData(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify({categories,items}));
+}
 
 function escapeHtml(v){const d=document.createElement('div');d.textContent=v||'';return d.innerHTML}
+
+function toggleMenu(close=false){
+  if(close){sidebar.classList.remove('open');backdrop.classList.remove('show')}
+  else{sidebar.classList.toggle('open');backdrop.classList.toggle('show')}
+}
+menuBtn.addEventListener('click',()=>toggleMenu());
+backdrop.addEventListener('click',()=>toggleMenu(true));
+
+function openPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const page=document.getElementById(id);
+  if(page) page.classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  toggleMenu(true);
+  if(id==='dashboard'||id==='manage-items') renderItems();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
+document.getElementById('homeRedirect').addEventListener('click',()=>window.location.href='index.html');
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Owner Dashboard?'))window.location.href='index.html'});
 
 function renderCategories(){
   const chips=document.getElementById('categoryChips');
   const select=document.getElementById('category');
   document.getElementById('categoryCount').textContent=categories.length;
-
   chips.innerHTML=categories.length
     ? categories.map((c,i)=>`<span class="chip">${escapeHtml(c)} <button type="button" onclick="removeCategory(${i})">×</button></span>`).join('')
     : '<span style="color:#777;font-size:13px">No categories created yet.</span>';
-
   const current=select.value;
   select.innerHTML='<option value="">Select category</option>'+categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   if(categories.includes(current))select.value=current;
@@ -226,27 +280,43 @@ function addCategory(){
   const value=input.value.trim();
   if(!value){alert('Please enter a category name.');return}
   if(categories.some(c=>c.toLowerCase()===value.toLowerCase())){alert('This category already exists.');return}
-  categories.push(value);
-  input.value='';
-  renderCategories();
-  document.getElementById('category').value=value;
-  updateProductPreview();
+  categories.push(value);input.value='';saveData();renderCategories();
+  document.getElementById('category').value=value;updateProductPreview();
 }
-
 function removeCategory(index){
   const removed=categories[index];
+  if(items.some(i=>i.category===removed)){alert('This category is being used by products. Change or delete those products first.');return}
   if(!confirm('Remove category "'+removed+'"?'))return;
-  categories.splice(index,1);
-  renderCategories();
-  updateProductPreview();
+  categories.splice(index,1);saveData();renderCategories();updateProductPreview();
 }
-
 document.getElementById('addCategoryBtn').addEventListener('click',addCategory);
 document.getElementById('newCategory').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCategory()}});
 
 const productImageInput=document.getElementById('productImage');
 const previewImage=document.getElementById('previewImage');
 const previewPlaceholder=document.getElementById('previewPlaceholder');
+
+function renderSelectedImages(){
+  const box=document.getElementById('multiImagePreview');
+  const note=document.querySelector('.gallery-note');
+  box.innerHTML=selectedImages.map((src,i)=>`<div class="multi-image-thumb"><img src="${src}" alt=""><button type="button" class="thumb-remove" onclick="removeSelectedImage(${i})">×</button></div>`).join('');
+  note.textContent=selectedImages.length+' / 5 images selected';
+  if(selectedImages[0]){
+    previewImage.src=selectedImages[0];previewImage.style.display='block';previewPlaceholder.style.display='none';
+  }else{
+    previewImage.removeAttribute('src');previewImage.style.display='none';previewPlaceholder.style.display='block';
+  }
+}
+function removeSelectedImage(index){selectedImages.splice(index,1);renderSelectedImages()}
+
+productImageInput.addEventListener('change',function(){
+  const files=[...this.files];
+  if(files.length+selectedImages.length>5){alert('Maximum 5 images allowed.');this.value='';return}
+  const readers=files.map(file=>new Promise((resolve,reject)=>{
+    const r=new FileReader();r.onload=e=>resolve(e.target.result);r.onerror=reject;r.readAsDataURL(file);
+  }));
+  Promise.all(readers).then(results=>{selectedImages.push(...results);this.value='';renderSelectedImages()});
+});
 
 function updateProductPreview(){
   const name=document.getElementById('itemName').value.trim()||'Product Name';
@@ -261,19 +331,18 @@ function updateProductPreview(){
   document.getElementById('previewPrice').textContent=(currency==='INR'?'₹ ':'रु ')+(price||'0');
   document.getElementById('previewDescription').textContent=description;
 }
-
 ['itemName','partNumber','category','price','description','currency'].forEach(id=>{
   document.getElementById(id).addEventListener('input',updateProductPreview);
   document.getElementById(id).addEventListener('change',updateProductPreview);
 });
 
-productImageInput.addEventListener('change',function(){
-  const file=this.files&&this.files[0];
-  if(!file){selectedImageData='';previewImage.style.display='none';previewPlaceholder.style.display='block';return}
-  const reader=new FileReader();
-  reader.onload=e=>{selectedImageData=e.target.result;previewImage.src=selectedImageData;previewImage.style.display='block';previewPlaceholder.style.display='none'};
-  reader.readAsDataURL(file);
-});
+function clearProductForm(){
+  ['itemName','partNumber','price','description'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('category').value='';
+  productImageInput.value='';selectedImages=[];editingIndex=null;
+  document.getElementById('addItemBtn').textContent='Add Product';
+  renderSelectedImages();updateProductPreview();
+}
 
 document.getElementById('addItemBtn').addEventListener('click',()=>{
   const name=document.getElementById('itemName').value.trim();
@@ -285,49 +354,65 @@ document.getElementById('addItemBtn').addEventListener('click',()=>{
 
   if(!name){alert('Please enter Product / Part Name.');return}
   if(!category){alert('Please create or select a category.');return}
-  if(!selectedImageData){alert('Please select a Product Image.');return}
+  if(selectedImages.length<4||selectedImages.length>5){alert('Please upload minimum 4 and maximum 5 images.');return}
 
-  items.push({name,part,category,price,currency,description,image:selectedImageData});
-  document.getElementById('itemCount').textContent=items.length;
-
-  ['itemName','partNumber','price','description'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('category').value='';
-  productImageInput.value='';
-  selectedImageData='';
-  previewImage.removeAttribute('src');
-  previewImage.style.display='none';
-  previewPlaceholder.style.display='block';
-  updateProductPreview();
-  renderItems();
-  alert('Product added successfully.');
-  openPage('dashboard');
+  const product={name,part,category,price,currency,description,images:[...selectedImages]};
+  if(editingIndex===null){items.push(product);alert('Product added successfully.')}
+  else{items[editingIndex]=product;alert('Product updated successfully.')}
+  saveData();clearProductForm();renderItems();openPage('dashboard');
 });
 
+function priceText(item){return (item.currency==='INR'?'₹ ':'रु ')+(item.price||'0')}
+
+function productCard(item,index,manage=false){
+  const main=item.images&&item.images[0]?'src="'+item.images[0]+'"':'';
+  const thumbs=(item.images||[]).slice(1,5).map(src=>`<img src="${src}" style="width:42px;height:42px;object-fit:cover;border-radius:5px;border:1px solid #eee">`).join('');
+  return `<div class="product-card">
+    <img ${main} alt="">
+    <div class="product-card-body">
+      <span class="badge">${escapeHtml(item.category)}</span>
+      <h3>${escapeHtml(item.name)}</h3>
+      ${item.part?`<div class="product-meta">Part No: ${escapeHtml(item.part)}</div>`:''}
+      ${item.description?`<div class="product-meta">${escapeHtml(item.description)}</div>`:''}
+      <div class="product-price">${priceText(item)}</div>
+      <div style="display:flex;gap:5px;margin-top:10px;flex-wrap:wrap">${thumbs}</div>
+      ${manage?`<div class="manage-actions"><button class="edit" onclick="editItem(${index})">Edit</button><button class="remove" onclick="deleteItem(${index})">Delete</button></div>`:''}
+    </div>
+  </div>`;
+}
+
 function renderItems(){
-  const list=document.getElementById('itemList');
-  if(!items.length){list.innerHTML='<div class="empty">No products have been added yet.</div>';return}
-  list.innerHTML=items.map((item,index)=>`
-    <div class="product-card">
-      <img src="${item.image}" alt="">
-      <div class="product-card-body">
-        <span class="badge">${escapeHtml(item.category)}</span>
-        <h3>${escapeHtml(item.name)}</h3>
-        ${item.part?`<div class="product-meta">Part No: ${escapeHtml(item.part)}</div>`:''}
-        ${item.description?`<div class="product-meta">${escapeHtml(item.description)}</div>`:''}
-        <div class="product-price">${item.currency==='INR'?'₹':'रु'} ${escapeHtml(item.price||'0')}</div>
-        <button class="remove" style="margin-top:12px" onclick="removeItem(${index})">Remove Item</button>
-      </div>
-    </div>`).join('');
-}
-
-function removeItem(index){
-  if(!confirm('Remove this product?'))return;
-  items.splice(index,1);
   document.getElementById('itemCount').textContent=items.length;
-  renderItems();
+  const dash=document.getElementById('itemList');
+  const manage=document.getElementById('manageItemList');
+  const empty='<div class="empty">No products have been added yet.</div>';
+  dash.innerHTML=items.length?items.map((i,x)=>productCard(i,x,false)).join(''):empty;
+  manage.innerHTML=items.length?items.map((i,x)=>productCard(i,x,true)).join(''):empty;
 }
 
+function editItem(index){
+  const item=items[index];
+  editingIndex=index;
+  document.getElementById('itemName').value=item.name||'';
+  document.getElementById('partNumber').value=item.part||'';
+  document.getElementById('category').value=item.category||'';
+  document.getElementById('price').value=item.price||'';
+  document.getElementById('currency').value=item.currency||'INR';
+  document.getElementById('description').value=item.description||'';
+  selectedImages=[...(item.images||[])];
+  document.getElementById('addItemBtn').textContent='Save Changes';
+  renderSelectedImages();updateProductPreview();openPage('add-items');
+}
+
+function deleteItem(index){
+  if(!confirm('Delete this product permanently?'))return;
+  items.splice(index,1);saveData();renderItems();
+}
+
+loadData();
 renderCategories();
+renderItems();
+renderSelectedImages();
 updateProductPreview();
 </script>
 </body>
