@@ -81,122 +81,91 @@
 </style>
 
 
+
 <script>
-/* =========================================================
-   NEW GAMA EARTHMOVERS - CLEAN SINGLE SUPABASE CLIENT
-   ========================================================= */
-window.addEventListener('DOMContentLoaded', function () {
-  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
-
-  // Exactly ONE client. Auth persistence disabled because this public homepage
-  // does not need login, avoiding GoTrue multiple-client warnings.
-  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-    console.error('Supabase SDK failed to load. Please check internet/CDN access.');
-    return;
-  }
-
-  window.newGamaSupabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false
-      }
-    }
-  );
-
-  const sb = window.newGamaSupabase;
+/* New Gama Earthmovers - Homepage Supabase REST connection.
+   No CDN / Supabase JS SDK required. */
+(function() {
+  const BASE = "https://gozvchqatiyebpnycubl.supabase.co";
+  const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
 
   function esc(v) {
-    const d = document.createElement('div');
-    d.textContent = v == null ? '' : String(v);
+    const d=document.createElement('div');
+    d.textContent=v == null ? '' : String(v);
     return d.innerHTML;
   }
 
-  function getContainer() {
-    const known = [
-      'customerProductList','productList','productsList','productsGrid',
-      'productGrid','itemsGrid'
-    ];
-    for (const id of known) {
-      const el = document.getElementById(id);
-      if (el) return el;
-    }
-    return document.querySelector('.products-grid, .product-grid, [data-products]');
+  function container() {
+    return document.getElementById('customerProductList') ||
+           document.getElementById('productList') ||
+           document.getElementById('productsList') ||
+           document.getElementById('productsGrid') ||
+           document.querySelector('.products-grid') ||
+           document.querySelector('.product-grid') ||
+           document.querySelector('[data-products]');
   }
 
-  function money(p) {
-    const c = String(p.currency || 'INR').toUpperCase();
-    return (c === 'NPR' ? 'रु ' : '₹ ') + (p.price ?? 0);
+  async function api(path) {
+    const r=await fetch(BASE + '/rest/v1/' + path, {
+      headers:{
+        'apikey':KEY,
+        'Authorization':'Bearer ' + KEY
+      }
+    });
+    if(!r.ok) {
+      const t=await r.text();
+      throw new Error('Supabase HTTP '+r.status+': '+t);
+    }
+    return r.json();
   }
 
   async function loadProducts() {
-    const container = getContainer();
-    if (!container) {
-      console.error('New Gama: Homepage product container not found');
+    const box=container();
+    if(!box) {
+      console.error('New Gama: product container not found');
       return;
     }
-
-    container.innerHTML = '<div class="customer-empty">Loading products...</div>';
+    box.innerHTML='<div class="customer-empty">Loading products...</div>';
 
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
-        sb.from('new_gama_products').select('*').order('created_at', { ascending:false }),
-        sb.from('new_gama_categories').select('id,name')
-      ]);
+      const [products,categories]=await Promise.all([
+        api('new_gama_products?select=*&order=created_at.desc'),
+        api('new_gama_categories?select=id,name')
+      ]); 
 
-      if (productsRes.error) throw productsRes.error;
-      if (categoriesRes.error) throw categoriesRes.error;
+      const cat=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
+      console.log('New Gama Homepage: loaded',products.length,'products from Supabase REST');
 
-      const categoryMap = Object.fromEntries(
-        (categoriesRes.data || []).map(c => [c.id, c.name])
-      );
-
-      const products = productsRes.data || [];
-      console.log('New Gama Homepage: loaded', products.length, 'products from Supabase');
-
-      if (!products.length) {
-        container.innerHTML = '<div class="customer-empty">No products available yet.</div>';
+      if(!products.length) {
+        box.innerHTML='<div class="customer-empty">No products available yet.</div>';
         return;
       }
 
-      container.innerHTML = products.map(p => {
-        const image = p.main_image_url || p.image_2_url || p.image_3_url ||
-                      p.image_4_url || p.image_5_url || 'new-gama-logo.png';
-        const category = categoryMap[p.category_id] || '';
-
-        return `
-          <article class="customer-card product-card">
-            <img src="${image}" alt="${esc(p.name)}" loading="lazy"
-                 onerror="this.onerror=null;this.src='new-gama-logo.png';">
-            <div class="customer-card-body">
-              ${category ? `<span class="customer-badge">${esc(category)}</span>` : ''}
-              <h3>${esc(p.name)}</h3>
-              ${p.part_number ? `<div style="color:#777;font-size:13px;margin-top:4px">Part No: ${esc(p.part_number)}</div>` : ''}
-              <div class="customer-price">${money(p)}</div>
-            </div>
-          </article>
-        `;
+      box.innerHTML=products.map(p=>{
+        const image=p.main_image_url||p.image_2_url||p.image_3_url||p.image_4_url||p.image_5_url||'new-gama-logo.png';
+        const currency=String(p.currency||'INR').toUpperCase();
+        const price=(currency==='NPR'?'रु ':'₹ ')+(p.price??0);
+        return `<article class="customer-card product-card" data-product-id="${esc(p.id)}">
+          <img src="${esc(image)}" alt="${esc(p.name)}" loading="lazy"
+               onerror="this.onerror=null;this.src='new-gama-logo.png'">
+          <div class="customer-card-body">
+            ${cat[p.category_id]?`<span class="customer-badge">${esc(cat[p.category_id])}</span>`:''}
+            <h3>${esc(p.name)}</h3>
+            ${p.part_number?`<div style="color:#777;font-size:13px;margin-top:4px">Part No: ${esc(p.part_number)}</div>`:''}
+            <div class="customer-price">${price}</div>
+          </div>
+        </article>`;
       }).join('');
-
-    } catch (err) {
-      console.error('New Gama Homepage Supabase Error:', err);
-      container.innerHTML =
-        '<div class="customer-empty">Could not load products: ' + esc(err.message || 'Unknown error') + '</div>';
+    } catch(err) {
+      console.error('New Gama Homepage REST Error:',err);
+      box.innerHTML='<div class="customer-empty">Products could not be loaded.</div>';
     }
   }
 
-  document.addEventListener('DOMContentLoaded', loadProducts, { once:true });
-  window.addEventListener('pageshow', function() {
-    // Reload on browser back/forward without creating another client.
-    loadProducts();
-  });
-
-  window.loadNewGamaProducts = loadProducts;
-});
+  document.addEventListener('DOMContentLoaded',loadProducts);
+  window.addEventListener('pageshow',loadProducts);
+  window.loadNewGamaProducts=loadProducts;
+})();
 </script>
 
 </body>
