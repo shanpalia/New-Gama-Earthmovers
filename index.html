@@ -429,7 +429,7 @@
     }
 
     list.innerHTML=items.map((item,i)=>{
-      const image=item.images[0]||'';
+      const image=item.images[0]||'new-gama-logo.png';
       return `<article class="customer-card" data-index="${i}">
         <img src="${image}" alt="${esc(item.name)}" loading="lazy">
         <div class="customer-card-body">

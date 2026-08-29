@@ -861,26 +861,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if(!name) return alert('Please enter Product / Part Name.');
       if(!category_id) return alert('Please create or select a category.');
-      if(images.length!==5 || images.some(x=>!x)) return alert('Please upload all 5 product images.');
+      // All five product images are optional.
+      // Product can be saved with 0, 1, 2, 3, 4 or 5 images.
 
       btn.disabled=true;
       btn.textContent='Saving...';
 
       try{
         const productId=crypto.randomUUID();
-        const urls=[];
+        const urls=[null,null,null,null,null];
 
+        // Image 1 is the main image. Images 2-5 are optional.
         for(let i=0;i<5;i++){
+          if(!images[i]) continue;
           const response=await fetch(images[i]);
           const blob=await response.blob();
-          const path='products/'+productId+'/'+(i+1)+'.jpg';
+          const ext=(blob.type && blob.type.split('/')[1]) || 'jpg';
+          const path='products/'+productId+'/'+(i+1)+'.'+ext;
           const up=await sb.storage.from(BUCKET).upload(path,blob,{
             upsert:true,
-            contentType:'image/jpeg'
+            contentType:blob.type || 'image/jpeg'
           });
           if(up.error) throw up.error;
           const pub=sb.storage.from(BUCKET).getPublicUrl(path);
-          urls.push(pub.data.publicUrl);
+          urls[i]=pub.data.publicUrl;
         }
 
         const insert=await sb.from('new_gama_products').insert({
