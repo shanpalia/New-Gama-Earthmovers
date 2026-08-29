@@ -525,5 +525,119 @@
 })();
 </script>
 
+
+<script>
+/* =========================================================
+   NEW GAMA EARTHMOVERS - DIRECT HOMEPAGE SUPABASE CONNECTOR
+   ========================================================= */
+(function () {
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+
+  function escapeHTML(value) {
+    const d = document.createElement("div");
+    d.textContent = value ?? "";
+    return d.innerHTML;
+  }
+
+  function findProductContainer() {
+    return (
+      document.getElementById("customerProductList") ||
+      document.getElementById("productList") ||
+      document.getElementById("productsList") ||
+      document.getElementById("productsGrid") ||
+      document.querySelector(".products-grid") ||
+      document.querySelector(".product-grid") ||
+      document.querySelector("[data-products]")
+    );
+  }
+
+  async function loadHomepageProducts() {
+    const container = findProductContainer();
+
+    if (!container) {
+      console.error("New Gama: product container not found on homepage.");
+      return;
+    }
+
+    if (!window.supabase) {
+      container.innerHTML = '<div style="padding:25px;text-align:center">Supabase library failed to load.</div>';
+      return;
+    }
+
+    container.innerHTML = '<div style="padding:25px;text-align:center">Loading products...</div>';
+
+    try {
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const productsResult = await sb
+        .from("new_gama_products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (productsResult.error) throw productsResult.error;
+
+      const categoriesResult = await sb
+        .from("new_gama_categories")
+        .select("id,name");
+
+      if (categoriesResult.error) throw categoriesResult.error;
+
+      const categoryMap = Object.fromEntries(
+        (categoriesResult.data || []).map(c => [c.id, c.name])
+      );
+
+      const products = productsResult.data || [];
+
+      if (!products.length) {
+        container.innerHTML =
+          '<div class="customer-empty" style="padding:25px;text-align:center">No products available yet.</div>';
+        return;
+      }
+
+      container.innerHTML = products.map((p) => {
+        const image =
+          p.main_image_url ||
+          p.image_2_url ||
+          p.image_3_url ||
+          p.image_4_url ||
+          p.image_5_url ||
+          "new-gama-logo.png";
+
+        const category = categoryMap[p.category_id] || "";
+        const currency = String(p.currency || "INR").toUpperCase();
+        const symbol = currency === "NPR" ? "रु " : "₹ ";
+
+        return `
+          <div class="customer-card product-card" data-product-id="${p.id}">
+            <img src="${image}" alt="${escapeHTML(p.name)}"
+                 onerror="this.src='new-gama-logo.png'">
+            <div class="customer-card-body">
+              ${category ? `<div class="customer-badge">${escapeHTML(category)}</div>` : ""}
+              <h3>${escapeHTML(p.name)}</h3>
+              ${p.part_number ? `<p>Part No: ${escapeHTML(p.part_number)}</p>` : ""}
+              <div class="customer-price">${symbol}${p.price ?? 0}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      console.log("New Gama Homepage: loaded", products.length, "products from Supabase");
+
+    } catch (error) {
+      console.error("New Gama Homepage Supabase Error:", error);
+      container.innerHTML =
+        '<div style="padding:25px;text-align:center">Products could not be loaded: ' +
+        escapeHTML(error.message || "Unknown error") +
+        "</div>";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadHomepageProducts);
+  window.addEventListener("pageshow", loadHomepageProducts);
+  window.loadHomepageProductsFromSupabase = loadHomepageProducts;
+})();
+</script>
+
 </body>
 </html>
