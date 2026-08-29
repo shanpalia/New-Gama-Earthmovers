@@ -133,7 +133,7 @@ main{max-width:1250px;margin:auto;padding:32px 22px 55px}
       <div class="brand-sub">Pickup Order Management</div>
     </div>
   </div>
-  <button class="dashboard-btn" onclick="ngBack()">← Dashboard</button>
+  <button class="dashboard-btn" onclick="ngBack()">← Back</button>
 </header>
 
 <main>
@@ -169,8 +169,14 @@ main{max-width:1250px;margin:auto;padding:32px 22px 55px}
 </main>
 
 <script>
-const REST='https://gozvchqatiyebpnycubl.supabase.co';
-const API_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+const SUPABASE_URL='https://gozvchqatiyebpnycubl.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+
+const ngSupabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } }
+);
 
 let allOrders=[];
 let activeFilter='all';
@@ -192,15 +198,36 @@ function initials(v){
 }
 
 async function fetchOrders(){
-  const r=await fetch(REST+'/new_gama_orders?select=*&order=created_at.desc',{
-    headers:{apikey:API_KEY,Authorization:'Bearer '+API_KEY},
-    cache:'no-store'
-  });
-  if(!r.ok){
-    const t=await r.text();
-    throw new Error('HTTP '+r.status+': '+t);
+  const {data:{user}, error:userError} = await ngSupabase.auth.getUser();
+
+  if(userError) throw userError;
+
+  if(!user){
+    location.href='users.html';
+    throw new Error('Please login as shop owner.');
   }
-  return r.json();
+
+  const {data:profile, error:profileError} = await ngSupabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if(profileError) throw profileError;
+
+  if(!profile || String(profile.role).toLowerCase() !== 'owner'){
+    location.href='index.html';
+    throw new Error('Only the shop owner can view orders.');
+  }
+
+  const {data, error} = await ngSupabase
+    .from('new_gama_orders')
+    .select('*')
+    .order('created_at', {ascending:false});
+
+  if(error) throw error;
+
+  return data || [];
 }
 
 function updateStats(){
@@ -275,7 +302,7 @@ async function loadOrders(){
   }catch(err){
     console.error('Orders error:',err);
     box.innerHTML='<div class="error"><b>Orders could not be loaded.</b><br>'+esc(err.message||'Unknown error')+
-      '<br><br><small>If this is an RLS/permission error, enable SELECT access for the anon role on <code>new_gama_orders</code>.</small></div>';
+      '<br><br><small>The owner account must have permission to read <code>new_gama_orders</code>. Run the included SQL fix once in Supabase SQL Editor.</small></div>';
     document.getElementById('listInfo').textContent='Unable to load orders';
   }
 }
@@ -294,21 +321,19 @@ document.getElementById('refreshBtn').addEventListener('click',loadOrders);
 document.addEventListener('DOMContentLoaded',loadOrders);
 </script>
 
-<script id="ng-orders-owner-guard">
-(async function(){
- const URL='REPLACE_WITH_YOUR_SUPABASE_URL', KEY='REPLACE_WITH_YOUR_PUBLISHABLE_OR_ANON_KEY';
- if(URL.startsWith('REPLACE_')||KEY.startsWith('REPLACE_')) return;
- if(!window.supabase) return;
- const c=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- const {data:{user}}=await c.auth.getUser();
- if(!user){location.replace('users.html');return;}
- const {data:p,error}=await c.from('profiles').select('role').eq('id',user.id).maybeSingle();
- if(error || (p?.role||'customer').toLowerCase()!=='owner'){location.replace('index.html');}
-})();
-</script>
+
 
 <script>
-function ngBack(){const f=new URLSearchParams(location.search).get('from');location.href=f?decodeURIComponent(f):'owner.html';}
+function ngBack(){
+  const from = new URLSearchParams(location.search).get('from');
+
+  if(from && /^[a-zA-Z0-9_-]+\.html$/.test(from)){
+    location.href = from;
+    return;
+  }
+
+  location.href = 'index.html';
+}
 </script>
 </body>
 </html>
