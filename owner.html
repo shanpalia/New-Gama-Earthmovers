@@ -666,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Override category creation if legacy UI uses addCategory.
   window.addCategory = async function() {
-    const input = q('#categoryName') || q('#newCategoryName');
+    const input = q('#newCategory') || q('#categoryName') || q('#newCategoryName');
     const name = input?.value?.trim();
     if (!name) return alert('Please enter a category name.');
     try {
@@ -683,18 +683,18 @@ document.addEventListener('DOMContentLoaded', function () {
   // Patch legacy save form by capturing submit/click events.
   async function interceptSave(e) {
     const target = e.target;
-    const saveButton = target.closest && target.closest('#saveProduct, #saveItem, button[type="submit"]');
+    const saveButton = target.closest && target.closest('#addItemBtn, #saveProduct, #saveItem, button[type="submit"]');
     if (!saveButton && target.tagName !== 'FORM') return;
 
     const form = target.tagName === 'FORM' ? target : target.closest('form');
     if (!form) return;
 
-    const nameEl = q('#productName') || q('[name="productName"]') || q('[name="name"]');
+    const nameEl = q('#itemName') || q('#productName') || q('[name="productName"]') || q('[name="name"]');
     const partEl = q('#partNumber') || q('#productPart') || q('[name="part"]');
-    const categoryEl = q('#productCategory') || q('#category');
-    const priceEl = q('#productPrice') || q('#price');
+    const categoryEl = q('#category') || q('#productCategory');
+    const priceEl = q('#price') || q('#productPrice');
     const currencyEl = q('#currency') || q('#productCurrency');
-    const descEl = q('#productDescription') || q('#description');
+    const descEl = q('#description') || q('#productDescription');
 
     if (!nameEl || !priceEl) return;
 
@@ -743,7 +743,15 @@ document.addEventListener('DOMContentLoaded', function () {
     return false;
   }
 
-  document.addEventListener('submit', interceptSave, true);
+  
+  // Current UI uses a normal button (#addItemBtn), not a form submit button.
+  // Attach a direct capture handler so Supabase save runs before the legacy localStorage handler.
+  const actualAddButton = document.getElementById('addItemBtn');
+  if (actualAddButton) {
+    actualAddButton.addEventListener('click', interceptSave, true);
+  }
+
+document.addEventListener('submit', interceptSave, true);
   document.addEventListener('click', interceptSave, true);
 
   // Delete cloud product when clicking legacy delete controls.
@@ -773,6 +781,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 })();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  console.log('New Gama Supabase save patch active');
+});
 </script>
 
 </body>
