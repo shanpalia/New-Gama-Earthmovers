@@ -170,6 +170,27 @@ body{background:#f7f8fa!important}
 .zoom-help{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#000000aa;color:#fff;padding:8px 13px;border-radius:20px;font-size:13px;z-index:5;white-space:nowrap}
 
 </style>
+
+<style id="ngCheckoutStyles">
+#ngCheckoutModal{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:999999;display:none;align-items:center;justify-content:center;padding:14px}
+#ngCheckoutModal.show{display:flex}
+.ng-checkout-card{background:#fff;color:#1f2937;width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.ng-checkout-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;padding-bottom:14px;margin-bottom:16px}
+.ng-close{border:0;background:#f3f4f6;border-radius:50%;width:38px;height:38px;font-size:22px;cursor:pointer}
+.ng-cart-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee}
+.ng-cart-name{font-weight:800}
+.ng-qty{display:flex;align-items:center;gap:8px;margin-top:7px}
+.ng-qty button{width:30px;height:30px;border:1px solid #ddd;background:#fff;border-radius:7px;font-weight:800;cursor:pointer}
+.ng-buy-more,.ng-proceed,.ng-final{border:0;border-radius:10px;padding:14px 18px;font-weight:800;cursor:pointer}
+.ng-buy-more{background:#f3f4f6;color:#111827}
+.ng-proceed,.ng-final{background:#f5ad00;color:#1f2937}
+.ng-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ng-total{margin-top:16px;padding:15px;background:#f8fafc;border-radius:12px;font-size:18px;font-weight:900;display:flex;justify-content:space-between}
+.ng-field{width:100%;box-sizing:border-box;padding:13px;margin:7px 0 13px;border:1px solid #d1d5db;border-radius:9px}
+.ng-step{display:none}.ng-step.active{display:block}
+.ng-pickup{padding:12px;border-radius:10px;background:#fff7dd;border:1px solid #f5ad00;margin-bottom:14px}
+</style>
+
 </head>
 <body>
 <div class="top">New Gama Earthmovers • Heavy Equipment Spare Parts</div>
@@ -700,5 +721,119 @@ init();
  document.addEventListener("DOMContentLoaded",hook); setTimeout(hook,800);
 })();
 </script>
+
+<div id="ngCheckoutModal">
+ <div class="ng-checkout-card">
+  <div class="ng-checkout-head">
+   <div><h2 style="margin:0">🛒 Checkout</h2><div style="color:#6b7280;font-size:13px;margin-top:4px">Shop Pickup Only</div></div>
+   <button class="ng-close" onclick="NGCheckout.close()">×</button>
+  </div>
+  <div id="ngStepCart" class="ng-step active">
+   <h3>Order Summary</h3>
+   <div id="ngCartItems"></div>
+   <div id="ngCartTotal" class="ng-total"></div>
+   <div class="ng-actions">
+    <button class="ng-buy-more" onclick="NGCheckout.buyMore()">← Buy More Products</button>
+    <button class="ng-proceed" onclick="NGCheckout.showBilling()">Proceed to Checkout →</button>
+   </div>
+  </div>
+  <div id="ngStepBilling" class="ng-step">
+   <h3>Billing Summary</h3>
+   <div class="ng-pickup"><b>📍 Pickup Order Only</b><br><span style="font-size:13px">Delivery address is not required. Collect your order directly from the shop.</span></div>
+   <div id="ngBillingItems"></div>
+   <div id="ngBillingTotal" class="ng-total"></div>
+   <h3 style="margin-top:20px">Customer Details</h3>
+   <input id="ngCustomerName" class="ng-field" placeholder="Customer Name *">
+   <input id="ngCustomerPhone" class="ng-field" inputmode="numeric" placeholder="Mobile Number *">
+   <div class="ng-actions">
+    <button class="ng-buy-more" onclick="NGCheckout.showCart()">← Back</button>
+    <button class="ng-buy-more" onclick="NGCheckout.buyMore()">Buy More Products</button>
+    <button class="ng-final" onclick="NGCheckout.placeOrder()">Place Pickup Order</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+
+<script id="ngCheckoutScript">
+(function(){
+ const CART_KEY='new_gama_customer_cart_v2';
+ const SB_URL='https://gozvchqatiyebpnycubl.supabase.co';
+ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+ let cart=[];
+ function load(){try{cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]')}catch(e){cart=[]}}
+ function save(){localStorage.setItem(CART_KEY,JSON.stringify(cart))}
+ function money(n){return '₹'+Number(n||0).toLocaleString('en-IN')}
+ function productData(){
+   const name=(window.product&& (product.name||product.title)) ||
+     document.querySelector('h1')?.textContent?.trim() || 'Product';
+   const id=(window.product&&product.id) || new URLSearchParams(location.search).get('id') || name;
+   let price=(window.product&&(product.price||product.selling_price||product.sellingPrice)) || 0;
+   if(!price){
+     const t=[...document.querySelectorAll('*')].map(x=>x.childElementCount?'' : x.textContent||'').find(x=>/₹\s*[\d,]+/.test(x));
+     if(t){const m=t.match(/₹\s*([\d,]+)/); if(m)price=Number(m[1].replace(/,/g,''))}
+   }
+   return {id:String(id),name,price:Number(price)||0,image:(window.product&&(product.main_image_url||product.image_url||product.image))||''};
+ }
+ function addCurrent(){
+   const p=productData(); const old=cart.find(x=>x.id===p.id);
+   const q=Number(document.querySelector('#quantity,input[name="quantity"],.quantity input')?.value||1);
+   if(old)old.quantity+=q; else cart.push({...p,quantity:q});
+   save(); render(); open();
+ }
+ function render(){
+   const list=document.getElementById('ngCartItems'), bill=document.getElementById('ngBillingItems');
+   if(!list)return;
+   const rows=cart.map((x,i)=>`<div class="ng-cart-row"><div><div class="ng-cart-name">${x.name}</div><div class="ng-qty"><button onclick="NGCheckout.change(${i},-1)">−</button><b>${x.quantity}</b><button onclick="NGCheckout.change(${i},1)">+</button><button onclick="NGCheckout.remove(${i})" style="margin-left:8px;width:auto;padding:0 8px">Remove</button></div></div><b>${money(x.price*x.quantity)}</b></div>`).join('') || '<p>Your cart is empty.</p>';
+   list.innerHTML=rows; bill.innerHTML=cart.map(x=>`<div class="ng-cart-row"><span>${x.name} × ${x.quantity}</span><b>${money(x.price*x.quantity)}</b></div>`).join('');
+   const total=cart.reduce((a,x)=>a+x.price*x.quantity,0), qty=cart.reduce((a,x)=>a+x.quantity,0);
+   document.getElementById('ngCartTotal').innerHTML=`<span>Total (${qty} items)</span><span>${money(total)}</span>`;
+   document.getElementById('ngBillingTotal').innerHTML=`<span>Grand Total</span><span>${money(total)}</span>`;
+ }
+ function open(){render();document.getElementById('ngCheckoutModal').classList.add('show');showCart()}
+ function close(){document.getElementById('ngCheckoutModal').classList.remove('show')}
+ function showCart(){document.getElementById('ngStepCart').classList.add('active');document.getElementById('ngStepBilling').classList.remove('active')}
+ function showBilling(){if(!cart.length)return alert('Please add a product first.');document.getElementById('ngStepCart').classList.remove('active');document.getElementById('ngStepBilling').classList.add('active');render()}
+ async function placeOrder(){
+   const customer_name=document.getElementById('ngCustomerName').value.trim();
+   const customer_phone=document.getElementById('ngCustomerPhone').value.trim();
+   if(!customer_name||!customer_phone)return alert('Please enter Customer Name and Mobile Number.');
+   const total=cart.reduce((a,x)=>a+x.price*x.quantity,0);
+   const row={
+     customer_name,customer_phone,
+     product_name:cart.map(x=>x.name+' × '+x.quantity).join(', '),
+     quantity:cart.reduce((a,x)=>a+x.quantity,0),
+     total_amount:total,status:'new',payment_status:'pending',pickup_only:true,
+     created_at:new Date().toISOString()
+   };
+   try{
+     if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase SDK not loaded');
+     const sb=window.__ngOrderSB||(window.__ngOrderSB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}));
+     const {error}=await sb.from('new_gama_orders').insert(row);
+     if(error)throw error;
+     cart=[];save();render();close();
+     alert('✓ Pickup Order placed successfully! Shop owner has been notified.');
+   }catch(e){console.error(e);alert('Order could not be sent: '+e.message)}
+ }
+ function buyMore(){close();location.href='index.html'}
+ window.NGCheckout={addCurrent,open,close,render,showCart,showBilling,placeOrder,buyMore,
+   change:(i,d)=>{cart[i].quantity=Math.max(1,cart[i].quantity+d);save();render()},
+   remove:(i)=>{cart.splice(i,1);save();render()}
+ };
+ function hook(){
+   const candidates=[...document.querySelectorAll('button,a,input[type="button"],input[type="submit"]')];
+   candidates.forEach(el=>{
+     const txt=(el.textContent||el.value||'').trim().toLowerCase();
+     if(/order this product|place order|buy now|proceed to checkout/.test(txt)){
+       if(el.dataset.ngCheckoutHook)return;
+       el.dataset.ngCheckoutHook='1';
+       el.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();NGCheckout.addCurrent()},true);
+     }
+   });
+ }
+ load();document.addEventListener('DOMContentLoaded',()=>{render();hook();setTimeout(hook,800);setTimeout(hook,2000)});
+})();
+</script>
+
 </body>
 </html>
