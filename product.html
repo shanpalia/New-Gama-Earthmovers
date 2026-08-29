@@ -21,8 +21,8 @@ nav{max-width:1200px;margin:auto;padding:10px 20px;display:flex;align-items:cent
 .product-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(350px,.85fr);gap:26px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 5px 22px #0000000c}
 .gallery-main{height:500px;border:1px solid #e7e7e7;border-radius:14px;overflow:hidden;background:#fafafa;display:flex;align-items:center;justify-content:center}
 .gallery-main img{width:100%;height:100%;object-fit:contain;display:block}
-.gallery-label{font-weight:800;margin-top:18px;margin-bottom:10px;font-size:16px}.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:0}
-.thumbs img{width:82px;height:82px;object-fit:cover;border:2px solid #e2e2e2;border-radius:9px;cursor:pointer;background:#fff;display:block}
+.gallery-label{font-weight:800;margin-top:18px;margin-bottom:10px;font-size:16px}.thumbs{display:flex;gap:12px;flex-wrap:wrap;margin-top:0;padding:4px 0}
+.thumbs img{width:92px;height:92px;object-fit:cover;border:2px solid #e2e2e2;border-radius:9px;cursor:pointer;background:#fff;display:block}
 .thumbs img.active{border-color:var(--yellow)}
 .category{display:inline-block;background:#fff2be;color:#765400;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:bold;margin-bottom:12px}
 h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin-bottom:10px}
@@ -190,42 +190,67 @@ async function post(table, payload) {
   return text ? JSON.parse(text) : [];
 }
 function imagesOf(p) {
-  const raw = [
-    p.main_image_url,
-    p.image_1_url,
-    p.image_2_url,
-    p.image_3_url,
-    p.image_4_url,
-    p.image_5_url,
-    p.image1_url,
-    p.image2_url,
-    p.image3_url,
-    p.image4_url,
-    p.image5_url,
-    p.image_url,
-    p.product_image,
-    p.photo_url
-  ];
+  const raw = [];
 
-  // Support array/JSON/comma-separated image fields too.
-  ["images", "image_urls", "product_images"].forEach(key => {
+  // First use the known image columns.
+  [
+    "main_image_url", "main_image", "image_url",
+    "image_1_url", "image_2_url", "image_3_url", "image_4_url", "image_5_url",
+    "image1_url", "image2_url", "image3_url", "image4_url", "image5_url",
+    "image_1", "image_2", "image_3", "image_4", "image_5",
+    "image1", "image2", "image3", "image4", "image5",
+    "product_image", "photo_url"
+  ].forEach(function(key) {
     const value = p[key];
-    if (Array.isArray(value)) raw.push(...value);
-    else if (typeof value === "string" && value.trim()) {
+    if (typeof value === "string" && value.trim()) raw.push(value.trim());
+  });
+
+  // Also automatically detect any future database column whose name contains "image".
+  Object.keys(p).forEach(function(key) {
+    if (!/image/i.test(key)) return;
+    const value = p[key];
+
+    if (Array.isArray(value)) {
+      value.forEach(function(item) {
+        if (typeof item === "string" && item.trim()) raw.push(item.trim());
+      });
+    } else if (typeof value === "string" && value.trim()) {
+      const text = value.trim();
       try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) raw.push(...parsed);
-        else raw.push(value);
-      } catch {
-        raw.push(...value.split(","));
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(function(item) {
+            if (typeof item === "string" && item.trim()) raw.push(item.trim());
+          });
+        } else if (typeof parsed === "string" && parsed.trim()) {
+          raw.push(parsed.trim());
+        } else {
+          raw.push(text);
+        }
+      } catch (e) {
+        // Support comma-separated image URLs.
+        if (text.includes(",")) {
+          text.split(",").forEach(function(item) {
+            if (item.trim()) raw.push(item.trim());
+          });
+        } else {
+          raw.push(text);
+        }
       }
     }
   });
 
-  return [...new Set(raw
-    .map(x => typeof x === "string" ? x.trim() : "")
-    .filter(Boolean)
-  )];
+  // Keep valid URLs/paths only and remove duplicates.
+  const unique = [];
+  raw.forEach(function(url) {
+    if (typeof url !== "string") return;
+    const clean = url.trim();
+    if (!clean) return;
+    if (!unique.includes(clean)) unique.push(clean);
+  });
+
+  console.log("New Gama: all product images found", unique.length, unique);
+  return unique;
 }
 function categoryOf(p) {
   return categoryMap[String(p.categroy_id)] || categoryMap[String(p.category_id)] || p.category || "";
