@@ -256,9 +256,11 @@
     });
   </script>
 
+
+
 <section class="store-products" id="storeProducts">
   <h2>Our Parts & Products</h2>
-  <p>Click a product to view all 5 product images and complete details.</p>
+  <p>Browse available parts. Click any product to view all 5 images and complete details.</p>
   <div class="customer-grid" id="customerProductList"></div>
 </section>
 
@@ -284,58 +286,108 @@
 <script>
 (function(){
   const KEY='newGamaStoreDataV2';
-  const list=document.getElementById('customerProductList');
-  const modal=document.getElementById('productModal');
-  const main=document.getElementById('galleryMain');
-  const thumbs=document.getElementById('galleryThumbs');
 
-  function esc(v){const d=document.createElement('div');d.textContent=v||'';return d.innerHTML}
   function getItems(){
-    try{const data=JSON.parse(localStorage.getItem(KEY)||'{}');return Array.isArray(data.items)?data.items:[]}
-    catch(e){return []}
+    try{
+      const raw=localStorage.getItem(KEY);
+      const data=raw?JSON.parse(raw):{};
+      return Array.isArray(data.items)?data.items:[];
+    }catch(e){
+      console.error('Customer product load error',e);
+      return [];
+    }
   }
-  function price(item){return (item.currency==='NPR'?'रु ':'₹ ')+(item.price||'0')}
+
+  function esc(v){
+    const d=document.createElement('div');
+    d.textContent=v||'';
+    return d.innerHTML;
+  }
+
+  function price(item){
+    return (item.currency==='NPR'?'रु ':'₹ ')+(item.price||'0');
+  }
 
   function showProduct(item){
     const images=(item.images||[]).filter(Boolean);
     if(!images.length)return;
+
     document.getElementById('modalCategory').textContent=item.category||'';
     document.getElementById('modalName').textContent=item.name||'Product';
     document.getElementById('modalPart').textContent=item.part?'Part No: '+item.part:'';
     document.getElementById('modalPrice').textContent=price(item);
     document.getElementById('modalDescription').textContent=item.description||'';
+
+    const main=document.getElementById('galleryMain');
+    const thumbs=document.getElementById('galleryThumbs');
     main.src=images[0];
-    thumbs.innerHTML=images.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}" data-i="${i}">`).join('');
-    thumbs.querySelectorAll('img').forEach(img=>img.onclick=()=>{
-      main.src=images[Number(img.dataset.i)];
-      thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
-      img.classList.add('active');
+
+    thumbs.innerHTML=images.map((src,i)=>
+      '<img src="'+src+'" data-index="'+i+'" class="'+(i===0?'active':'')+'" alt="Product image '+(i+1)+'">'
+    ).join('');
+
+    thumbs.querySelectorAll('img').forEach(function(img){
+      img.addEventListener('click',function(){
+        main.src=images[Number(this.dataset.index)];
+        thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
+        this.classList.add('active');
+      });
     });
-    modal.classList.add('show');
+
+    document.getElementById('productModal').classList.add('show');
   }
 
-  function render(){
+  function renderCustomerProducts(){
+    const list=document.getElementById('customerProductList');
+    if(!list)return;
+
     const items=getItems();
-    if(!items.length){list.innerHTML='<div class="customer-empty">No products available yet.</div>';return}
-    list.innerHTML=items.map((item,i)=>{
-      const image=(item.images||[]).filter(Boolean)[0]||'';
-      return `<article class="customer-card" data-index="${i}">
-        <img src="${image}" alt="">
-        <div class="customer-card-body">
-          <span class="customer-badge">${esc(item.category)}</span>
-          <h3>${esc(item.name)}</h3>
-          ${item.part?`<div style="color:#777;font-size:13px">Part No: ${esc(item.part)}</div>`:''}
-          <div class="customer-price">${price(item)}</div>
-        </div>
-      </article>`;
+
+    if(!items.length){
+      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
+      return;
+    }
+
+    list.innerHTML=items.map(function(item,index){
+      const images=(item.images||[]).filter(Boolean);
+      const mainImage=images[0]||'';
+      return '<article class="customer-card" data-product-index="'+index+'">'+
+        '<img src="'+mainImage+'" alt="'+esc(item.name)+'">'+
+        '<div class="customer-card-body">'+
+        '<span class="customer-badge">'+esc(item.category)+'</span>'+
+        '<h3>'+esc(item.name)+'</h3>'+
+        (item.part?'<div style="color:#777;font-size:13px">Part No: '+esc(item.part)+'</div>':'')+
+        '<div class="customer-price">'+price(item)+'</div>'+
+        '</div></article>';
     }).join('');
-    list.querySelectorAll('.customer-card').forEach(card=>card.onclick=()=>showProduct(items[Number(card.dataset.index)]));
+
+    list.querySelectorAll('.customer-card').forEach(function(card){
+      card.addEventListener('click',function(){
+        const items=getItems();
+        const item=items[Number(this.dataset.productIndex)];
+        if(item)showProduct(item);
+      });
+    });
   }
-  document.getElementById('productClose').onclick=()=>modal.classList.remove('show');
-  modal.onclick=e=>{if(e.target===modal)modal.classList.remove('show')};
-  render();
-  window.addEventListener('storage',render);
+
+  document.getElementById('productClose').addEventListener('click',function(){
+    document.getElementById('productModal').classList.remove('show');
+  });
+
+  document.getElementById('productModal').addEventListener('click',function(e){
+    if(e.target===this)this.classList.remove('show');
+  });
+
+  // Load products immediately and again when returning from owner dashboard.
+  document.addEventListener('DOMContentLoaded',renderCustomerProducts);
+  window.addEventListener('focus',renderCustomerProducts);
+  window.addEventListener('pageshow',renderCustomerProducts);
+  window.addEventListener('storage',renderCustomerProducts);
+
+  // Also refresh periodically so products saved in another open tab appear automatically.
+  setInterval(renderCustomerProducts,2000);
 })();
 </script>
+
 </body>
 </html>
