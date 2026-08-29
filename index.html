@@ -473,7 +473,8 @@ header, .header, nav, .navbar, .topbar {
         }
       }
       sessionStorage.setItem('newGamaOwnerAuthorized','true');
-      window.location.href = 'owner.html';
+      localStorage.setItem('newGamaOwnerAuthorized','true');
+      window.location.href = 'owner.html?owner_access=1';
     });
 
     pinInput.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('securitySubmit').click(); });

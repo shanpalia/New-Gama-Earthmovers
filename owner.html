@@ -301,7 +301,7 @@ function openPage(id){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
-document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?')){sessionStorage.removeItem('newGamaOwnerAuthorized');window.location.href='index.html'}});
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?')){sessionStorage.removeItem('newGamaOwnerAuthorized');localStorage.removeItem('newGamaOwnerAuthorized');window.location.href='index.html'}});
 
 const STORAGE_KEY='newGamaStoreDataV2';
 
@@ -353,7 +353,7 @@ function openPage(id){
 
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
 document.getElementById('homeRedirect').addEventListener('click',()=>window.location.href='index.html');
-document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?')){sessionStorage.removeItem('newGamaOwnerAuthorized');window.location.href='index.html'}});
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?')){sessionStorage.removeItem('newGamaOwnerAuthorized');localStorage.removeItem('newGamaOwnerAuthorized');window.location.href='index.html'}});
 
 function renderCategories(){
   const chips=document.getElementById('categoryChips');
@@ -1028,33 +1028,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-<script id="ng-owner-session-guard-v3">
-/*
-  Owner Dashboard can be opened in two valid ways:
-  1) Hidden 5-click logo trigger + correct Owner PIN.
-  2) Supabase account whose profiles.role is "owner".
-  Customer login is NOT required for the 5-click Owner PIN flow.
-*/
+<script id="ng-owner-session-guard-v4">
 (async function(){
-  const localOwnerAccess =
-    sessionStorage.getItem('newGamaOwnerAuthorized') === 'true';
+  // Successful 5-click + PIN authorization.
+  const qs = new URLSearchParams(location.search);
+  const pinAuthorized =
+    qs.get('owner_access') === '1' ||
+    sessionStorage.getItem('newGamaOwnerAuthorized') === 'true' ||
+    localStorage.getItem('newGamaOwnerAuthorized') === 'true';
 
-  // The hidden 5-click + PIN flow already authorized this browser tab.
-  if (localOwnerAccess) return;
+  if(pinAuthorized){
+    sessionStorage.setItem('newGamaOwnerAuthorized','true');
+    localStorage.setItem('newGamaOwnerAuthorized','true');
 
+    // Remove the visible URL marker after the page has loaded.
+    if(qs.get('owner_access') === '1'){
+      history.replaceState({}, document.title, 'owner.html');
+    }
+    return;
+  }
+
+  // Normal owner Supabase login is still allowed.
   try{
+    if(!window.supabase || !window.supabase.createClient){
+      location.replace('index.html');
+      return;
+    }
+
     const c = window.NG_SUPABASE || window.supabase.createClient(
       'https://gozvchqatiyebpnycubl.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40',
       {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
     );
-    window.NG_SUPABASE = c;
 
-    const {data:sd,error:se} = await c.auth.getSession();
-
-    // No normal user session: do not send to customer login.
-    // Return to homepage because the dashboard was not opened through the PIN trigger.
-    if (se || !sd?.session) {
+    const {data:{session}} = await c.auth.getSession();
+    if(!session){
       location.replace('index.html');
       return;
     }
@@ -1062,10 +1070,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const {data:p,error} = await c
       .from('profiles')
       .select('role')
-      .eq('id',sd.session.user.id)
+      .eq('id',session.user.id)
       .maybeSingle();
 
-    if (error || String(p?.role||'customer').toLowerCase() !== 'owner') {
+    if(error || String(p?.role||'customer').toLowerCase() !== 'owner'){
       location.replace('index.html');
     }
   }catch(e){
