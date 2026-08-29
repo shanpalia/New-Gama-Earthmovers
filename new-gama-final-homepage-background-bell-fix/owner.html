@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | New Gama Earthmovers</title>
+<link rel="icon" type="image/png" href="new-gama-logo.png">
+<style>
+:root{--yellow:#f5b400;--dark:#171717;--dark2:#242424;--light:#f5f6f7;--white:#fff;--text:#242424;--muted:#777;--border:#e6e6e6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--light);color:var(--text)}
+button{font:inherit;cursor:pointer}
+.topbar{height:70px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10000}
+.top-left{display:flex;align-items:center;gap:14px}
+.menu-btn{width:42px;height:42px;border:0;background:transparent;color:#fff;font-size:26px;border-radius:7px}
+.menu-btn:hover{background:#303030}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
+.brand b{font-size:16px}.brand small{display:block;color:#aaa;font-size:11px;margin-top:3px}.owner{font-size:13px;color:#ccc}
+.sidebar{position:fixed;left:0;top:70px;bottom:0;width:260px;display:block;background:var(--dark2);color:#eee;transform:translateX(-100%);transition:transform .25s ease;z-index:9999;padding:20px 12px;box-shadow:8px 0 30px rgba(0,0,0,.18)}
+.sidebar.open{transform:translateX(0)}.sidebar-title{color:#aaa;font-size:11px;font-weight:bold;padding:5px 12px 12px;letter-spacing:.7px}
+.nav-item{width:100%;border:0;background:transparent;color:#eee;display:flex;align-items:center;gap:13px;text-align:left;padding:14px;border-radius:8px;margin:4px 0;font-weight:bold}
+.nav-item:hover,.nav-item.active{background:#343434}.nav-item.active{color:var(--yellow)}.nav-icon{width:24px;text-align:center;font-size:18px}.logout{margin-top:18px;color:#ffb0a8}
+.backdrop{display:none;position:fixed;inset:70px 0 0;background:rgba(0,0,0,.35);z-index:9998}.backdrop.show{display:block}
+main{max-width:1250px;margin:auto;padding:28px 22px 50px}.page{display:none}.page.active{display:block}.page-header{margin-bottom:24px}
+.page-header h1{font-size:28px;margin-bottom:6px}.page-header p{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}.stat{background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)}
+.stat b{display:block;font-size:28px;margin-top:8px}.stat span{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px}.card h2{font-size:19px;margin-bottom:15px}
+.empty{padding:35px 15px;text-align:center;color:var(--muted);border:1px dashed #ccc;border-radius:9px}
+label{display:block;font-size:13px;font-weight:bold;margin:15px 0 7px}
+input,textarea,select{width:100%;border:1px solid #dcdcdc;border-radius:7px;padding:13px;font:inherit;outline:none;background:#fff}
+input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-height:100px;resize:vertical}
+.primary{background:var(--yellow);border:0;border-radius:7px;padding:13px 22px;font-weight:bold;margin-top:18px}
+.secondary{background:#eee;border:0;border-radius:7px;padding:13px 22px;font-weight:bold;margin-top:18px}
+.add-product-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.product-preview{position:sticky;top:92px}.preview-card{overflow:hidden;padding:0}
+.preview-image-wrap{height:300px;background:#f3f3f3;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border)}
+.preview-image-wrap img{width:100%;height:100%;object-fit:contain;display:none;background:#fff}
+.preview-placeholder{text-align:center;color:#999;padding:30px}.camera{font-size:42px;display:block;margin-bottom:10px}
+.preview-details{padding:20px}.preview-category{font-size:12px;font-weight:bold;color:#9a7200;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.preview-title{font-size:22px;margin-bottom:8px;word-break:break-word}.preview-part{font-size:13px;color:var(--muted);margin-bottom:12px}
+.preview-price{font-size:26px;font-weight:bold;margin:10px 0}.preview-description{color:#666;font-size:14px;white-space:pre-wrap}
+.image-upload-box{border:2px dashed #d2d2d2;border-radius:9px;padding:18px;background:#fafafa}.image-help{font-size:12px;color:#777;margin-top:8px}
+    .multi-image-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+    .upload-slot{aspect-ratio:1;border:2px dashed #cfcfcf;border-radius:9px;background:#fafafa;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+    .upload-slot.main-slot{border-color:#f5b400;background:#fffaf0}
+    .upload-slot img{width:100%;height:100%;object-fit:cover;display:none}
+    .upload-slot .slot-empty{text-align:center;color:#888;font-size:12px;padding:8px}
+    .upload-slot .slot-empty b{display:block;font-size:20px;color:#555;margin-bottom:5px}
+    .upload-slot .main-tag{position:absolute;top:5px;left:5px;background:#f5b400;color:#171717;font-size:10px;font-weight:bold;padding:4px 6px;border-radius:5px}
+    .upload-slot input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .slot-remove{position:absolute;right:5px;top:5px;border:0;background:#fff;color:#c33;width:24px;height:24px;border-radius:50%;font-weight:bold;display:none;z-index:3}
+    .multi-image-thumb{aspect-ratio:1;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:#fafafa;position:relative}
+    .multi-image-thumb img{width:100%;height:100%;object-fit:cover}
+    .thumb-remove{position:absolute;right:3px;top:3px;border:0;background:#fff;color:#c33;width:22px;height:22px;border-radius:50%;font-weight:bold}
+    .manage-actions{display:flex;gap:8px;margin-top:12px}
+    .edit{border:0;background:#fff3c9;padding:9px 12px;border-radius:6px;font-weight:bold}
+    .save-edit{background:var(--yellow);border:0;border-radius:7px;padding:13px 22px;font-weight:bold;margin-top:18px}
+    .gallery-note{font-size:12px;color:#777;margin-top:8px}
+.item-list{display:grid;gap:12px}.item-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:16px;border:1px solid var(--border);border-radius:9px}
+.item-row small{display:block;color:var(--muted);margin-top:4px}.remove{border:0;background:#fff0ef;color:#c73b2d;padding:9px 12px;border-radius:6px}
+.category-box{display:flex;gap:10px;align-items:center}.category-box input{flex:1}.category-box button{margin:0;padding:12px 18px}
+.category-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.chip{background:#fff8df;border:1px solid #f0d274;padding:8px 10px;border-radius:20px;font-size:13px;font-weight:bold}
+.chip button{margin-left:7px;border:0;background:transparent;color:#b52f24;font-weight:bold}
+.category-note{font-size:12px;color:#777;margin-top:8px}
+.category-select-row{display:flex;gap:10px}.category-select-row select{flex:1}.category-select-row button{margin:0;padding:10px 15px;background:#eee}
+.product-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.product-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}.product-card img{width:100%;height:180px;object-fit:contain;background:#fafafa;border-bottom:1px solid var(--border)}
+.product-card-body{padding:15px}.product-card-body h3{font-size:17px;margin-bottom:7px}.product-meta{font-size:12px;color:#777;margin:4px 0}.product-price{font-size:21px;font-weight:bold;margin-top:10px}
+.badge{display:inline-block;font-size:11px;background:#fff3c9;padding:5px 8px;border-radius:12px;margin-bottom:8px}
+@media(max-width:850px){.stats{grid-template-columns:repeat(2,1fr)}.grid,.add-product-layout{grid-template-columns:1fr}.product-preview{position:static}}
+@media(max-width:550px){.topbar{padding:0 12px}.owner{display:none}.brand b{font-size:13px}main{padding:22px 14px 40px}.stats{gap:10px}.stat{padding:15px}.stat b{font-size:23px}.category-select-row{flex-direction:column}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script id="ng-supabase-singleton">
+window.NG_SUPABASE = window.NG_SUPABASE || window.supabase.createClient('https://gozvchqatiyebpnycubl.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40',{
+  auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
+});
+</script>
+
+
+<style id="ng-owner-order-notification-style">
+#ngOwnerBell{position:relative;background:transparent;border:0;font-size:25px;cursor:pointer;padding:7px;display:none}
+#ngOwnerBell.show{display:inline-block}
+#ngOwnerBellBadge{position:absolute;top:1px;right:0;min-width:17px;height:17px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center}
+#ngOwnerNoticePanel{display:none;position:fixed;top:64px;right:18px;width:min(380px,calc(100vw - 36px));max-height:70vh;overflow:auto;background:#fff;color:#111;border-radius:14px;box-shadow:0 15px 45px rgba(0,0,0,.25);z-index:999999;padding:12px}
+.ng-owner-notice{padding:12px;border-bottom:1px solid #eee;font-size:13px}.ng-owner-notice.new{background:#fff8db}
+</style>
+
+<style id="ng-order-complete-css">
+#ngOwnerBell{position:fixed!important;top:10px;right:16px;z-index:1000001;background:#fff;border:1px solid #e5e7eb;border-radius:50%;box-shadow:0 4px 14px rgba(0,0,0,.18);width:46px;height:46px}
+#ngOwnerBellBadge{top:-3px!important;right:-3px!important}
+#ngOwnerNoticePanel{z-index:1000002!important;top:64px!important}
+.ng-owner-notice{cursor:pointer;border-radius:8px;margin:5px 0}.ng-owner-notice:hover{background:#f3f4f6}
+#ngOrderDetailModal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000005;display:none;align-items:center;justify-content:center;padding:15px}
+#ngOrderDetailModal.show{display:flex}
+.ng-order-detail-card{background:#fff;width:min(650px,100%);max-height:90vh;overflow:auto;border-radius:16px;padding:22px;color:#111}
+.ng-order-detail-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:12px;margin-bottom:14px}
+.ng-order-detail-close{border:0;background:#f1f3f5;border-radius:50%;width:36px;height:36px;font-size:21px;cursor:pointer}
+.ng-order-info{line-height:1.8}.ng-complete-btn{width:100%;margin-top:18px;padding:15px;border:0;border-radius:10px;background:#159447;color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+.ng-complete-btn:disabled{opacity:.6;cursor:not-allowed}
+.ng-order-status{display:inline-block;padding:4px 9px;border-radius:20px;background:#fff3c9;font-size:12px;font-weight:800}
+</style>
+
+
+<style id="ng-total-orders-card-style">
+.order-stat-card{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.order-stat-card:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,0,0,.10)}
+.order-stat-card small{display:block;color:#777;margin-top:6px;font-size:11px}
+</style>
+
+
+<style id="ng-total-orders-hard-click">
+#totalOrdersCard{cursor:pointer!important}
+#totalOrdersCard:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,0,0,.12)}
+</style>
+</head>
+<body></div>
+
+
+<header class="topbar">
+  <div class="top-left">
+    <button class="menu-btn" id="menuBtn">☰</button>
+    <div class="brand">
+      <img src="new-gama-logo.png" alt="New Gama Earthmovers">
+      <div><b>NEW GAMA EARTHMOVERS</b><small>Dashboard</small></div>
+    </div>
+  </div>
+  <div class="owner">Admin</div>
+</header>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-title">OWNER MENU</div>
+  <button class="nav-item" id="homeRedirect"><span class="nav-icon">⌂</span> Home</button>
+  <button class="nav-item active" data-page="dashboard"><span class="nav-icon">▦</span> Dashboard</button>
+  <button class="nav-item" data-page="add-items"><span class="nav-icon">＋</span> Add Items</button>
+  <button class="nav-item" data-page="manage-items"><span class="nav-icon">☷</span> Manage Items</button>
+  <button class="nav-item" data-page="manage-profile"><span class="nav-icon">⚙</span> Manage Profile</button>
+  <button class="nav-item logout" id="logoutBtn"><span class="nav-icon">↪</span> Logout</button>
+</aside>
+<div class="backdrop" id="backdrop"></div>
+
+<main>
+<section class="page" id="home">
+  <div class="page-header"><h1>Welcome, Admin 👋</h1><p>Manage your parts store from one place.</p></div>
+  <div class="grid">
+    <div class="card"><h2>Quick Actions</h2><p style="color:#777">Create categories and add your products.</p><button class="primary" onclick="openPage('add-items')">Add New Item</button></div>
+    <div class="card"><h2>Store Status</h2><div class="empty"><strong>Your store is ready.</strong><br>Products you add will appear in your Dashboard list.</div></div>
+  </div>
+</section>
+
+<section class="page active" id="dashboard">
+  <div class="page-header"><h1>Dashboard</h1><p>All products added by the shop owner are shown here.</p></div>
+  <div class="stats">
+    <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
+    <div class="stat"><span>Total Categories</span><b id="categoryCount">0</b></div>
+    <div class="stat order-stat-card" id="totalOrdersCard" title="Click to view all orders" role="button" tabindex="0" onclick="location.href='orders.html'">
+        <span>Total Orders</span><b id="totalOrderCount">0</b>
+        <small>Click to view orders</small>
+      </div>
+    <div class="stat"><span>Store Status</span><b style="font-size:18px;color:#159447">Active</b></div>
+  </div>
+  <div class="card">
+    <h2>Item List</h2>
+    <div class="product-card-grid" id="itemList"><div class="empty">No products have been added yet.</div></div>
+  </div>
+</section>
+
+<section class="page" id="add-items">
+  <div class="page-header"><h1>Add New Product</h1><p>Create your own machine/brand categories and add products with live preview.</p></div>
+
+  <div class="card" style="margin-bottom:22px">
+    <h2>Category (Create Once, Reuse for Products)</h2>
+    <div class="category-box">
+      <input id="newCategory" placeholder="Example: JCB, Terex, L&T, Tractor, Komatsu">
+      <button class="primary" id="addCategoryBtn" style="margin:0">Create Category</button>
+    </div>
+    <div class="category-note">You can create any category yourself. No demo category is required.</div>
+    <div class="category-chips" id="categoryChips"><span style="color:#777;font-size:13px">No categories created yet.</span></div>
+  </div>
+
+  <div class="add-product-layout">
+    <div class="card">
+      <h2>Product Details</h2>
+
+      <label>Product Image</label>
+      <div class="image-upload-box">
+        <div class="image-help"><b>Upload 5 product images.</b> Box 1 is the Main Image and will appear on the customer homepage. Click any box to choose its image.</div>
+      <div id="multiImagePreview" class="multi-image-preview">
+        <label class="upload-slot main-slot" data-slot="0"><span class="main-tag">MAIN</span><span class="slot-empty"><b>📷</b>Main Image</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="1"><span class="slot-empty"><b>＋</b>Image 2</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="2"><span class="slot-empty"><b>＋</b>Image 3</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="3"><span class="slot-empty"><b>＋</b>Image 4</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="4"><span class="slot-empty"><b>＋</b>Image 5</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+      </div>
+      <div class="gallery-note">5 image boxes: <b>Box 1 = Homepage Main Image</b>. All images will open on the customer product details page.</div>
+      </div>
+
+      <label>Item / Part Name</label>
+      <input id="itemName" placeholder="Enter product or part name">
+
+      <label>Part Number</label>
+      <input id="partNumber" placeholder="Enter part number">
+
+      <label>Category</label>
+      <div class="category-select-row">
+        <select id="category"><option value="">Select category</option></select>
+        <button type="button" onclick="document.getElementById('newCategory').focus()">+ Create</button>
+      </div>
+
+      <label>Price</label>
+      <input id="price" type="number" min="0" placeholder="Enter price">
+
+      <label>Currency</label>
+      <select id="currency">
+        <option value="INR">Indian Rupee (₹ INR)</option>
+        <option value="NPR">Nepalese Rupee (रु NPR)</option>
+      </select>
+
+      <label>Item Description</label>
+      <textarea id="description" placeholder="Enter product details"></textarea>
+
+      <button class="primary" id="addItemBtn">Add Product</button>
+    </div>
+
+    <div class="product-preview">
+      <div class="card preview-card">
+        <div class="preview-image-wrap">
+          <img id="previewImage" alt="Product preview">
+          <div id="previewPlaceholder" class="preview-placeholder"><span class="camera">📷</span>Product image preview</div>
+        </div>
+        <div class="preview-details">
+          <div class="preview-category" id="previewCategory">CATEGORY</div>
+          <h2 class="preview-title" id="previewTitle">Product Name</h2>
+          <div class="preview-part" id="previewPart">Part No: —</div>
+          <div class="preview-price" id="previewPrice">₹ 0</div>
+          <div class="preview-description" id="previewDescription">Product description will appear here.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="manage-items">
+  <div class="page-header">
+    <h1>Manage Items</h1>
+    <p>View, edit or delete products added by the owner.</p>
+  </div>
+  <div class="card">
+    <div class="product-card-grid" id="manageItemList">
+      <div class="empty">No products have been added yet.</div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="manage-profile">
+  <div class="page-header"><h1>Manage Profile</h1><p>Update the details customers will see.</p></div>
+  <div class="grid">
+    <div class="card"><h2>Shop Information</h2><label>Shop Name</label><input value="New Gama Earthmovers"><label>Shop Address</label><textarea placeholder="Enter complete shop address"></textarea><label>Country</label><select><option>India</option><option>Nepal</option></select></div>
+    <div class="card"><h2>Contact Information</h2><label>Contact Number</label><input placeholder="Enter contact number"><label>WhatsApp Number</label><input placeholder="Enter WhatsApp number"><label>Email Address</label><input type="email" placeholder="Enter email address"></div>
+  </div>
+</section>
+</main>
+
+<script>
+const menuBtn = document.getElementById('menuBtn');
+const sidebar = document.getElementById('sidebar');
+const backdrop = document.getElementById('backdrop');
+
+function toggleMenu(forceClose){
+  if (!sidebar || !backdrop) return;
+  const shouldClose = forceClose === true;
+  if (shouldClose) {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('show');
+  } else {
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('show');
+  }
+}
+
+if (menuBtn) {
+  menuBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    toggleMenu(false);
+  });
+}
+if (backdrop) {
+  backdrop.addEventListener('click', function(){
+    toggleMenu(true);
+  });
+}
+
+function openPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  toggleMenu(true);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?'))window.location.href='index.html'});
+
+const STORAGE_KEY='newGamaStoreDataV2';
+
+let categories=[];
+let items=[];
+let selectedImages=[];
+let editingIndex=null;
+
+function loadData(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    categories=Array.isArray(saved.categories)?saved.categories:[];
+    items=Array.isArray(saved.items)?saved.items:[];
+  }catch(e){categories=[];items=[]}
+}
+function saveData(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({categories,items}));
+    return true;
+  }catch(error){
+    console.error('Save error:', error);
+    if(error && (error.name==='QuotaExceededError' || error.code===22)){
+      alert('Images are too large for browser storage. Please use the new compressed image upload and try again.');
+    }else{
+      alert('Could not save the product. Please try again.');
+    }
+    return false;
+  }
+}
+
+function escapeHtml(v){const d=document.createElement('div');d.textContent=v||'';return d.innerHTML}
+
+function toggleMenu(close=false){
+  if(close){sidebar.classList.remove('open');backdrop.classList.remove('show')}
+  else{sidebar.classList.toggle('open');backdrop.classList.toggle('show')}
+}
+menuBtn.addEventListener('click',()=>toggleMenu());
+backdrop.addEventListener('click',()=>toggleMenu(true));
+
+function openPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const page=document.getElementById(id);
+  if(page) page.classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  toggleMenu(true);
+  if(id==='dashboard'||id==='manage-items') renderItems();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
+document.getElementById('homeRedirect').addEventListener('click',()=>window.location.href='index.html');
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?'))window.location.href='index.html'});
+
+function renderCategories(){
+  const chips=document.getElementById('categoryChips');
+  const select=document.getElementById('category');
+  document.getElementById('categoryCount').textContent=categories.length;
+  chips.innerHTML=categories.length
+    ? categories.map((c,i)=>`<span class="chip">${escapeHtml(c)} <button type="button" onclick="removeCategory(${i})">×</button></span>`).join('')
+    : '<span style="color:#777;font-size:13px">No categories created yet.</span>';
+  const current=select.value;
+  select.innerHTML='<option value="">Select category</option>'+categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  if(categories.includes(current))select.value=current;
+}
+
+function addCategory(){
+  const input=document.getElementById('newCategory');
+  const value=input.value.trim();
+  if(!value){alert('Please enter a category name.');return}
+  if(categories.some(c=>c.toLowerCase()===value.toLowerCase())){alert('This category already exists.');return}
+  categories.push(value);input.value='';saveData();renderCategories();
+  document.getElementById('category').value=value;updateProductPreview();
+}
+function removeCategory(index){
+  const removed=categories[index];
+  if(items.some(i=>i.category===removed)){alert('This category is being used by products. Change or delete those products first.');return}
+  if(!confirm('Remove category "'+removed+'"?'))return;
+  categories.splice(index,1);saveData();renderCategories();updateProductPreview();
+}
+document.getElementById('addCategoryBtn').addEventListener('click',addCategory);
+document.getElementById('newCategory').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCategory()}});
+
+const imageSlots=[...document.querySelectorAll('.upload-slot')];
+const previewImage=document.getElementById('previewImage');
+const previewPlaceholder=document.getElementById('previewPlaceholder');
+
+function renderSelectedImages(){
+  imageSlots.forEach((slot,index)=>{
+    const img=slot.querySelector('img');
+    const empty=slot.querySelector('.slot-empty');
+    const existing=selectedImages[index];
+    if(existing){
+      img.src=existing;img.style.display='block';empty.style.display='none';
+    }else{
+      img.removeAttribute('src');img.style.display='none';empty.style.display='block';
+    }
+  });
+  if(selectedImages[0]){
+    previewImage.src=selectedImages[0];
+    previewImage.style.display='block';
+    previewPlaceholder.style.display='none';
+  }else{
+    previewImage.removeAttribute('src');
+    previewImage.style.display='none';
+    previewPlaceholder.style.display='block';
+  }
+}
+
+async function compressProductImage(file){
+  // Resize and compress large phone/camera images before saving to browser storage.
+  // This keeps 5 images small enough for localStorage in most cases.
+  const bitmap = await createImageBitmap(file);
+  const maxSize = 900;
+  let width = bitmap.width;
+  let height = bitmap.height;
+  if(width > maxSize || height > maxSize){
+    const ratio = Math.min(maxSize / width, maxSize / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  if(bitmap.close) bitmap.close();
+  return canvas.toDataURL('image/jpeg', 0.72);
+}
+
+imageSlots.forEach((slot,index)=>{
+  const input=slot.querySelector('input');
+  input.addEventListener('change', async function(){
+    const file=this.files&&this.files[0];
+    if(!file)return;
+    const originalLabel=slot.querySelector('.slot-empty');
+    if(originalLabel) originalLabel.textContent='Loading...';
+    try{
+      selectedImages[index]=await compressProductImage(file);
+      renderSelectedImages();
+    }catch(error){
+      console.error(error);
+      alert('This image could not be processed. Please choose another image.');
+      renderSelectedImages();
+    }
+    this.value='';
+  });
+});
+
+function updateProductPreview(){
+  const name=document.getElementById('itemName').value.trim()||'Product Name';
+  const part=document.getElementById('partNumber').value.trim();
+  const category=document.getElementById('category').value||'CATEGORY';
+  const price=document.getElementById('price').value.trim();
+  const currency=document.getElementById('currency').value;
+  const description=document.getElementById('description').value.trim()||'Product description will appear here.';
+  document.getElementById('previewTitle').textContent=name;
+  document.getElementById('previewPart').textContent=part?'Part No: '+part:'Part No: —';
+  document.getElementById('previewCategory').textContent=category;
+  document.getElementById('previewPrice').textContent=(currency==='INR'?'₹ ':'रु ')+(price||'0');
+  document.getElementById('previewDescription').textContent=description;
+}
+['itemName','partNumber','category','price','description','currency'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',updateProductPreview);
+  document.getElementById(id).addEventListener('change',updateProductPreview);
+});
+
+function clearProductForm(){
+  ['itemName','partNumber','price','description'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('category').value='';
+  selectedImages=[];editingIndex=null;
+  document.getElementById('addItemBtn').textContent='Add Product';
+  renderSelectedImages();updateProductPreview();
+}
+
+document.getElementById('addItemBtn').addEventListener('click',()=>{
+  const name=document.getElementById('itemName').value.trim();
+  const part=document.getElementById('partNumber').value.trim();
+  const category=document.getElementById('category').value;
+  const price=document.getElementById('price').value.trim();
+  const currency=document.getElementById('currency').value;
+  const description=document.getElementById('description').value.trim();
+
+  if(!name){alert('Please enter Product / Part Name.');return}
+  if(!category){alert('Please create or select a category.');return}
+  if(selectedImages.length!==5 || selectedImages.some(img=>!img)){alert('Please upload all 5 product images. Box 1 is the main homepage image.');return}
+
+  const product={name,part,category,price,currency,description,images:[...selectedImages]};
+  const wasEditing = editingIndex !== null;
+  const oldItems = JSON.parse(JSON.stringify(items));
+  if(editingIndex===null){items.push(product);}
+  else{items[editingIndex]=product;}
+
+  if(!saveData()){
+    items.splice(0, items.length, ...oldItems);
+    return;
+  }
+
+  alert(wasEditing ? 'Product updated successfully.' : 'Product added successfully.');
+  clearProductForm();
+  renderItems();
+  openPage('dashboard');
+});
+
+function priceText(item){return (item.currency==='INR'?'₹ ':'रु ')+(item.price||'0')}
+
+function productCard(item,index,manage=false){
+  const main=item.images&&item.images[0]?'src="'+item.images[0]+'"':'';
+  const thumbs=(item.images||[]).slice(1,5).map(src=>`<img src="${src}" style="width:42px;height:42px;object-fit:cover;border-radius:5px;border:1px solid #eee">`).join('');
+  return `<div class="product-card">
+    <img ${main} alt="">
+    <div class="product-card-body">
+      <span class="badge">${escapeHtml(item.category)}</span>
+      <h3>${escapeHtml(item.name)}</h3>
+      ${item.part?`<div class="product-meta">Part No: ${escapeHtml(item.part)}</div>`:''}
+      ${item.description?`<div class="product-meta">${escapeHtml(item.description)}</div>`:''}
+      <div class="product-price">${priceText(item)}</div>
+      <div style="display:flex;gap:5px;margin-top:10px;flex-wrap:wrap">${thumbs}</div>
+      ${manage?`<div class="manage-actions"><button class="edit" onclick="editItem(${index})">Edit</button><button class="remove" onclick="deleteItem(${index})">Delete</button></div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderItems(){
+  document.getElementById('itemCount').textContent=items.length;
+  const dash=document.getElementById('itemList');
+  const manage=document.getElementById('manageItemList');
+  const empty='<div class="empty">No products have been added yet.</div>';
+  dash.innerHTML=items.length?items.map((i,x)=>productCard(i,x,false)).join(''):empty;
+  manage.innerHTML=items.length?items.map((i,x)=>productCard(i,x,true)).join(''):empty;
+}
+
+function editItem(index){
+  const item=items[index];
+  editingIndex=index;
+  document.getElementById('itemName').value=item.name||'';
+  document.getElementById('partNumber').value=item.part||'';
+  document.getElementById('category').value=item.category||'';
+  document.getElementById('price').value=item.price||'';
+  document.getElementById('currency').value=item.currency||'INR';
+  document.getElementById('description').value=item.description||'';
+  selectedImages=[...(item.images||[])]; while(selectedImages.length<5) selectedImages.push('');
+  document.getElementById('addItemBtn').textContent='Save Changes';
+  renderSelectedImages();updateProductPreview();openPage('add-items');
+}
+
+function deleteItem(index){
+  if(!confirm('Delete this product permanently?'))return;
+  items.splice(index,1);saveData();renderItems();
+}
+
+loadData();
+renderCategories();
+renderItems();
+renderSelectedImages();
+updateProductPreview();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var btn = document.getElementById('menuBtn');
+  var side = document.getElementById('sidebar');
+  var back = document.getElementById('backdrop');
+
+  if (!btn || !side || !back) return;
+
+  // Capture-phase fallback guarantees the menu opens even if another script has an error.
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var opening = !side.classList.contains('open');
+    side.classList.toggle('open', opening);
+    back.classList.toggle('show', opening);
+  }, true);
+
+  back.addEventListener('click', function () {
+    side.classList.remove('open');
+    back.classList.remove('show');
+  }, true);
+});
+</script>
+
+
+<script>
+/* New Gama Earthmovers - Supabase Cloud Bridge */
+(() => {
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  const BUCKET = 'new-gama-product-images';
+  const sb = window.NG_SUPABASE;
+
+  let cloudItems = [];
+  let cloudCategories = [];
+  let bridgeReady = false;
+
+  const q = (s) => document.querySelector(s);
+
+  function currencyText(v) {
+    return String(v || 'INR').toUpperCase() === 'NPR' ? 'NPR' : 'INR';
+  }
+
+  async function loadCloudData() {
+    const [catRes, productRes] = await Promise.all([
+      sb.from('new_gama_categories').select('*').order('name', {ascending:true}),
+      sb.from('new_gama_products').select('*').order('created_at', {ascending:false})
+    ]);
+    if (catRes.error) throw catRes.error;
+    if (productRes.error) throw productRes.error;
+
+    cloudCategories = catRes.data || [];
+    cloudItems = (productRes.data || []).map(p => ({
+      id:p.id,
+      name:p.name || '',
+      part:p.part_number || '',
+      category_id:p.category_id || '',
+      category:(cloudCategories.find(c => c.id === p.category_id) || {}).name || '',
+      price:p.price ?? 0,
+      currency:currencyText(p.currency),
+      description:p.description || '',
+      images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+    }));
+
+    // Sync legacy UI globals if present.
+    try {
+      categories = cloudCategories.map(c => c.name);
+      items = cloudItems;
+      if (typeof renderCategories === 'function') renderCategories();
+      if (typeof renderItems === 'function') renderItems();
+    } catch(e) { console.warn(e); }
+  }
+
+  async function uploadImage(dataUrl, productId, position) {
+    if (!dataUrl) return null;
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const path = `products/${productId}/${position}.jpg`;
+    const up = await sb.storage.from(BUCKET).upload(path, blob, {
+      upsert:true,
+      contentType:'image/jpeg',
+      cacheControl:'31536000'
+    });
+    if (up.error) throw up.error;
+    return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+
+  async function cloudSaveProduct(product, editingId) {
+    const productId = editingId || crypto.randomUUID();
+    const old = cloudItems.find(x => x.id === editingId);
+    const images = [...(product.images || [])];
+    while(images.length < 5) images.push('');
+
+    const urls = [];
+    for (let i=0; i<5; i++) {
+      if (images[i] && images[i].startsWith('http')) {
+        urls[i] = images[i];
+      } else if (images[i]) {
+        urls[i] = await uploadImage(images[i], productId, i+1);
+      } else {
+        urls[i] = old?.images?.[i] || null;
+      }
+    }
+
+    let categoryId = product.category_id || '';
+    if (!categoryId && product.category) {
+      const found = cloudCategories.find(c => c.name.toLowerCase() === String(product.category).toLowerCase());
+      categoryId = found?.id || '';
+    }
+
+    const row = {
+      id: productId,
+      name: product.name,
+      part_number: product.part || null,
+      category_id: categoryId || null,
+      price: Number(product.price || 0),
+      currency: currencyText(product.currency),
+      description: product.description || null,
+      main_image_url: urls[0],
+      image_2_url: urls[1],
+      image_3_url: urls[2],
+      image_4_url: urls[3],
+      image_5_url: urls[4],
+      updated_at: new Date().toISOString()
+    };
+
+    const result = await sb.from('new_gama_products').upsert(row, {onConflict:'id'});
+    if (result.error) throw result.error;
+    return productId;
+  }
+
+  async function cloudDeleteProduct(id) {
+    const del = await sb.from('new_gama_products').delete().eq('id', id);
+    if (del.error) throw del.error;
+    await sb.storage.from(BUCKET).remove([
+      `products/${id}/1.jpg`, `products/${id}/2.jpg`, `products/${id}/3.jpg`,
+      `products/${id}/4.jpg`, `products/${id}/5.jpg`
+    ]);
+  }
+
+  async function cloudAddCategory(name) {
+    name = String(name || '').trim();
+    if (!name) return;
+    const r = await sb.from('new_gama_categories').insert({name}).select().single();
+    if (r.error) {
+      if (String(r.error.message).toLowerCase().includes('duplicate')) return;
+      throw r.error;
+    }
+    cloudCategories.push(r.data);
+    try { categories = cloudCategories.map(c => c.name); if(typeof renderCategories==='function') renderCategories(); } catch(e){}
+  }
+
+  // Override category creation if legacy UI uses addCategory.
+  window.addCategory = async function() {
+    const input = q('#newCategory') || q('#categoryName') || q('#newCategoryName');
+    const name = input?.value?.trim();
+    if (!name) return alert('Please enter a category name.');
+    try {
+      await cloudAddCategory(name);
+      input.value = '';
+      alert('Category created successfully.');
+      await loadCloudData();
+    } catch(err) {
+      console.error(err);
+      alert('Category save error: ' + (err.message || 'Please check Supabase policies.'));
+    }
+  };
+
+  // Patch legacy save form by capturing submit/click events.
+  async function interceptSave(e) {
+    const target = e.target;
+    const saveButton = target.closest && target.closest('#addItemBtn, #saveProduct, #saveItem, button[type="submit"]');
+    if (!saveButton && target.tagName !== 'FORM') return;
+
+    const form = target.tagName === 'FORM' ? target : target.closest('form');
+    if (!form) return;
+
+    const nameEl = q('#itemName') || q('#productName') || q('[name="productName"]') || q('[name="name"]');
+    const partEl = q('#partNumber') || q('#productPart') || q('[name="part"]');
+    const categoryEl = q('#category') || q('#productCategory');
+    const priceEl = q('#price') || q('#productPrice');
+    const currencyEl = q('#currency') || q('#productCurrency');
+    const descEl = q('#description') || q('#productDescription');
+
+    if (!nameEl || !priceEl) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const imgs = (window.selectedImages || []).filter(Boolean);
+    if (imgs.length < 5) {
+      alert('Please upload all 5 product images.');
+      return false;
+    }
+
+    const selectedCategory = categoryEl?.value || '';
+    const catObj = cloudCategories.find(c => c.name === selectedCategory);
+
+    const editingId = (typeof window.editingIndex !== 'undefined' && window.editingIndex !== null)
+      ? (cloudItems[window.editingIndex]?.id || null)
+      : null;
+
+    const product = {
+      name:nameEl.value.trim(),
+      part:partEl?.value?.trim() || '',
+      category:selectedCategory,
+      category_id:catObj?.id || '',
+      price:priceEl.value,
+      currency:currencyEl?.value || 'INR',
+      description:descEl?.value?.trim() || '',
+      images:window.selectedImages
+    };
+
+    if (!product.name) return alert('Please enter product name.');
+
+    saveButton?.setAttribute('disabled','disabled');
+    try {
+      await cloudSaveProduct(product, editingId);
+      alert(editingId ? 'Product updated successfully.' : 'Product saved successfully.');
+      await loadCloudData();
+      if (typeof window.clearProductForm === 'function') window.clearProductForm();
+      if (typeof window.openPage === 'function') window.openPage('dashboard');
+    } catch(err) {
+      console.error(err);
+      alert('Product save error: ' + (err.message || 'Please check Supabase setup and Storage policies.'));
+    } finally {
+      saveButton?.removeAttribute('disabled');
+    }
+    return false;
+  }
+
+  
+  // Current UI uses a normal button (#addItemBtn), not a form submit button.
+  // Attach a direct capture handler so Supabase save runs before the legacy localStorage handler.
+  const actualAddButton = document.getElementById('addItemBtn');
+  if (actualAddButton) {
+    actualAddButton.addEventListener('click', interceptSave, true);
+  }
+
+document.addEventListener('submit', interceptSave, true);
+  document.addEventListener('click', interceptSave, true);
+
+  // Delete cloud product when clicking legacy delete controls.
+  document.addEventListener('click', async function(e) {
+    const btn = e.target.closest && e.target.closest('[data-delete-id]');
+    if (!btn) return;
+    const id = btn.dataset.deleteId;
+    if (!id) return;
+    e.preventDefault();
+    if (!confirm('Delete this product?')) return;
+    try {
+      await cloudDeleteProduct(id);
+      await loadCloudData();
+    } catch(err) {
+      alert('Delete error: ' + (err.message || 'Unknown error'));
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await loadCloudData();
+      bridgeReady = true;
+      console.log('New Gama Supabase connected');
+    } catch(err) {
+      console.error('Supabase load error', err);
+      alert('Supabase connection error: ' + (err.message || 'Check tables, policies and internet connection.'));
+    }
+  });
+})();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  console.log('New Gama Supabase save patch active');
+});
+</script>
+
+
+<script>
+/* FINAL Supabase save override - replaces legacy localStorage button listeners */
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.supabase) return;
+
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  const BUCKET = "new-gama-product-images";
+  const sb = window.NG_SUPABASE;
+
+  async function getCategories() {
+    const r = await sb.from('new_gama_categories').select('*').order('name');
+    if (r.error) throw r.error;
+    return r.data || [];
+  }
+
+  async function refreshCategorySelect() {
+    const cats = await getCategories();
+    const select = document.getElementById('category');
+    const current = select.value;
+    select.innerHTML = '<option value="">Select category</option>' +
+      cats.map(c => '<option value="'+c.id+'">'+String(c.name).replace(/</g,'&lt;')+'</option>').join('');
+    if (current) select.value=current;
+
+    const chips=document.getElementById('categoryChips');
+    if(chips) chips.innerHTML=cats.length ? cats.map(c=>'<span class="chip">'+String(c.name).replace(/</g,'&lt;')+'</span>').join('') : '<span style="color:#777;font-size:13px">No categories created yet.</span>';
+    const count=document.getElementById('categoryCount');
+    if(count) count.textContent=cats.length;
+  }
+
+  // Replace legacy category button completely.
+  const oldCatBtn=document.getElementById('addCategoryBtn');
+  if(oldCatBtn){
+    const catBtn=oldCatBtn.cloneNode(true);
+    oldCatBtn.replaceWith(catBtn);
+    catBtn.addEventListener('click', async function(){
+      const input=document.getElementById('newCategory');
+      const name=input.value.trim();
+      if(!name) return alert('Please enter a category name.');
+      try{
+        const r=await sb.from('new_gama_categories').insert({name}).select().single();
+        if(r.error) throw r.error;
+        input.value='';
+        await refreshCategorySelect();
+        document.getElementById('category').value=r.data.id;
+        alert('Category created successfully.');
+      }catch(err){
+        console.error(err);
+        alert('Category save error: '+(err.message||'Unknown error'));
+      }
+    });
+  }
+
+  // Replace legacy Add Product button completely.
+  const oldBtn=document.getElementById('addItemBtn');
+  if(oldBtn){
+    const btn=oldBtn.cloneNode(true);
+    oldBtn.replaceWith(btn);
+
+    btn.addEventListener('click', async function(){
+      const name=document.getElementById('itemName').value.trim();
+      const part=document.getElementById('partNumber').value.trim();
+      const category_id=document.getElementById('category').value;
+      const price=document.getElementById('price').value.trim();
+      const currency=document.getElementById('currency').value;
+      const description=document.getElementById('description').value.trim();
+      const images=(window.selectedImages||[]);
+
+      if(!name) return alert('Please enter Product / Part Name.');
+      if(!category_id) return alert('Please create or select a category.');
+      // All five product images are optional.
+      // Product can be saved with 0, 1, 2, 3, 4 or 5 images.
+
+      btn.disabled=true;
+      btn.textContent='Saving...';
+
+      try{
+        const productId=crypto.randomUUID();
+        const urls=[null,null,null,null,null];
+
+        // Image 1 is the main image. Images 2-5 are optional.
+        for(let i=0;i<5;i++){
+          if(!images[i]) continue;
+          const response=await fetch(images[i]);
+          const blob=await response.blob();
+          const ext=(blob.type && blob.type.split('/')[1]) || 'jpg';
+          const path='products/'+productId+'/'+(i+1)+'.'+ext;
+          const up=await sb.storage.from(BUCKET).upload(path,blob,{
+            upsert:true,
+            contentType:blob.type || 'image/jpeg'
+          });
+          if(up.error) throw up.error;
+          const pub=sb.storage.from(BUCKET).getPublicUrl(path);
+          urls[i]=pub.data.publicUrl;
+        }
+
+        const insert=await sb.from('new_gama_products').insert({
+          id:productId,
+          name:name,
+          part_number:part||null,
+          category_id:category_id,
+          price:Number(price||0),
+          currency:currency,
+          description:description||null,
+          main_image_url:urls[0],
+          image_2_url:urls[1],
+          image_3_url:urls[2],
+          image_4_url:urls[3],
+          image_5_url:urls[4]
+        }).select();
+
+        if(insert.error) throw insert.error;
+
+        alert('Product saved to Supabase successfully.');
+
+        // Immediately reload products from Supabase and update the Dashboard.
+        const fresh = await sb.from('new_gama_products').select('*').order('created_at',{ascending:false});
+        const cats = await sb.from('new_gama_categories').select('*');
+        if (fresh.error) throw fresh.error;
+        if (cats.error) throw cats.error;
+
+        const catMap = Object.fromEntries((cats.data||[]).map(c=>[c.id,c.name]));
+        items = (fresh.data||[]).map(p=>({
+          id:p.id,
+          name:p.name||'',
+          part:p.part_number||'',
+          category_id:p.category_id||'',
+          category:catMap[p.category_id]||'',
+          price:p.price??0,
+          currency:p.currency||'INR',
+          description:p.description||'',
+          images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+        }));
+        if(typeof renderItems==='function') renderItems();
+
+        if(typeof clearProductForm==='function') clearProductForm();
+        if(typeof openPage==='function') openPage('dashboard');
+      }catch(err){
+        console.error('SUPABASE PRODUCT SAVE ERROR:',err);
+        alert('Supabase save error: '+(err.message||JSON.stringify(err)));
+      }finally{
+        btn.disabled=false;
+        btn.textContent='Add Product';
+      }
+    });
+  }
+
+  refreshCategorySelect().catch(console.error);
+});
+</script>
+
+
+<script id="ng-dashboard-total-order-count">
+(function(){
+  async function updateTotalOrders(){
+    const el=document.getElementById('totalOrderCount');
+    if(!el) return;
+    try{
+      const client=window.NG_SUPABASE;
+      if(!client) throw new Error('Supabase client not ready');
+      const r=await client.from('new_gama_orders').select('id');
+      if(r.error) throw r.error;
+      el.textContent=(r.data||[]).length;
+    }catch(e){
+      console.error('Total Orders error:',e);
+    }
+  }
+  function boot(){
+    const card=document.getElementById('totalOrdersCard');
+    if(card){
+      card.onclick=function(){location.href='orders.html'};
+      card.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();location.href='orders.html'}};
+    }
+    updateTotalOrders();
+    if(window.NG_SUPABASE && !window.NG_DASH_ORDER_COUNT_CHANNEL){
+      window.NG_DASH_ORDER_COUNT_CHANNEL=window.NG_SUPABASE.channel('ng-dashboard-total-orders-v2')
+        .on('postgres_changes',{event:'*',schema:'public',table:'new_gama_orders'},updateTotalOrders)
+        .subscribe();
+    }
+    setInterval(updateTotalOrders,15000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
+</script>
+
+
+
+<script id="ng-owner-page-guard">
+(async function(){
+ const URL='REPLACE_WITH_YOUR_SUPABASE_URL', KEY='REPLACE_WITH_YOUR_PUBLISHABLE_OR_ANON_KEY';
+ if(URL.startsWith('REPLACE_')||KEY.startsWith('REPLACE_')) return;
+ if(!window.supabase) return;
+ const c=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ const {data:{user}}=await c.auth.getUser();
+ if(!user){location.replace('users.html');return;}
+ const {data:p,error}=await c.from('profiles').select('role').eq('id',user.id).maybeSingle();
+ if(error || (p?.role||'customer').toLowerCase()!=='owner'){location.replace('index.html');}
+})();
+</script>
+
+</body>
+</html>

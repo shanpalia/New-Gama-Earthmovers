@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Orders | New Gama Earthmovers</title>
+<link rel="icon" type="image/png" href="new-gama-logo.png">
+<style>
+:root{
+  --yellow:#f5b400;--yellow-dark:#d99e00;--dark:#171717;--text:#20242a;
+  --muted:#727984;--bg:#f5f6f8;--card:#fff;--border:#e6e8ec;
+  --green:#14804a;--red:#c7372f;--shadow:0 12px 35px rgba(22,27,35,.08)
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+.topbar{
+  height:74px;background:var(--dark);color:#fff;display:flex;align-items:center;
+  justify-content:space-between;padding:0 28px;box-shadow:0 2px 14px rgba(0,0,0,.2)
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
+.brand-title{font-weight:800;letter-spacing:.4px;font-size:17px}
+.brand-sub{font-size:11px;color:#aaa;margin-top:4px}
+.dashboard-btn{
+  border:1px solid #444;background:#242424;color:#fff;border-radius:10px;
+  padding:11px 17px;font-weight:700;cursor:pointer
+}
+.dashboard-btn:hover{border-color:var(--yellow);color:var(--yellow)}
+main{max-width:1250px;margin:auto;padding:32px 22px 55px}
+.hero{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:24px}
+.hero h1{font-size:32px;margin:0 0 7px}
+.hero p{margin:0;color:var(--muted)}
+.hero-actions{display:flex;gap:10px;align-items:center}
+.refresh-btn{
+  border:1px solid var(--border);background:#fff;border-radius:10px;padding:11px 15px;
+  font-weight:700;cursor:pointer
+}
+.refresh-btn:hover{border-color:var(--yellow)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;
+  box-shadow:0 4px 15px rgba(0,0,0,.025)
+}
+.stat-top{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px}
+.stat-icon{
+  width:38px;height:38px;border-radius:12px;background:#fff6d8;display:grid;place-items:center;font-size:19px
+}
+.stat strong{display:block;font-size:29px;margin-top:12px}
+.panel{background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.toolbar{
+  padding:17px;border-bottom:1px solid var(--border);display:flex;gap:12px;
+  justify-content:space-between;align-items:center;flex-wrap:wrap
+}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filter{
+  border:1px solid var(--border);background:#fff;border-radius:999px;padding:9px 15px;
+  font-weight:700;color:#555;cursor:pointer
+}
+.filter:hover{border-color:var(--yellow)}
+.filter.active{background:var(--yellow);border-color:var(--yellow);color:#171717}
+.search-wrap{position:relative;min-width:min(310px,100%)}
+.search-wrap span{position:absolute;left:13px;top:11px;color:#777}
+.search-wrap input{
+  width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px 11px 37px;
+  outline:none;font-size:14px;background:#fafafa
+}
+.search-wrap input:focus{border-color:var(--yellow);background:#fff}
+.list-head{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;padding:16px 20px;
+  color:var(--muted);font-size:13px;background:#fcfcfd;border-bottom:1px solid var(--border)
+}
+.orders{padding:16px}
+.order-card{
+  display:grid;grid-template-columns:58px minmax(0,1.3fr) minmax(180px,.9fr) minmax(160px,.7fr) auto;
+  gap:18px;align-items:center;padding:17px;margin-bottom:12px;border:1px solid var(--border);
+  border-radius:15px;background:#fff;cursor:pointer;transition:.2s
+}
+.order-card:hover{transform:translateY(-2px);border-color:#f0ca55;box-shadow:0 12px 26px rgba(20,20,20,.07)}
+.avatar{
+  width:52px;height:52px;border-radius:14px;background:#fff4d1;display:grid;place-items:center;
+  font-size:22px;font-weight:800;color:#765600
+}
+.order-main b{font-size:16px}
+.order-id{font-size:11px;color:#9097a1;margin-top:5px}
+.product{font-size:14px;font-weight:700;margin-bottom:6px}
+.meta{font-size:12px;color:var(--muted);line-height:1.55}
+.amount{font-size:18px;font-weight:800;margin-bottom:5px}
+.pay{font-size:12px;color:var(--muted)}
+.status{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;
+  font-size:11px;font-weight:800;white-space:nowrap
+}
+.status.pending{background:#fff4d6;color:#8a6300}
+.status.completed{background:#eaf8ef;color:var(--green)}
+.status.other{background:#eef1f5;color:#59616b}
+.open-arrow{font-size:21px;color:#a0a6af}
+.empty{padding:72px 20px;text-align:center;color:var(--muted)}
+.empty-icon{font-size:46px;margin-bottom:13px}
+.error{
+  margin:18px;padding:18px;border:1px solid #f3c4c0;background:#fff5f4;border-radius:12px;color:#a52d27;
+  line-height:1.55
+}
+.loading{padding:65px;text-align:center;color:var(--muted)}
+.spinner{
+  width:34px;height:34px;border:4px solid #eee;border-top-color:var(--yellow);border-radius:50%;
+  margin:0 auto 14px;animation:spin .8s linear infinite
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1000px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .order-card{grid-template-columns:55px 1fr auto;gap:14px}
+  .product-info,.amount-info{grid-column:2}
+  .open-arrow{grid-column:3;grid-row:1}
+}
+@media(max-width:650px){
+  .topbar{padding:0 14px}.brand-title{font-size:13px}.brand-sub{display:none}
+  main{padding:22px 12px 40px}.hero{align-items:start;flex-direction:column}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}.stat{padding:15px}.stat strong{font-size:24px}
+  .toolbar{padding:12px}.search-wrap{min-width:100%}.filters{width:100%}.filter{flex:1;padding:9px 8px}
+  .list-head{padding:13px}.orders{padding:10px}
+  .order-card{grid-template-columns:48px 1fr auto;padding:14px 12px}
+  .avatar{width:44px;height:44px}.order-main b{font-size:14px}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <img src="new-gama-logo.png" alt="New Gama Earthmovers">
+    <div>
+      <div class="brand-title">NEW GAMA EARTHMOVERS</div>
+      <div class="brand-sub">Pickup Order Management</div>
+    </div>
+  </div>
+  <button class="dashboard-btn" onclick="ngBack()">← Back</button>
+</header>
+
+<main>
+  <section class="hero">
+    <div>
+      <h1>Orders</h1>
+      <p>Manage all customer pickup orders in one place.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="refresh-btn" id="refreshBtn">↻ Refresh Orders</button>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-top"><span>Total Orders</span><span class="stat-icon">📦</span></div><strong id="totalCount">0</strong></div>
+    <div class="stat"><div class="stat-top"><span>Pending Pickup</span><span class="stat-icon">⏳</span></div><strong id="pendingCount">0</strong></div>
+    <div class="stat"><div class="stat-top"><span>Completed</span><span class="stat-icon">✓</span></div><strong id="completedCount">0</strong></div>
+    <div class="stat"><div class="stat-top"><span>Total Value</span><span class="stat-icon">₹</span></div><strong id="valueCount">₹0</strong></div>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div class="filters">
+        <button class="filter active" data-filter="all">All</button>
+        <button class="filter" data-filter="pending">Pending</button>
+        <button class="filter" data-filter="completed">Completed</button>
+      </div>
+      <div class="search-wrap"><span>⌕</span><input id="orderSearch" autocomplete="off" placeholder="Search customer, product or mobile"></div>
+    </div>
+    <div class="list-head"><span id="listInfo">Loading orders...</span><span>Click an order to view details →</span></div>
+    <div id="ordersList" class="orders"><div class="loading"><div class="spinner"></div>Loading orders...</div></div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL='https://gozvchqatiyebpnycubl.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+
+const ngSupabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } }
+);
+
+let allOrders=[];
+let activeFilter='all';
+
+function esc(v){
+  const d=document.createElement('div');
+  d.textContent=v==null?'':String(v);
+  return d.innerHTML;
+}
+function money(v){return '₹'+Number(v||0).toLocaleString('en-IN')}
+function isCompleted(o){return String(o.status||'new').toLowerCase()==='completed'}
+function dateText(v){
+  if(!v)return 'Date unavailable';
+  try{return new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}
+  catch(e){return String(v)}
+}
+function initials(v){
+  return String(v||'C').trim().slice(0,1).toUpperCase();
+}
+
+async function fetchOrders(){
+  const {data:{user}, error:userError} = await ngSupabase.auth.getUser();
+
+  if(userError) throw userError;
+
+  if(!user){
+    location.href='users.html';
+    throw new Error('Please login as shop owner.');
+  }
+
+  const {data:profile, error:profileError} = await ngSupabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if(profileError) throw profileError;
+
+  if(!profile || String(profile.role).toLowerCase() !== 'owner'){
+    location.href='index.html';
+    throw new Error('Only the shop owner can view orders.');
+  }
+
+  const {data, error} = await ngSupabase
+    .from('new_gama_orders')
+    .select('*')
+    .order('created_at', {ascending:false});
+
+  if(error) throw error;
+
+  return data || [];
+}
+
+function updateStats(){
+  const total=allOrders.length;
+  const pending=allOrders.filter(o=>!isCompleted(o)).length;
+  const completed=allOrders.filter(isCompleted).length;
+  const value=allOrders.reduce((sum,o)=>sum+Number(o.total_amount||0),0);
+  document.getElementById('totalCount').textContent=total;
+  document.getElementById('pendingCount').textContent=pending;
+  document.getElementById('completedCount').textContent=completed;
+  document.getElementById('valueCount').textContent=money(value);
+}
+
+function filteredOrders(){
+  const q=document.getElementById('orderSearch').value.trim().toLowerCase();
+  return allOrders.filter(o=>{
+    if(activeFilter==='pending' && isCompleted(o))return false;
+    if(activeFilter==='completed' && !isCompleted(o))return false;
+    if(!q)return true;
+    return [
+      o.customer_name,o.customer_phone,o.mobile,o.product_name,o.id
+    ].join(' ').toLowerCase().includes(q);
+  });
+}
+
+function render(){
+  const box=document.getElementById('ordersList');
+  const rows=filteredOrders();
+  document.getElementById('listInfo').innerHTML='<b>'+rows.length+'</b> order'+(rows.length===1?'':'s')+' found';
+
+  if(!rows.length){
+    box.innerHTML='<div class="empty"><div class="empty-icon">📭</div><h3 style="margin:0 0 8px;color:#333">No orders found</h3><div>There are no orders in this section yet.</div></div>';
+    return;
+  }
+
+  box.innerHTML=rows.map(o=>{
+    const done=isCompleted(o);
+    const status=done?'Completed':String(o.status||'Pending').replace(/_/g,' ');
+    const statusClass=done?'completed':'pending';
+    return `<article class="order-card" data-id="${esc(o.id)}">
+      <div class="avatar">${esc(initials(o.customer_name))}</div>
+      <div class="order-main">
+        <b>${esc(o.customer_name||'Customer')}</b>
+        <div class="order-id">Order #${esc(String(o.id||'').slice(0,8).toUpperCase())}</div>
+        <div class="meta">📅 ${esc(dateText(o.created_at))}<br>📞 ${esc(o.customer_phone||o.mobile||'Not provided')}</div>
+      </div>
+      <div class="product-info">
+        <div class="product">${esc(o.product_name||'Product')}</div>
+        <div class="meta">Qty: ${esc(o.quantity||1)} · Shop Pickup</div>
+      </div>
+      <div class="amount-info">
+        <div class="amount">${money(o.total_amount)}</div>
+        <div class="pay">${String(o.payment_method||'cash').toUpperCase()} Payment</div>
+        <div style="margin-top:8px"><span class="status ${statusClass}">${done?'✓':'●'} ${esc(status)}</span></div>
+      </div>
+      <div class="open-arrow">›</div>
+    </article>`;
+  }).join('');
+
+  box.querySelectorAll('.order-card').forEach(card=>{
+    card.addEventListener('click',()=>location.href='order.html?order='+encodeURIComponent(card.dataset.id));
+  });
+}
+
+async function loadOrders(){
+  const box=document.getElementById('ordersList');
+  box.innerHTML='<div class="loading"><div class="spinner"></div>Loading orders...</div>';
+  try{
+    allOrders=await fetchOrders();
+    updateStats();
+    render();
+  }catch(err){
+    console.error('Orders error:',err);
+    box.innerHTML='<div class="error"><b>Orders could not be loaded.</b><br>'+esc(err.message||'Unknown error')+
+      '<br><br><small>The owner account must have permission to read <code>new_gama_orders</code>. Run the included SQL fix once in Supabase SQL Editor.</small></div>';
+    document.getElementById('listInfo').textContent='Unable to load orders';
+  }
+}
+
+document.querySelectorAll('.filter').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter=btn.dataset.filter;
+    render();
+  });
+});
+document.getElementById('orderSearch').addEventListener('input',render);
+document.getElementById('refreshBtn').addEventListener('click',loadOrders);
+
+document.addEventListener('DOMContentLoaded',loadOrders);
+</script>
+
+
+
+<script>
+function ngBack(){
+  const from = new URLSearchParams(location.search).get('from');
+
+  if(from && /^[a-zA-Z0-9_-]+\.html$/.test(from)){
+    location.href = from;
+    return;
+  }
+
+  location.href = 'index.html';
+}
+</script>
+</body>
+</html>

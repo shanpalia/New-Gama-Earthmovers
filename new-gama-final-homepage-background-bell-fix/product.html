@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Details | New Gama Earthmovers</title>
+<link rel="icon" type="image/png" href="new-gama-logo.png">
+<style>
+:root{--yellow:#f5b400;--dark:#181818;--light:#f6f6f6;--muted:#707070;--green:#168a43;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;color:#202020}
+a{color:inherit;text-decoration:none}
+.top{background:#181818;color:#ddd;text-align:center;padding:9px 5%;font-size:13px}
+header{background:#fff;box-shadow:0 2px 12px #0001;position:sticky;top:0;z-index:20}
+nav{max-width:1200px;margin:auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.brand{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:800}
+.brand img{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
+.back{font-weight:bold;padding:10px 14px;border-radius:8px;background:#f3f3f3}
+.page{max-width:1200px;margin:auto;padding:25px 18px 60px}
+.breadcrumb{font-size:14px;color:#666;margin-bottom:20px}
+.product-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(350px,.85fr);gap:26px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 5px 22px #0000000c}
+.gallery-main{height:500px;border:1px solid #e7e7e7;border-radius:14px;overflow:hidden;background:#fafafa;display:flex;align-items:center;justify-content:center}
+.gallery-main img{width:100%;height:100%;object-fit:contain;display:block}
+.gallery-label{font-weight:800;margin-top:18px;margin-bottom:10px;font-size:16px}.thumbs{display:flex;gap:12px;flex-wrap:wrap;margin-top:0;padding:4px 0}
+.thumbs img{width:92px;height:92px;object-fit:cover;border:2px solid #e2e2e2;border-radius:9px;cursor:pointer;background:#fff;display:block}
+.thumbs img.active{border-color:var(--yellow)}
+.category{display:inline-block;background:#fff2be;color:#765400;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:bold;margin-bottom:12px}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin-bottom:10px}
+.part{color:#777;margin-bottom:18px}
+.price{font-size:32px;font-weight:800;margin:18px 0}
+.description{line-height:1.65;color:#555;border-top:1px solid #eee;padding-top:18px;margin-top:16px}
+.buy-box{border:1px solid #e5e5e5;border-radius:14px;padding:18px;margin-top:22px;background:#fffdf7}
+.buy-box h3{margin-bottom:14px}
+.qty-row{display:flex;align-items:center;gap:12px;margin:14px 0 20px}
+.qty-control{display:flex;align-items:center;border:1px solid #ddd;border-radius:9px;overflow:hidden}
+.qty-control button{width:42px;height:42px;border:0;background:#f4f4f4;font-size:22px;cursor:pointer}
+.qty-control input{width:58px;height:42px;border:0;text-align:center;font-size:16px;font-weight:bold;outline:0}
+.primary{width:100%;border:0;border-radius:10px;background:var(--yellow);color:#1b1b1b;padding:15px;font-size:16px;font-weight:800;cursor:pointer}
+.primary:hover{filter:brightness(.96)}
+.order-total{display:flex;align-items:center;justify-content:space-between;gap:15px;background:#fff8df;border:1px solid #f0d676;border-radius:10px;padding:14px 16px;margin:5px 0 16px;font-size:15px}.order-total strong{font-size:22px;color:#1b1b1b}.note{font-size:12px;color:#777;margin-top:10px}
+.section{background:#fff;border-radius:16px;padding:24px;margin-top:24px;box-shadow:0 5px 22px #0000000c}
+.section h2{margin-bottom:18px}
+.review-summary{display:flex;align-items:center;gap:16px;border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px}
+.rating-big{font-size:42px;font-weight:800}
+.stars{color:#f5b400;letter-spacing:2px}
+.review-list{display:grid;gap:14px}
+.review{border:1px solid #eee;border-radius:12px;padding:16px}
+.review-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
+.review-name{font-weight:bold}
+.review-date{font-size:12px;color:#888}
+.review-form{display:grid;gap:12px;margin-top:20px;border-top:1px solid #eee;padding-top:20px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #d8d8d8;border-radius:9px;font:inherit;background:#fff}
+textarea{min-height:100px;resize:vertical}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
+.modal.show{display:flex}
+.modal-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:24px;position:relative}.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice-card{border:1px solid #ddd;border-radius:10px;padding:13px;display:flex;gap:10px;cursor:pointer}.choice-card input{width:auto;margin-top:3px}.choice-card small{display:block;color:#777;margin-top:4px}.upi-box{background:#f7f7f7;border:1px solid #ddd;border-radius:10px;padding:13px}.pickup-info{background:#fff8df;border:1px solid #f0d676;border-radius:10px;padding:13px;margin:8px 0 18px}.pickup-info small{display:block;color:#666;margin-top:5px}@media(max-width:600px){.choice-grid{grid-template-columns:1fr}}
+.close{position:absolute;right:14px;top:12px;border:0;background:#f1f1f1;width:36px;height:36px;border-radius:50%;font-size:22px;cursor:pointer}
+.loading{padding:70px 20px;text-align:center;color:#666}
+.error{background:#fff;border-radius:14px;padding:25px;text-align:center;color:#b42318}
+footer{background:#181818;color:#ddd;text-align:center;padding:25px;margin-top:40px}
+@media(max-width:850px){
+  .product-layout{grid-template-columns:1fr;padding:16px}
+  .gallery-main{height:360px}
+  .form-grid{grid-template-columns:1fr}
+  nav{padding:9px 14px}
+}
+
+/* ===== PREMIUM PRODUCT PAGE UI ===== */
+:root{--yellow:#ffb300;--yellow2:#ffd15a;--ink:#111722;--panel:#18202c;--line:#2b3544;--text:#eef3f8;--muted:#a9b2bf;--green:#36c878}
+body{background:#0d121a;color:var(--text)}
+.top{background:#070b10;color:#b9c2cc;border-bottom:1px solid #1c2530}
+header{background:#101721;box-shadow:none;border-bottom:1px solid #263140}
+.back{background:#1a2430;color:#eef3f8;border:1px solid #2d3948}
+.page{max-width:1500px;padding:24px 18px 60px}
+.breadcrumb{color:#9aa5b1}
+.breadcrumb a{color:#ffd15a}
+.product-layout{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(380px,.82fr);gap:28px;background:#111924;border:1px solid #273243;border-radius:22px;padding:20px;box-shadow:0 16px 50px #0005}
+.gallery-side{display:grid;grid-template-columns:120px minmax(0,1fr);gap:18px;min-width:0}
+.thumb-column{display:flex;flex-direction:column;gap:12px;max-height:680px;overflow-y:auto;padding-right:4px}
+.thumb-column::-webkit-scrollbar{width:6px}.thumb-column::-webkit-scrollbar-thumb{background:#364252;border-radius:10px}
+.thumb-btn{width:108px;height:92px;padding:4px;border:1px solid #303b4a;border-radius:12px;background:#18212d;cursor:pointer;flex:0 0 auto}
+.thumb-btn.active{border:2px solid var(--yellow);box-shadow:0 0 0 2px #ffb30022}
+.thumb-btn img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
+.gallery-main{height:min(680px,65vw);min-height:480px;background:#0b1017;border:1px solid #293544;border-radius:18px;position:relative;overflow:hidden;cursor:zoom-in}
+.gallery-main img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .25s ease}
+.gallery-main:hover img{transform:scale(1.015)}
+.zoom-hint{position:absolute;right:16px;top:16px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#111a25e8;border:1px solid #3b4757;color:#fff;font-size:24px}
+.image-count{position:absolute;left:16px;top:16px;background:#101722d9;border:1px solid #344153;border-radius:10px;padding:8px 12px;font-weight:800}
+.gallery-note{grid-column:1/-1;text-align:center;color:#aeb8c4;font-size:14px;margin-top:-4px}
+.product-info{padding:8px 2px}
+.category{background:#ffbf21;color:#111;padding:7px 13px}
+h1{font-size:clamp(34px,4vw,58px);color:#f7f9fb}
+.part{color:#aeb8c4;font-size:16px}
+.price{font-size:42px;color:#ffbd24;border-bottom:1px solid #2a3442;padding-bottom:20px}
+.description{color:#b8c1cc;border-color:#2a3442}
+.buy-box{background:#151f2b;border:1px solid #2c3848;border-radius:18px;padding:22px}
+.buy-box h3{letter-spacing:.5px;text-transform:uppercase}
+.qty-row{margin-bottom:16px}
+.qty-control{border-color:#3a4656}
+.qty-control button{background:#1c2734;color:#fff}
+.qty-control input{background:#121923;color:#fff}
+.order-total{background:#1a2029;border-color:#ffbd2455;color:#d7dee7}
+.order-total strong{color:#ffbf24;font-size:30px}
+.pickup-strip{margin:16px 0;padding:16px;border-radius:14px;background:#0f2b22;border:1px solid #1f7756;color:#dff8eb}
+.pickup-strip strong{color:#58d89b;display:block;font-size:17px;margin-bottom:5px}
+.payment-mini{display:flex;gap:10px;margin:12px 0 18px}
+.payment-mini span{border:1px solid #354153;border-radius:10px;padding:9px 12px;color:#c6d0dc;background:#121a25;font-size:13px}
+.full-order-wrap{grid-column:1/-1;border-top:1px solid #293442;padding-top:20px;margin-top:2px}
+.full-order-btn{width:100%;border:0;border-radius:14px;padding:20px;background:linear-gradient(90deg,#ffad00,#ffc42c);color:#111;font-size:22px;font-weight:900;letter-spacing:.5px;cursor:pointer}
+.full-order-btn:hover{filter:brightness(1.05)}
+.trust-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #293442;padding-top:18px;gap:10px}
+.trust-item{padding:8px 14px;border-right:1px solid #293442}
+.trust-item:last-child{border-right:0}.trust-item b{display:block;color:#fff}.trust-item span{font-size:13px;color:#9ea9b7}
+.section{background:#111924;color:#eef3f8;border:1px solid #273243;box-shadow:none}
+.review{background:#151f2b;border-color:#2b3746}.review-date,.review-form input,.review-form select,.review-form textarea{background:#101722;color:#eef3f8;border-color:#354152}
+#zoomModal{position:fixed;inset:0;background:#000d;display:none;z-index:9999;align-items:center;justify-content:center;padding:22px}
+#zoomModal.show{display:flex}
+.zoom-card{width:min(1100px,100%);height:min(90vh,850px);background:#0d131b;border:1px solid #344152;border-radius:18px;position:relative;padding:18px}
+.zoom-card img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-out}
+.zoom-close{position:absolute;right:16px;top:16px;width:44px;height:44px;border-radius:50%;border:1px solid #485568;background:#111a25;color:#fff;font-size:25px;cursor:pointer;z-index:2}
+@media(max-width:900px){
+  .product-layout{grid-template-columns:1fr}
+  .gallery-side{grid-template-columns:1fr}
+  .thumb-column{order:2;flex-direction:row;max-height:none;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}
+  .thumb-btn{width:90px;height:76px}
+  .gallery-main{min-height:360px;height:65vw}
+  .trust-row{grid-template-columns:1fr 1fr}.trust-item:nth-child(2){border-right:0}
+}
+@media(max-width:560px){
+  .page{padding:14px 8px 40px}.product-layout{padding:10px;gap:16px}
+  .gallery-main{min-height:290px}.price{font-size:34px}
+  .trust-row{grid-template-columns:1fr}.trust-item{border-right:0;border-bottom:1px solid #293442}
+  .full-order-btn{font-size:18px;padding:17px}
+}
+
+
+/* ===== WHITE PREMIUM THEME ===== */
+html,body{background:#f7f8fa!important;color:#20242a!important}
+body{background:#f7f8fa!important}
+.top,header{background:#fff!important;border-color:#e5e8ec!important}
+.page{background:#f7f8fa!important}
+.back{background:#fff!important;color:#20242a!important;border-color:#dfe4e9!important}
+.product-layout,.section,.review,.modal-card{background:#fff!important;border-color:#e1e5e9!important;box-shadow:0 10px 35px #1018200d!important;color:#20242a!important}
+.product-info h1,h1{color:#20242a!important}
+.part,.description,.gallery-note{color:#6d747d!important}
+.price{color:#20242a!important;border-color:#e5e8ec!important}
+.gallery-main{background:#fff!important;border-color:#e0e4e8!important}
+.thumb-btn{background:#fff!important;border-color:#dfe4e9!important}
+.thumb-btn.active{border-color:#f5ad00!important;box-shadow:0 0 0 3px #f5ad0022!important}
+.zoom-hint,.image-count{background:#ffffffed!important;color:#20242a!important;border-color:#d9dee4!important}
+.buy-box{background:#fff!important;border-color:#e1e5e9!important}
+.qty-control,.qty-control button,.qty-control input{background:#fff!important;color:#20242a!important;border-color:#dfe4e9!important}
+.order-total{background:#fffdf4!important;border-color:#ecd78b!important;color:#3a3f45!important}
+.order-total strong{color:#20242a!important}
+.pickup-strip{background:#f2fbf6!important;border-color:#b8e0c8!important;color:#286a49!important}
+.pickup-strip strong{color:#157746!important}
+.payment-mini span{background:#fff!important;color:#454b53!important;border-color:#dfe4e9!important}
+.full-order-wrap,.trust-row{border-color:#e5e8ec!important}
+.trust-item{border-color:#e5e8ec!important}.trust-item b{color:#252a31!important}.trust-item span{color:#737b85!important}
+.review-form input,.review-form select,.review-form textarea{background:#fff!important;color:#252a31!important;border-color:#dfe4e9!important}
+.choice-card{background:#fff!important;border-color:#dfe4e9!important}.choice-card small{color:#6e7680!important}
+.upi-box{background:#f7f8fa!important;border-color:#dfe4e9!important}
+#zoomModal{background:#000000d9!important}
+.zoom-card{background:#fff!important;border-color:#fff!important;overflow:hidden}
+.zoom-close,.zoom-tool{position:absolute;top:16px;width:44px;height:44px;border-radius:50%;border:1px solid #dfe4e9;background:#fff;color:#20242a;font-size:25px;font-weight:800;z-index:5;cursor:pointer}
+.zoom-close{right:16px}.zoom-tool-in{right:70px}.zoom-tool-out{right:122px}
+#zoomImage{transform-origin:center center;transition:transform .12s ease;cursor:grab;user-select:none}
+#zoomImage.dragging{cursor:grabbing;transition:none}
+.zoom-help{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#000000aa;color:#fff;padding:8px 13px;border-radius:20px;font-size:13px;z-index:5;white-space:nowrap}
+
+</style>
+</head>
+<body>
+<div class="top">New Gama Earthmovers • Heavy Equipment Spare Parts</div>
+<header>
+  <nav>
+    <a class="brand" href="index.html"><img src="new-gama-logo.png" alt="New Gama Earthmovers"><span>NEW GAMA<br>EARTHMOVERS</span></a>
+    <a class="back" href="index.html#parts">← Back to Products</a>
+  </nav>
+</header>
+
+<main class="page">
+  <div class="breadcrumb"><a href="index.html">Home</a> / <span id="crumb">Product Details</span></div>
+  <div id="productRoot"><div class="loading">Loading product details...</div></div>
+
+  <section class="section" id="reviewsSection">
+    <h2>Customer Reviews</h2>
+    <div id="reviewSummary" class="review-summary">
+      <div class="rating-big">0.0</div>
+      <div><div class="stars">☆☆☆☆☆</div><div id="reviewCount" style="color:#777;font-size:14px">No reviews yet</div></div>
+    </div>
+    <div id="reviewList" class="review-list"><div class="loading">Loading reviews...</div></div>
+
+    <form id="reviewForm" class="review-form">
+      <h3>Write a Review</h3>
+      <div class="form-grid">
+        <input id="reviewName" placeholder="Your name" required>
+        <select id="reviewRating" required>
+          <option value="">Select rating</option>
+          <option value="5">★★★★★ Excellent</option>
+          <option value="4">★★★★☆ Very good</option>
+          <option value="3">★★★☆☆ Good</option>
+          <option value="2">★★☆☆☆ Fair</option>
+          <option value="1">★☆☆☆☆ Poor</option>
+        </select>
+      </div>
+      <textarea id="reviewText" placeholder="Share your experience with this product" required></textarea>
+      <button class="primary" type="submit">Submit Review</button>
+      <div id="reviewMessage" class="note"></div>
+    </form>
+  </section>
+</main>
+
+
+<div id="zoomModal" aria-hidden="true">
+  <div class="zoom-card" id="zoomCard">
+    <button type="button" class="zoom-close" id="zoomClose">×</button>
+    <button type="button" id="zoomOutBtn" class="zoom-tool zoom-tool-out">−</button>
+    <button type="button" id="zoomInBtn" class="zoom-tool zoom-tool-in">+</button>
+    <img id="zoomImage" src="" alt="Zoomed product image">
+    <div class="zoom-help">Use + / − or mouse wheel to zoom • Drag image to move</div>
+  </div>
+</div>
+
+<div class="modal" id="orderModal">
+  <div class="modal-card">
+    <button class="close" id="closeOrder" type="button">×</button>
+    <h2>Place Your Order</h2>
+    <p id="orderProductText" style="color:#666;margin:8px 0 18px"></p>
+    <form id="orderForm" class="review-form" style="border-top:0;padding-top:0">
+      <div class="form-grid">
+        <input id="customerName" placeholder="Full name" required>
+        <input id="customerPhone" placeholder="Mobile / WhatsApp number" required>
+      </div>
+
+      <div class="pickup-info">
+        <strong>🏪 Shop Pickup Only</strong>
+        <small>Customer will collect the product directly from the shop.</small>
+      </div>
+
+      <h3 style="margin-top:8px">Payment Method</h3>
+      <div class="choice-grid">
+        <label class="choice-card">
+          <input type="radio" name="paymentMethod" value="cash" checked>
+          <span><strong>Cash</strong><small>Pay in cash</small></span>
+        </label>
+        <label class="choice-card">
+          <input type="radio" name="paymentMethod" value="upi">
+          <span><strong>UPI</strong><small>Pay using UPI</small></span>
+        </label>
+      </div>
+
+      <div id="upiInfo" class="upi-box" style="display:none">
+        <strong>UPI Payment</strong>
+        <div id="upiAmount" style="margin-top:6px"></div>
+        <small>After confirming, payment details/QR can be configured for your shop.</small>
+      </div>
+
+      <textarea id="customerNote" placeholder="Order note (optional)"></textarea>
+      <button class="primary" type="submit">Confirm Order</button>
+      <div id="orderMessage" class="note"></div>
+    </form>
+  </div>
+</div><footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
+
+<script>
+(() => {
+const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+const productId = new URLSearchParams(location.search).get("id");
+let product = null;
+let categoryMap = {};
+let quantity = 1;
+
+document.getElementById("year").textContent = new Date().getFullYear();
+
+function esc(v) {
+  const d = document.createElement("div");
+  d.textContent = v == null ? "" : String(v);
+  return d.innerHTML;
+}
+function headers() {
+  return {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  };
+}
+async function get(path) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, {headers:headers()});
+  const text = await r.text();
+  if (!r.ok) throw new Error("HTTP " + r.status + ": " + text);
+  return text ? JSON.parse(text) : [];
+}
+async function post(table, payload) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
+    method:"POST",
+    headers:{...headers(), "Prefer":"return=representation"},
+    body:JSON.stringify(payload)
+  });
+  const text = await r.text();
+  if (!r.ok) throw new Error("HTTP " + r.status + ": " + text);
+  return text ? JSON.parse(text) : [];
+}
+function imagesOf(p) {
+  const found = [];
+  const add = value => {
+    if (value == null) return;
+    if (typeof value === "string") {
+      const text = value.trim();
+      if (!text) return;
+      try {
+        if ((text.startsWith("[") && text.endsWith("]")) || (text.startsWith("{") && text.endsWith("}"))) {
+          add(JSON.parse(text)); return;
+        }
+      } catch (_) {}
+      // Split comma/newline separated URLs.
+      if (/[\n,]/.test(text) && /(https?:\/\/|storage\/v1|\/storage\/|^\/)/i.test(text)) {
+        text.split(/[\n,]+/).forEach(add); return;
+      }
+      if (!found.includes(text)) found.push(text);
+      return;
+    }
+    if (Array.isArray(value)) { value.forEach(add); return; }
+    if (typeof value === "object") Object.values(value).forEach(add);
+  };
+
+  Object.keys(p || {}).forEach(key => {
+    const value = p[key];
+    if (/(image|photo|gallery|media|picture|thumb|url)/i.test(key)) add(value);
+  });
+
+  console.log("New Gama: detected images", found.length, found);
+  return found.filter(Boolean);
+}
+
+function mergeImages(baseImages, extraRows) {
+  const out = Array.isArray(baseImages) ? baseImages.slice() : [];
+  (extraRows || []).forEach(function(row) {
+    imagesOf(row).forEach(function(url) {
+      if (url && !out.includes(url)) out.push(url);
+    });
+  });
+  console.log("New Gama: total gallery images:", out.length, out);
+  return out;
+}
+function categoryOf(p) {
+  return categoryMap[String(p.categroy_id)] || categoryMap[String(p.category_id)] || p.category || "";
+}
+function priceOf(p) {
+  return (String(p.currency||"INR").toUpperCase()==="NPR" ? "रु " : "₹ ") + (p.price ?? 0);
+}
+function stars(n) {
+  const x = Math.round(Number(n)||0);
+  return "★★★★★".split("").map((s,i)=>i<x?"★":"☆").join("");
+}
+
+function totalPrice() {
+  const unit = Number(product && product.price != null ? product.price : 0);
+  return unit * quantity;
+}
+function totalPriceText() {
+  const currency = String(product && product.currency || "INR").toUpperCase();
+  const symbol = currency === "NPR" ? "रु " : "₹ ";
+  return symbol + totalPrice().toLocaleString("en-IN");
+}
+function renderProduct() {
+  const root = document.getElementById("productRoot");
+  const images = (Array.isArray(product._gallery_images) && product._gallery_images.length)
+    ? product._gallery_images : imagesOf(product);
+  const mainImage = images[0] || "new-gama-logo.png";
+  const cat = categoryOf(product);
+
+  document.title = (product.name || "Product") + " | New Gama Earthmovers";
+  document.getElementById("crumb").textContent = product.name || "Product Details";
+
+  root.innerHTML = `
+    <section class="product-layout">
+      <div class="gallery-side">
+        <div class="thumb-column" id="thumbs">
+          ${images.map((src,i)=>`
+            <button class="thumb-btn ${i===0?'active':''}" type="button" data-index="${i}" data-src="${esc(src)}" aria-label="View product image ${i+1}">
+              <img src="${esc(src)}" alt="Product image ${i+1}" onerror="this.closest('button').style.display='none'">
+            </button>`).join("")}
+        </div>
+
+        <div class="gallery-main" id="galleryMain" title="Click to zoom">
+          <div class="image-count"><span id="currentImageNo">1</span> / ${images.length || 1}</div>
+          <img id="mainImage" src="${esc(mainImage)}" alt="${esc(product.name || 'Product image')}" onerror="this.src='new-gama-logo.png'">
+          <div class="zoom-hint">⌕</div>
+        </div>
+        <div class="gallery-note">Click any image on the left to view it • Click the large image to zoom</div>
+      </div>
+
+      <div class="product-info">
+        ${cat?`<span class="category">${esc(cat)}</span>`:""}
+        <h1>${esc(product.name || "Product")}</h1>
+        ${product.part_number?`<div class="part">Part No: <strong>${esc(product.part_number)}</strong></div>`:""}
+        <div class="price">${priceOf(product)}</div>
+        <div class="description">${esc(product.description || product.descri || "Contact the shop for more product information.")}</div>
+
+        <div class="buy-box">
+          <h3>Select Quantity</h3>
+          <div class="qty-row">
+            <div class="qty-control">
+              <button type="button" id="minusQty">−</button>
+              <input id="qty" value="1" inputmode="numeric">
+              <button type="button" id="plusQty">+</button>
+            </div>
+            <span style="color:#aeb8c4">Quantity</span>
+          </div>
+
+          <div class="order-total">
+            <span>Total Amount</span>
+            <strong id="totalAmount">${priceOf(product)}</strong>
+          </div>
+
+          <div class="pickup-strip">
+            <strong>🏪 SHOP PICKUP ONLY</strong>
+            Customer will collect this product directly from the shop.
+          </div>
+
+          <div class="payment-mini">
+            <span>💵 Cash Available</span>
+            <span>📱 UPI Available</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="full-order-wrap">
+        <button class="full-order-btn" id="buyNow" type="button">🛒 ORDER THIS PRODUCT</button>
+      </div>
+
+      <div class="trust-row">
+        <div class="trust-item"><b>✓ 100% Genuine Parts</b><span>Original & authentic</span></div>
+        <div class="trust-item"><b>★ Best Quality</b><span>Tested & verified</span></div>
+        <div class="trust-item"><b>🔒 Secure Ordering</b><span>Safe & secure process</span></div>
+        <div class="trust-item"><b>🎧 Customer Support</b><span>We are here to help</span></div>
+      </div>
+    </section>`;
+
+  const main = document.getElementById("mainImage");
+  const setImage = function(btn) {
+    main.src = btn.dataset.src;
+    document.querySelectorAll(".thumb-btn").forEach(x => x.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("currentImageNo").textContent = Number(btn.dataset.index) + 1;
+  };
+
+  document.querySelectorAll(".thumb-btn").forEach(btn => {
+    btn.addEventListener("click", () => setImage(btn));
+  });
+
+  document.getElementById("galleryMain").addEventListener("click", () => {
+    if (window.openProductZoom) window.openProductZoom(main.src, main.alt);
+  });
+
+  const qtyInput = document.getElementById("qty");
+  function setQty(v) {
+    quantity = Math.max(1, Math.min(999, Number(v) || 1));
+    qtyInput.value = quantity;
+    const totalEl = document.getElementById("totalAmount");
+    if (totalEl) totalEl.textContent = totalPriceText();
+  }
+
+  document.getElementById("minusQty").onclick = () => setQty(quantity - 1);
+  document.getElementById("plusQty").onclick = () => setQty(quantity + 1);
+  qtyInput.onchange = () => setQty(qtyInput.value);
+
+  document.getElementById("buyNow").onclick = () => {
+    document.getElementById("orderProductText").textContent =
+      (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
+    updateOrderOptions();
+    document.getElementById("orderModal").classList.add("show");
+  };
+}
+async function loadReviews() {
+  const list = document.getElementById("reviewList");
+  try {
+    const reviews = await get("new_gama_reviews?select=*&product_id=eq." + encodeURIComponent(productId));
+    const count = reviews.length;
+    const avg = count ? reviews.reduce((a,r)=>a+Number(r.rating||0),0)/count : 0;
+    document.querySelector(".rating-big").textContent = avg.toFixed(1);
+    document.querySelector(".stars").textContent = stars(avg);
+    document.getElementById("reviewCount").textContent = count ? count + " customer review" + (count===1?"":"s") : "No reviews yet";
+
+    list.innerHTML = count ? reviews.map(r=>`
+      <article class="review">
+        <div class="review-head">
+          <div><div class="review-name">${esc(r.customer_name || "Customer")}</div><div class="stars">${stars(r.rating)}</div></div>
+          <div class="review-date">${r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}</div>
+        </div>
+        <div>${esc(r.review_text || r.comment || "")}</div>
+      </article>`).join("") :
+      '<div style="color:#777">Be the first customer to review this product.</div>';
+  } catch (e) {
+    console.warn("Reviews unavailable:", e);
+    list.innerHTML = '<div style="color:#777">Reviews will appear here after the review table is enabled.</div>';
+  }
+}
+
+document.getElementById("reviewForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const msg = document.getElementById("reviewMessage");
+  msg.textContent = "Submitting review...";
+  try {
+    await post("new_gama_reviews", {
+      product_id: productId,
+      customer_name: document.getElementById("reviewName").value.trim(),
+      rating: Number(document.getElementById("reviewRating").value),
+      review_text: document.getElementById("reviewText").value.trim()
+    });
+    this.reset();
+    msg.textContent = "Thank you! Your review was submitted.";
+    loadReviews();
+  } catch (err) {
+    msg.textContent = "Review could not be submitted. Enable the new_gama_reviews table and insert policy.";
+    console.error(err);
+  }
+});
+
+document.getElementById("closeOrder").onclick=()=>document.getElementById("orderModal").classList.remove("show");
+document.getElementById("orderModal").onclick=e=>{if(e.target.id==="orderModal")e.currentTarget.classList.remove("show")};
+
+function selectedValue(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : "";
+}
+
+function updateOrderOptions() {
+  const paymentMethod = selectedValue("paymentMethod");
+  const upiInfo = document.getElementById("upiInfo");
+  const upiAmount = document.getElementById("upiAmount");
+
+  upiInfo.style.display = paymentMethod === "upi" ? "block" : "none";
+  upiAmount.textContent = "Amount to pay: " + totalPriceText();
+}
+
+document.querySelectorAll('input[name="paymentMethod"]').forEach(function(el) {
+  el.addEventListener("change", updateOrderOptions);
+});
+
+document.getElementById("orderForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const msg = document.getElementById("orderMessage");
+  const fulfillment = "shop_pickup";
+  const paymentMethod = selectedValue("paymentMethod");
+
+  msg.textContent = "Sending order...";
+
+  try {
+    await post("new_gama_orders", {
+      product_id: productId,
+      product_name: product.name || "",
+      part_number: product.part_number || "",
+      quantity: quantity,
+      customer_name: document.getElementById("customerName").value.trim(),
+      customer_phone: document.getElementById("customerPhone").value.trim(),
+      customer_address: "",
+      customer_note: document.getElementById("customerNote").value.trim(),
+      fulfillment_method: fulfillment,
+      payment_method: paymentMethod,
+      payment_status: paymentMethod === "cash" ? "pending_cash" : "pending_upi",
+      currency: product.currency || "INR",
+      unit_price: product.price ?? 0,
+      total_amount: totalPrice(),
+      order_status: "new"
+    });
+
+    if (paymentMethod === "upi") {
+      msg.textContent = "Order placed. Please complete the UPI payment as instructed by the shop.";
+    } else {
+      msg.textContent = "Order placed successfully. Please pay cash when you pick up the product from the shop.";
+    }
+
+    setTimeout(() => {
+      document.getElementById("orderModal").classList.remove("show");
+      this.reset();
+      updateOrderOptions();
+    }, 1800);
+
+  } catch (err) {
+    msg.textContent = "Order could not be sent. Please update the orders table SQL.";
+    console.error(err);
+  }
+});
+
+
+(function setupZoom() {
+  const modal = document.getElementById("zoomModal");
+  const img = document.getElementById("zoomImage");
+  let scale = 1, x = 0, y = 0, dragging = false, startX = 0, startY = 0;
+  const apply = () => { img.style.transform = `translate(${x}px,${y}px) scale(${scale})`; };
+  const reset = () => { scale = 1; x = 0; y = 0; apply(); };
+  const closeZoom = () => { modal.classList.remove("show"); modal.setAttribute("aria-hidden","true"); reset(); };
+
+  window.openProductZoom = function(src, alt) {
+    img.src = src; img.alt = alt || "Zoomed product image";
+    reset();
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden","false");
+  };
+
+  document.getElementById("zoomClose").onclick = closeZoom;
+  document.getElementById("zoomInBtn").onclick = () => { scale = Math.min(4, +(scale + .25).toFixed(2)); apply(); };
+  document.getElementById("zoomOutBtn").onclick = () => { scale = Math.max(1, +(scale - .25).toFixed(2)); if(scale === 1){x=0;y=0;} apply(); };
+
+  modal.addEventListener("wheel", e => {
+    if (!modal.classList.contains("show")) return;
+    e.preventDefault();
+    scale = Math.max(1, Math.min(4, scale + (e.deltaY < 0 ? .2 : -.2)));
+    if(scale === 1){x=0;y=0;}
+    apply();
+  }, {passive:false});
+
+  img.addEventListener("pointerdown", e => {
+    if (scale <= 1) return;
+    dragging = true; startX = e.clientX - x; startY = e.clientY - y;
+    img.classList.add("dragging"); img.setPointerCapture(e.pointerId);
+  });
+  img.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    x = e.clientX - startX; y = e.clientY - startY; apply();
+  });
+  img.addEventListener("pointerup", () => { dragging=false; img.classList.remove("dragging"); });
+
+  modal.addEventListener("click", e => { if(e.target === modal) closeZoom(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeZoom(); });
+})();
+async function init() {
+  try {
+    if (!productId) throw new Error("Product ID is missing.");
+    const rows = await get("new_gama_products?select=*&id=eq." + encodeURIComponent(productId));
+    product = rows[0];
+    if (!product) throw new Error("Product not found.");
+
+    console.log("New Gama full product row:", product);
+
+    const extraImageRows = [];
+    const tables = ["new_gama_product_images","new_gama_images","product_images"];
+    const fields = ["product_id","item_id","product","parent_id"];
+
+    for (const table of tables) {
+      for (const field of fields) {
+        try {
+          const r = await get(table + "?select=*&" + field + "=eq." + encodeURIComponent(productId));
+          if (Array.isArray(r) && r.length) {
+            console.log("New Gama image rows:", table, field, r);
+            extraImageRows.push(...r);
+          }
+        } catch (_) {}
+      }
+    }
+
+    product._gallery_images = mergeImages(imagesOf(product), extraImageRows);
+    console.log("New Gama FINAL gallery:", product._gallery_images);
+    renderProduct();
+    loadReviews();
+  } catch (err) {
+    console.error(err);
+    document.getElementById("productRoot").innerHTML =
+      '<div class="error">Product could not be loaded.<br><small>' + esc(err.message || String(err)) + '</small></div>';
+  }
+}
+init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login | New Gama Earthmovers</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial;background:#f5f6f8;color:#222;min-height:100vh;display:grid;place-items:center}
+.card{width:min(440px,calc(100% - 28px));background:#fff;border:1px solid #e5e7eb;border-radius:22px;padding:30px;box-shadow:0 18px 50px #00000012}
+.logo{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #f5b400;display:block;margin:auto}
+h1{text-align:center;margin:15px 0 5px}.sub{text-align:center;color:#777;margin:0 0 25px}.tabs{display:flex;background:#f3f4f6;border-radius:12px;padding:4px;gap:4px;margin-bottom:20px}
+.tab{flex:1;border:0;background:transparent;padding:11px;border-radius:9px;font-weight:700;cursor:pointer}.tab.active{background:#fff;box-shadow:0 2px 8px #00000012}
+label{display:block;font-size:13px;font-weight:700;margin:13px 0 6px}input{width:100%;padding:13px;border:1px solid #d8dce2;border-radius:10px;font-size:15px;outline:none}input:focus{border-color:#f5b400}
+button.submit{width:100%;border:0;background:#f5b400;padding:14px;border-radius:10px;font-weight:800;font-size:15px;margin-top:20px;cursor:pointer}.back{display:block;text-align:center;margin-top:17px;color:#555;text-decoration:none}
+.msg{display:none;margin:14px 0 0;padding:11px;border-radius:9px;font-size:13px}.msg.err{background:#fff0ef;color:#a22}.msg.ok{background:#effaf2;color:#176b39}
+</style></head><body><main class="card">
+<img class="logo" src="new-gama-logo.png" onerror="this.style.display='none'"><h1 id="title">Customer Login</h1><p class="sub">Login to continue shopping and ordering</p>
+<div class="tabs"><button class="tab active" id="loginTab">Login</button><button class="tab" id="signupTab">Create Account</button></div>
+<form id="authForm" autocomplete="off">
+<div id="nameBox" style="display:none"><label>Full Name</label><input id="name" name="new-gama-full-name" autocomplete="off" placeholder="Enter full name"></div>
+<label>Email</label><input id="email" name="new-gama-email" type="email" autocomplete="off" placeholder="Enter email" required>
+<label>Password</label><input id="password" name="new-gama-password" type="password" autocomplete="new-password" placeholder="Enter password" minlength="6" required>
+<button class="submit" id="submitBtn" type="submit">Login</button><div class="msg" id="msg"></div>
+</form><a class="back" href="index.html">← Back to Homepage</a></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='REPLACE_WITH_YOUR_SUPABASE_URL';
+const SUPABASE_KEY='REPLACE_WITH_YOUR_PUBLISHABLE_OR_ANON_KEY';
+let client=null,mode='login';
+function show(t,kind){const m=document.getElementById('msg');m.className='msg '+kind;m.textContent=t;m.style.display='block'}
+function validConfig(){return !SUPABASE_URL.startsWith('REPLACE_')&&!SUPABASE_KEY.startsWith('REPLACE_')}
+function setMode(m){mode=m;document.getElementById('loginTab').classList.toggle('active',m==='login');document.getElementById('signupTab').classList.toggle('active',m==='signup');document.getElementById('nameBox').style.display=m==='signup'?'block':'none';document.getElementById('submitBtn').textContent=m==='signup'?'Create Account':'Login';document.getElementById('title').textContent=m==='signup'?'Create Customer Account':'Customer Login'}
+document.getElementById('loginTab').onclick=()=>setMode('login');document.getElementById('signupTab').onclick=()=>setMode('signup');
+window.addEventListener('pageshow',()=>{document.getElementById('email').value='';document.getElementById('password').value='';});
+document.getElementById('authForm').onsubmit=async e=>{e.preventDefault();if(!validConfig())return show('Supabase URL and Publishable/anon key users.html me replace karein.','err');try{
+client=client||window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value,name=document.getElementById('name').value.trim();
+if(mode==='signup'){const r=await client.auth.signUp({email,password,options:{data:{full_name:name}}});if(r.error)throw r.error;show('Account created. Email confirmation enabled ho to inbox confirm karein, phir login karein.','ok');}
+else {const r=await client.auth.signInWithPassword({email,password});if(r.error)throw r.error;location.href='index.html';}
+}catch(err){show(err.message||'Login failed','err')}};
+</script></body></html>
