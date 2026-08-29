@@ -155,7 +155,7 @@ window.NG_SUPABASE = window.NG_SUPABASE || window.supabase.createClient('https:/
   <div class="stats">
     <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
     <div class="stat"><span>Total Categories</span><b id="categoryCount">0</b></div>
-    <div class="stat order-stat-card" id="totalOrdersCard" title="Click to view all orders" role="button" tabindex="0" onclick="location.href='orders.html'">
+    <div class="stat order-stat-card" id="totalOrdersCard" title="Click to view all orders" role="button" tabindex="0" onclick="ngOwnerGo('orders.html')">
         <span>Total Orders</span><b id="totalOrderCount">0</b>
         <small>Click to view orders</small>
       </div>
@@ -1008,8 +1008,8 @@ document.addEventListener('DOMContentLoaded', function () {
   function boot(){
     const card=document.getElementById('totalOrdersCard');
     if(card){
-      card.onclick=function(){location.href='orders.html'};
-      card.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();location.href='orders.html'}};
+      card.onclick=function(){ngOwnerGo('orders.html')};
+      card.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();ngOwnerGo('orders.html')}};
     }
     updateTotalOrders();
     if(window.NG_SUPABASE && !window.NG_DASH_ORDER_COUNT_CHANNEL){
@@ -1080,6 +1080,48 @@ document.addEventListener('DOMContentLoaded', function () {
     location.replace('index.html');
   }
 })();
+</script>
+
+
+<script id="ng-owner-card-navigation-fix">
+(function(){
+  window.ngOwnerGo=function(page){
+    sessionStorage.setItem('newGamaOwnerAuthorized','true');
+    localStorage.setItem('newGamaOwnerAuthorized','true');
+    location.href=page + (page.indexOf('?')>=0 ? '&' : '?') + 'owner_access=1&from=owner.html';
+  };
+})();
+</script>
+
+
+<script id="ng-owner-total-cards-fix">
+document.addEventListener('DOMContentLoaded',function(){
+  const targets=[
+    ['totalOrdersCard','orders.html'],
+    ['ordersCard','orders.html'],
+    ['totalUsersCard','users.html'],
+    ['usersCard','users.html']
+  ];
+  targets.forEach(([id,page])=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.style.cursor='pointer';
+      el.onclick=()=>ngOwnerGo(page);
+    }
+  });
+
+  // Text-based fallback for existing dashboard cards.
+  document.querySelectorAll('.stat-card,.card,.dashboard-card').forEach(el=>{
+    const text=(el.innerText||'').trim().toLowerCase();
+    if(text.includes('total order')){
+      el.style.cursor='pointer';
+      el.addEventListener('click',()=>ngOwnerGo('orders.html'));
+    }else if(text.includes('total user')){
+      el.style.cursor='pointer';
+      el.addEventListener('click',()=>ngOwnerGo('users.html'));
+    }
+  });
+});
 </script>
 
 </body>
