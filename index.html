@@ -117,6 +117,29 @@
   </main>
 
   <footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
+  </div>
+
+
+  <div class="security-modal" id="securityModal" role="dialog" aria-modal="true">
+    <div class="security-box">
+      <div class="security-icon">🔐</div>
+      <h2 id="securityTitle">Owner Security</h2>
+      <p id="securityText">Enter your owner security PIN to open the dashboard.</p>
+      <div id="confirmPinWrap" style="display:none">
+        <label for="confirmPin">Confirm Security PIN</label>
+        <input id="confirmPin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Enter PIN again" maxlength="12">
+      </div>
+      <div id="pinWrap">
+        <label for="ownerPin" id="pinLabel">Security PIN</label>
+        <input id="ownerPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4 to 12 digit PIN" maxlength="12">
+      </div>
+      <div class="security-error" id="securityError"></div>
+      <div class="security-actions">
+        <button type="button" id="securitySubmit">Continue</button>
+        <button type="button" class="cancel-btn" id="securityCancel">Cancel</button>
+      </div>
+    </div>
+
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
@@ -166,8 +189,10 @@
 
     function closeSecurity(){ modal.classList.remove('show'); }
 
-    document.getElementById('securityCancel').addEventListener('click', closeSecurity);
-    document.getElementById('securitySubmit').addEventListener('click', async function(){
+    const securityCancelBtn = document.getElementById('securityCancel');
+    const securitySubmitBtn = document.getElementById('securitySubmit');
+    if (securityCancelBtn) securityCancelBtn.addEventListener('click', closeSecurity);
+    if (securitySubmitBtn) securitySubmitBtn.addEventListener('click', async function(){
       const pin = pinInput.value.trim();
       securityError.style.display='none';
       if(!/^\d{4,12}$/.test(pin)){
@@ -203,26 +228,5 @@
       ownerClickTimer=setTimeout(()=>ownerClicks=0,3000);
     });
   </script>
-
-  <div class="security-modal" id="securityModal" role="dialog" aria-modal="true">
-    <div class="security-box">
-      <div class="security-icon">🔐</div>
-      <h2 id="securityTitle">Owner Security</h2>
-      <p id="securityText">Enter your owner security PIN to open the dashboard.</p>
-      <div id="confirmPinWrap" style="display:none">
-        <label for="confirmPin">Confirm Security PIN</label>
-        <input id="confirmPin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Enter PIN again" maxlength="12">
-      </div>
-      <div id="pinWrap">
-        <label for="ownerPin" id="pinLabel">Security PIN</label>
-        <input id="ownerPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4 to 12 digit PIN" maxlength="12">
-      </div>
-      <div class="security-error" id="securityError"></div>
-      <div class="security-actions">
-        <button type="button" id="securitySubmit">Continue</button>
-        <button type="button" class="cancel-btn" id="securityCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
