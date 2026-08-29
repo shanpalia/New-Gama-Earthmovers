@@ -54,7 +54,7 @@ textarea{min-height:100px;resize:vertical}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
 .modal.show{display:flex}
-.modal-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:24px;position:relative}
+.modal-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:24px;position:relative}.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice-card{border:1px solid #ddd;border-radius:10px;padding:13px;display:flex;gap:10px;cursor:pointer}.choice-card input{width:auto;margin-top:3px}.choice-card small{display:block;color:#777;margin-top:4px}.upi-box{background:#f7f7f7;border:1px solid #ddd;border-radius:10px;padding:13px}.pickup-info{background:#fff8df;border:1px solid #f0d676;border-radius:10px;padding:13px;margin:8px 0 18px}.pickup-info small{display:block;color:#666;margin-top:5px}@media(max-width:600px){.choice-grid{grid-template-columns:1fr}}
 .close{position:absolute;right:14px;top:12px;border:0;background:#f1f1f1;width:36px;height:36px;border-radius:50%;font-size:22px;cursor:pointer}
 .loading{padding:70px 20px;text-align:center;color:#666}
 .error{background:#fff;border-radius:14px;padding:25px;text-align:center;color:#b42318}
@@ -118,15 +118,36 @@ footer{background:#181818;color:#ddd;text-align:center;padding:25px;margin-top:4
         <input id="customerName" placeholder="Full name" required>
         <input id="customerPhone" placeholder="Mobile / WhatsApp number" required>
       </div>
-      <input id="customerAddress" placeholder="Delivery address" required>
+
+      <div class="pickup-info">
+        <strong>🏪 Shop Pickup Only</strong>
+        <small>Customer will collect the product directly from the shop.</small>
+      </div>
+
+      <h3 style="margin-top:8px">Payment Method</h3>
+      <div class="choice-grid">
+        <label class="choice-card">
+          <input type="radio" name="paymentMethod" value="cash" checked>
+          <span><strong>Cash</strong><small>Pay in cash</small></span>
+        </label>
+        <label class="choice-card">
+          <input type="radio" name="paymentMethod" value="upi">
+          <span><strong>UPI</strong><small>Pay using UPI</small></span>
+        </label>
+      </div>
+
+      <div id="upiInfo" class="upi-box" style="display:none">
+        <strong>UPI Payment</strong>
+        <div id="upiAmount" style="margin-top:6px"></div>
+        <small>After confirming, payment details/QR can be configured for your shop.</small>
+      </div>
+
       <textarea id="customerNote" placeholder="Order note (optional)"></textarea>
       <button class="primary" type="submit">Confirm Order</button>
       <div id="orderMessage" class="note"></div>
     </form>
   </div>
-</div>
-
-<footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
+</div><footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
 
 <script>
 (() => {
@@ -292,6 +313,7 @@ function renderProduct() {
   document.getElementById("buyNow").onclick=()=>{
     document.getElementById("orderProductText").textContent =
       (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
+    updateOrderOptions();
     document.getElementById("orderModal").classList.add("show");
   };
 }
@@ -344,10 +366,32 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
 document.getElementById("closeOrder").onclick=()=>document.getElementById("orderModal").classList.remove("show");
 document.getElementById("orderModal").onclick=e=>{if(e.target.id==="orderModal")e.currentTarget.classList.remove("show")};
 
+function selectedValue(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : "";
+}
+
+function updateOrderOptions() {
+  const paymentMethod = selectedValue("paymentMethod");
+  const upiInfo = document.getElementById("upiInfo");
+  const upiAmount = document.getElementById("upiAmount");
+
+  upiInfo.style.display = paymentMethod === "upi" ? "block" : "none";
+  upiAmount.textContent = "Amount to pay: " + totalPriceText();
+}
+
+document.querySelectorAll('input[name="paymentMethod"]').forEach(function(el) {
+  el.addEventListener("change", updateOrderOptions);
+});
+
 document.getElementById("orderForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   const msg = document.getElementById("orderMessage");
+  const fulfillment = "shop_pickup";
+  const paymentMethod = selectedValue("paymentMethod");
+
   msg.textContent = "Sending order...";
+
   try {
     await post("new_gama_orders", {
       product_id: productId,
@@ -356,17 +400,31 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
       quantity: quantity,
       customer_name: document.getElementById("customerName").value.trim(),
       customer_phone: document.getElementById("customerPhone").value.trim(),
-      customer_address: document.getElementById("customerAddress").value.trim(),
+      customer_address: "",
       customer_note: document.getElementById("customerNote").value.trim(),
+      fulfillment_method: fulfillment,
+      payment_method: paymentMethod,
+      payment_status: paymentMethod === "cash" ? "pending_cash" : "pending_upi",
       currency: product.currency || "INR",
       unit_price: product.price ?? 0,
       total_amount: totalPrice(),
       order_status: "new"
     });
-    msg.textContent = "Order sent successfully! The shop owner can now see your order.";
-    setTimeout(()=>{document.getElementById("orderModal").classList.remove("show");this.reset();},1300);
+
+    if (paymentMethod === "upi") {
+      msg.textContent = "Order placed. Please complete the UPI payment as instructed by the shop.";
+    } else {
+      msg.textContent = "Order placed successfully. Please pay cash when you pick up the product from the shop.";
+    }
+
+    setTimeout(() => {
+      document.getElementById("orderModal").classList.remove("show");
+      this.reset();
+      updateOrderOptions();
+    }, 1800);
+
   } catch (err) {
-    msg.textContent = "Order could not be sent. Enable the new_gama_orders table and insert policy.";
+    msg.textContent = "Order could not be sent. Please update the orders table SQL.";
     console.error(err);
   }
 });
