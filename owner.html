@@ -1100,7 +1100,7 @@ document.addEventListener('DOMContentLoaded',function(){
     ['totalOrdersCard','orders.html'],
     ['ordersCard','orders.html'],
     ['totalUsersCard','users.html'],
-    ['usersCard','users.html']
+    ['usersCard','orders.html']
   ];
   targets.forEach(([id,page])=>{
     const el=document.getElementById(id);
@@ -1122,6 +1122,44 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   });
 });
+</script>
+
+
+<script id="ng-total-orders-direct-fix">
+(function(){
+  function openOrders(e){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    sessionStorage.setItem('newGamaOwnerAuthorized','true');
+    localStorage.setItem('newGamaOwnerAuthorized','true');
+    window.location.href='orders.html?owner_access=1&from=owner.html';
+    return false;
+  }
+
+  function bind(){
+    document.querySelectorAll('a,button,div,.stat-card,.card,.dashboard-card').forEach(function(el){
+      const t=(el.innerText || el.textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
+      if(t.includes('total orders') || t === 'orders'){
+        // Capture listener runs before old bubbling handlers.
+        el.addEventListener('click', openOrders, true);
+        el.style.cursor='pointer';
+      }
+    });
+
+    // Explicit IDs/classes if present.
+    ['totalOrdersCard','ordersCard','total-orders','totalOrders'].forEach(function(id){
+      const el=document.getElementById(id);
+      if(el){
+        el.onclick=null;
+        el.addEventListener('click',openOrders,true);
+        el.style.cursor='pointer';
+      }
+    });
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
+  else bind();
+})();
 </script>
 
 </body>
