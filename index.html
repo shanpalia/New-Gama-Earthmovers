@@ -80,562 +80,117 @@
 @media(max-width:800px){.product-detail{grid-template-columns:1fr}.gallery-main{height:330px}.product-info{padding:22px}}
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-  <div class="top">🚜 Heavy Equipment Spare Parts & Solutions</div>
-
-  <header>
-    <nav>
-      <div class="brand">
-        <img id="ownerTrigger" class="brand-logo" src="new-gama-logo.png" alt="New Gama Earthmovers Logo">
-        <a href="#home">
-          <div>NEW GAMA EARTHMOVERS<span>Heavy Equipment Spare Parts</span></div>
-        </a>
-      </div>
-
-      <div class="links">
-        <a href="#parts">Parts</a>
-        <a href="#categories">Categories</a>
-        <a href="#contact">Contact Us</a>
-      </div>
-    </nav>
-  </header>
-
-  <main>
-    <section class="hero" id="home">
-      <div>
-        <img class="hero-logo" src="new-gama-logo.png" alt="New Gama Earthmovers">
-        <div class="badge">HEAVY EQUIPMENT PARTS</div>
-        <h1>Reliable Parts for Powerful Machines.</h1>
-        <p>Welcome to New Gama Earthmovers. Browse heavy equipment and earthmoving machine spare parts.</p>
-        <a href="#parts" class="btn">Browse Parts</a>
-        <a href="#contact" class="btn outline">Contact Us</a>
-      </div>
-    </section>
-
-    <div class="search">
-      <input id="searchInput" placeholder="Search Part Name or Part Number">
-      <button onclick="searchParts()">Search</button>
-    </div>
-
-    <section id="parts" class="container">
-      <div class="title"><h2>Spare Parts</h2><p>Search and browse available parts.</p></div>
-      <div class="empty" id="result"><strong>No parts available yet.</strong><br>Parts added by the shop owner will appear here.</div>
-    </section>
-
-    <section id="categories" class="container">
-      <div class="title"><h2>Categories</h2><p>Browse parts by category.</p></div>
-      <div class="empty"><strong>No categories available yet.</strong><br>Categories will appear after the shop owner adds them.</div>
-    </section>
-
-    <section id="contact" class="contact">
-      <div class="container">
-        <div>
-          <h2>Contact New Gama Earthmovers</h2>
-          <p style="color:#bbb;margin-top:12px">Shop address, contact and WhatsApp details will be configured by the shop owner.</p>
-        </div>
-        <div>
-          <div class="card"><b>📍 Shop Address</b><br><span>Not configured yet</span></div>
-          <div class="card"><b>📞 Contact Number</b><br><span>Not configured yet</span></div>
-          <div class="card"><b>💬 WhatsApp</b><br><span>Not configured yet</span></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
-  </div>
-
-
-  <div class="security-modal" id="securityModal" role="dialog" aria-modal="true">
-    <div class="security-box">
-      <div class="security-icon">🔐</div>
-      <h2 id="securityTitle">Owner Security</h2>
-      <p id="securityText">Enter your owner security PIN to open the dashboard.</p>
-      <div id="confirmPinWrap" style="display:none">
-        <label for="confirmPin">Confirm Security PIN</label>
-        <input id="confirmPin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Enter PIN again" maxlength="12">
-      </div>
-      <div id="pinWrap">
-        <label for="ownerPin" id="pinLabel">Security PIN</label>
-        <input id="ownerPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4 to 12 digit PIN" maxlength="12">
-      </div>
-      <div class="security-error" id="securityError"></div>
-      <div class="security-actions">
-        <button type="button" id="securitySubmit">Continue</button>
-        <button type="button" class="cancel-btn" id="securityCancel">Cancel</button>
-      </div>
-    </div>
-
-
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    function searchParts(){
-      const q = document.getElementById('searchInput').value.trim();
-      document.getElementById('result').innerHTML = q
-        ? '<strong>Search: ' + q.replace(/</g,'&lt;') + '</strong><br>Real parts search will be connected when the database is added.'
-        : '<strong>Please enter a Part Name or Part Number.</strong>';
-    }
-
-    const SECURITY_KEY = 'newGamaOwnerPinHash';
-    const modal = document.getElementById('securityModal');
-    const pinInput = document.getElementById('ownerPin');
-    const confirmInput = document.getElementById('confirmPin');
-    const confirmWrap = document.getElementById('confirmPinWrap');
-    const securityTitle = document.getElementById('securityTitle');
-    const securityText = document.getElementById('securityText');
-    const pinLabel = document.getElementById('pinLabel');
-    const securityError = document.getElementById('securityError');
-    let setupMode = false;
-
-    async function hashPin(pin){
-      const data = new TextEncoder().encode(pin);
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
-
-    function showSecurity(){
-      setupMode = !localStorage.getItem(SECURITY_KEY);
-      securityError.style.display='none';
-      pinInput.value=''; confirmInput.value='';
-      if(setupMode){
-        securityTitle.textContent='Create Owner Security';
-        securityText.textContent='First time setup: create a 4 to 12 digit security PIN. You will need this PIN every time you open the Owner Dashboard.';
-        pinLabel.textContent='Create Security PIN';
-        confirmWrap.style.display='block';
-      }else{
-        securityTitle.textContent='Owner Security';
-        securityText.textContent='Enter your owner security PIN to open the dashboard.';
-        pinLabel.textContent='Security PIN';
-        confirmWrap.style.display='none';
-      }
-      modal.classList.add('show');
-      setTimeout(()=>pinInput.focus(),50);
-    }
-
-    function closeSecurity(){ modal.classList.remove('show'); }
-
-    const securityCancelBtn = document.getElementById('securityCancel');
-    const securitySubmitBtn = document.getElementById('securitySubmit');
-    if (securityCancelBtn) securityCancelBtn.addEventListener('click', closeSecurity);
-    if (securitySubmitBtn) securitySubmitBtn.addEventListener('click', async function(){
-      const pin = pinInput.value.trim();
-      securityError.style.display='none';
-      if(!/^\d{4,12}$/.test(pin)){
-        securityError.textContent='Please enter a 4 to 12 digit PIN.';
-        securityError.style.display='block'; return;
-      }
-      if(setupMode){
-        if(pin !== confirmInput.value.trim()){
-          securityError.textContent='PINs do not match. Please try again.';
-          securityError.style.display='block'; return;
-        }
-        localStorage.setItem(SECURITY_KEY, await hashPin(pin));
-      }else{
-        const saved = localStorage.getItem(SECURITY_KEY);
-        if(await hashPin(pin) !== saved){
-          securityError.textContent='Incorrect security PIN.';
-          securityError.style.display='block'; return;
-        }
-      }
-      sessionStorage.setItem('newGamaOwnerAuthorized','true');
-      window.location.href = 'owner.html';
-    });
-
-    pinInput.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('securitySubmit').click(); });
-    confirmInput.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('securitySubmit').click(); });
-
-    // Hidden Owner/Admin Panel trigger: click header PNG logo 5 times within 3 seconds.
-    let ownerClicks = 0, ownerClickTimer = null;
-    const ownerTrigger = document.getElementById('ownerTrigger');
-    ownerTrigger.addEventListener('click', function(){
-      ownerClicks++; clearTimeout(ownerClickTimer);
-      if(ownerClicks >= 5){ ownerClicks=0; showSecurity(); return; }
-      ownerClickTimer=setTimeout(()=>ownerClicks=0,3000);
-    });
-  </script>
-
-
-
-<section class="store-products" id="storeProducts">
-  <h2>Our Parts & Products</h2>
-  <p>Browse available parts. Click any product to view all 5 images and complete details.</p>
-  <div class="customer-grid" id="customerProductList"></div>
-</section>
-
-<div class="product-modal" id="productModal">
-  <div class="product-modal-box">
-    <button class="product-close" id="productClose">×</button>
-    <div class="product-detail">
-      <div>
-        <div class="gallery-main"><img id="galleryMain" alt="Product image"></div>
-        <div class="gallery-thumbs" id="galleryThumbs"></div>
-      </div>
-      <div class="product-info">
-        <span class="customer-badge" id="modalCategory"></span>
-        <h2 id="modalName"></h2>
-        <div class="meta" id="modalPart"></div>
-        <div class="price" id="modalPrice"></div>
-        <div class="desc" id="modalDescription"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  const KEY='newGamaStoreDataV2';
-
-  function getItems(){
-    try{
-      const raw=localStorage.getItem(KEY);
-      const data=raw?JSON.parse(raw):{};
-      return Array.isArray(data.items)?data.items:[];
-    }catch(e){
-      console.error('Customer product load error',e);
-      return [];
-    }
-  }
-
-  function esc(v){
-    const d=document.createElement('div');
-    d.textContent=v||'';
-    return d.innerHTML;
-  }
-
-  function price(item){
-    return (item.currency==='NPR'?'रु ':'₹ ')+(item.price||'0');
-  }
-
-  function showProduct(item){
-    const images=(item.images||[]).filter(Boolean);
-    if(!images.length)return;
-
-    document.getElementById('modalCategory').textContent=item.category||'';
-    document.getElementById('modalName').textContent=item.name||'Product';
-    document.getElementById('modalPart').textContent=item.part?'Part No: '+item.part:'';
-    document.getElementById('modalPrice').textContent=price(item);
-    document.getElementById('modalDescription').textContent=item.description||'';
-
-    const main=document.getElementById('galleryMain');
-    const thumbs=document.getElementById('galleryThumbs');
-    main.src=images[0];
-
-    thumbs.innerHTML=images.map((src,i)=>
-      '<img src="'+src+'" data-index="'+i+'" class="'+(i===0?'active':'')+'" alt="Product image '+(i+1)+'">'
-    ).join('');
-
-    thumbs.querySelectorAll('img').forEach(function(img){
-      img.addEventListener('click',function(){
-        main.src=images[Number(this.dataset.index)];
-        thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
-
-    document.getElementById('productModal').classList.add('show');
-  }
-
-  function renderCustomerProducts(){
-    const list=document.getElementById('customerProductList');
-    if(!list)return;
-
-    const items=getItems();
-
-    if(!items.length){
-      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
-      return;
-    }
-
-    list.innerHTML=items.map(function(item,index){
-      const images=(item.images||[]).filter(Boolean);
-      const mainImage=images[0]||'';
-      return '<article class="customer-card" data-product-index="'+index+'">'+
-        '<img src="'+mainImage+'" alt="'+esc(item.name)+'">'+
-        '<div class="customer-card-body">'+
-        '<span class="customer-badge">'+esc(item.category)+'</span>'+
-        '<h3>'+esc(item.name)+'</h3>'+
-        (item.part?'<div style="color:#777;font-size:13px">Part No: '+esc(item.part)+'</div>':'')+
-        '<div class="customer-price">'+price(item)+'</div>'+
-        '</div></article>';
-    }).join('');
-
-    list.querySelectorAll('.customer-card').forEach(function(card){
-      card.addEventListener('click',function(){
-        const items=getItems();
-        const item=items[Number(this.dataset.productIndex)];
-        if(item)showProduct(item);
-      });
-    });
-  }
-
-  document.getElementById('productClose').addEventListener('click',function(){
-    document.getElementById('productModal').classList.remove('show');
-  });
-
-  document.getElementById('productModal').addEventListener('click',function(e){
-    if(e.target===this)this.classList.remove('show');
-  });
-
-  // Load products immediately and again when returning from owner dashboard.
-  document.addEventListener('DOMContentLoaded',renderCustomerProducts);
-  window.addEventListener('focus',renderCustomerProducts);
-  window.addEventListener('pageshow',renderCustomerProducts);
-  window.addEventListener('storage',renderCustomerProducts);
-
-  // Also refresh periodically so products saved in another open tab appear automatically.
-  setInterval(renderCustomerProducts,2000);
-})();
-</script>
-
-
-<script>
-(() => {
-  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  function esc(v) {
-    const d=document.createElement('div'); d.textContent=v||''; return d.innerHTML;
-  }
-  function price(item) {
-    return (String(item.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ')+(item.price ?? 0);
-  }
-
-  async function loadProducts() {
-    const list=document.getElementById('customerProductList');
-    if(!list) return;
-    list.innerHTML='<div class="customer-empty">Loading products...</div>';
-
-    const [catRes, prodRes] = await Promise.all([
-      sb.from('new_gama_categories').select('id,name'),
-      sb.from('new_gama_products').select('*').order('created_at',{ascending:false})
-    ]);
-    if(catRes.error) throw catRes.error;
-    if(prodRes.error) throw prodRes.error;
-
-    const catMap = Object.fromEntries((catRes.data||[]).map(c=>[c.id,c.name]));
-    const items=(prodRes.data||[]).map(p=>({
-      ...p,
-      category:catMap[p.category_id]||'',
-      images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
-    }));
-
-    if(!items.length) {
-      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
-      return;
-    }
-
-    list.innerHTML=items.map((item,i)=>{
-      const image=item.images[0]||'new-gama-logo.png';
-      return `<article class="customer-card" data-index="${i}">
-        <img src="${image}" alt="${esc(item.name)}" loading="lazy">
-        <div class="customer-card-body">
-          <span class="customer-badge">${esc(item.category)}</span>
-          <h3>${esc(item.name)}</h3>
-          ${item.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(item.part_number)}</div>`:''}
-          <div class="customer-price">${price(item)}</div>
-        </div>
-      </article>`;
-    }).join('');
-
-    list.querySelectorAll('.customer-card').forEach(card=>card.addEventListener('click',()=>showProduct(items[Number(card.dataset.index)])));
-  }
-
-  function showProduct(item) {
-    const modal=document.getElementById('productModal');
-    const main=document.getElementById('galleryMain');
-    const thumbs=document.getElementById('galleryThumbs');
-    const images=item.images||[];
-
-    document.getElementById('modalCategory').textContent=item.category||'';
-    document.getElementById('modalName').textContent=item.name||'Product';
-    document.getElementById('modalPart').textContent=item.part_number?'Part No: '+item.part_number:'';
-    document.getElementById('modalPrice').textContent=price(item);
-    document.getElementById('modalDescription').textContent=item.description||'';
-
-    main.src=images[0]||'';
-    thumbs.innerHTML=images.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}" data-i="${i}">`).join('');
-    thumbs.querySelectorAll('img').forEach(img=>img.addEventListener('click',()=>{
-      main.src=images[Number(img.dataset.i)];
-      thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
-      img.classList.add('active');
-    }));
-    modal.classList.add('show');
-  }
-
-  document.addEventListener('DOMContentLoaded',()=>{
-    loadProducts().catch(err=>{
-      console.error(err);
-      const list=document.getElementById('customerProductList');
-      if(list) list.innerHTML='<div class="customer-empty">Could not load products.</div>';
-    });
-    document.getElementById('productClose')?.addEventListener('click',()=>document.getElementById('productModal').classList.remove('show'));
-    document.getElementById('productModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show')});
-  });
-})();
-</script>
-
-
-<script>
-/* Reliable homepage product loader */
-(async function(){
-  const URL="https://gozvchqatiyebpnycubl.supabase.co";
-  const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
-  function esc(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
-  async function reloadProducts(){
-    const list=document.getElementById('customerProductList');
-    if(!list || !window.supabase) return;
-    try{
-      const sb=window.supabase.createClient(URL,KEY);
-      const [pr,cr]=await Promise.all([
-        sb.from('new_gama_products').select('*').order('created_at',{ascending:false}),
-        sb.from('new_gama_categories').select('id,name')
-      ]);
-      if(pr.error) throw pr.error;
-      if(cr.error) throw cr.error;
-      const cm=Object.fromEntries((cr.data||[]).map(c=>[c.id,c.name]));
-      const rows=pr.data||[];
-      if(!rows.length){
-        list.innerHTML='<div class="customer-empty">No products available yet.</div>';
-        return;
-      }
-      list.innerHTML=rows.map((p,i)=>{
-        const image=p.main_image_url||p.image_2_url||p.image_3_url||p.image_4_url||p.image_5_url||'new-gama-logo.png';
-        const symbol=String(p.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ';
-        return `<article class="customer-card" data-cloud-index="${i}">
-          <img src="${image}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='new-gama-logo.png'">
-          <div class="customer-card-body">
-            <span class="customer-badge">${esc(cm[p.category_id]||'')}</span>
-            <h3>${esc(p.name)}</h3>
-            ${p.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(p.part_number)}</div>`:''}
-            <div class="customer-price">${symbol}${p.price??0}</div>
-          </div>
-        </article>`;
-      }).join('');
-    }catch(err){
-      console.error('Homepage Supabase error:',err);
-      if(list) list.innerHTML='<div class="customer-empty">Products could not be loaded. Please refresh the page.</div>';
-    }
-  }
-  document.addEventListener('DOMContentLoaded',reloadProducts);
-  window.addEventListener('pageshow',reloadProducts);
-})();
-</script>
-
 
 <script>
 /* =========================================================
-   NEW GAMA EARTHMOVERS - DIRECT HOMEPAGE SUPABASE CONNECTOR
+   NEW GAMA EARTHMOVERS - CLEAN SINGLE SUPABASE CLIENT
    ========================================================= */
 (function () {
   const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
 
-  function escapeHTML(value) {
-    const d = document.createElement("div");
-    d.textContent = value ?? "";
+  // Exactly ONE client. Auth persistence disabled because this public homepage
+  // does not need login, avoiding GoTrue multiple-client warnings.
+  window.newGamaSupabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  );
+
+  const sb = window.newGamaSupabase;
+
+  function esc(v) {
+    const d = document.createElement('div');
+    d.textContent = v == null ? '' : String(v);
     return d.innerHTML;
   }
 
-  function findProductContainer() {
-    return (
-      document.getElementById("customerProductList") ||
-      document.getElementById("productList") ||
-      document.getElementById("productsList") ||
-      document.getElementById("productsGrid") ||
-      document.querySelector(".products-grid") ||
-      document.querySelector(".product-grid") ||
-      document.querySelector("[data-products]")
-    );
+  function getContainer() {
+    const known = [
+      'customerProductList','productList','productsList','productsGrid',
+      'productGrid','itemsGrid'
+    ];
+    for (const id of known) {
+      const el = document.getElementById(id);
+      if (el) return el;
+    }
+    return document.querySelector('.products-grid, .product-grid, [data-products]');
   }
 
-  async function loadHomepageProducts() {
-    const container = findProductContainer();
+  function money(p) {
+    const c = String(p.currency || 'INR').toUpperCase();
+    return (c === 'NPR' ? 'रु ' : '₹ ') + (p.price ?? 0);
+  }
 
+  async function loadProducts() {
+    const container = getContainer();
     if (!container) {
-      console.error("New Gama: product container not found on homepage.");
+      console.error('New Gama: Homepage product container not found');
       return;
     }
 
-    if (!window.supabase) {
-      container.innerHTML = '<div style="padding:25px;text-align:center">Supabase library failed to load.</div>';
-      return;
-    }
-
-    container.innerHTML = '<div style="padding:25px;text-align:center">Loading products...</div>';
+    container.innerHTML = '<div class="customer-empty">Loading products...</div>';
 
     try {
-      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const [productsRes, categoriesRes] = await Promise.all([
+        sb.from('new_gama_products').select('*').order('created_at', { ascending:false }),
+        sb.from('new_gama_categories').select('id,name')
+      ]);
 
-      const productsResult = await sb
-        .from("new_gama_products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (productsResult.error) throw productsResult.error;
-
-      const categoriesResult = await sb
-        .from("new_gama_categories")
-        .select("id,name");
-
-      if (categoriesResult.error) throw categoriesResult.error;
+      if (productsRes.error) throw productsRes.error;
+      if (categoriesRes.error) throw categoriesRes.error;
 
       const categoryMap = Object.fromEntries(
-        (categoriesResult.data || []).map(c => [c.id, c.name])
+        (categoriesRes.data || []).map(c => [c.id, c.name])
       );
 
-      const products = productsResult.data || [];
+      const products = productsRes.data || [];
+      console.log('New Gama Homepage: loaded', products.length, 'products from Supabase');
 
       if (!products.length) {
-        container.innerHTML =
-          '<div class="customer-empty" style="padding:25px;text-align:center">No products available yet.</div>';
+        container.innerHTML = '<div class="customer-empty">No products available yet.</div>';
         return;
       }
 
-      container.innerHTML = products.map((p) => {
-        const image =
-          p.main_image_url ||
-          p.image_2_url ||
-          p.image_3_url ||
-          p.image_4_url ||
-          p.image_5_url ||
-          "new-gama-logo.png";
-
-        const category = categoryMap[p.category_id] || "";
-        const currency = String(p.currency || "INR").toUpperCase();
-        const symbol = currency === "NPR" ? "रु " : "₹ ";
+      container.innerHTML = products.map(p => {
+        const image = p.main_image_url || p.image_2_url || p.image_3_url ||
+                      p.image_4_url || p.image_5_url || 'new-gama-logo.png';
+        const category = categoryMap[p.category_id] || '';
 
         return `
-          <div class="customer-card product-card" data-product-id="${p.id}">
-            <img src="${image}" alt="${escapeHTML(p.name)}"
-                 onerror="this.src='new-gama-logo.png'">
+          <article class="customer-card product-card">
+            <img src="${image}" alt="${esc(p.name)}" loading="lazy"
+                 onerror="this.onerror=null;this.src='new-gama-logo.png';">
             <div class="customer-card-body">
-              ${category ? `<div class="customer-badge">${escapeHTML(category)}</div>` : ""}
-              <h3>${escapeHTML(p.name)}</h3>
-              ${p.part_number ? `<p>Part No: ${escapeHTML(p.part_number)}</p>` : ""}
-              <div class="customer-price">${symbol}${p.price ?? 0}</div>
+              ${category ? `<span class="customer-badge">${esc(category)}</span>` : ''}
+              <h3>${esc(p.name)}</h3>
+              ${p.part_number ? `<div style="color:#777;font-size:13px;margin-top:4px">Part No: ${esc(p.part_number)}</div>` : ''}
+              <div class="customer-price">${money(p)}</div>
             </div>
-          </div>
+          </article>
         `;
-      }).join("");
+      }).join('');
 
-      console.log("New Gama Homepage: loaded", products.length, "products from Supabase");
-
-    } catch (error) {
-      console.error("New Gama Homepage Supabase Error:", error);
+    } catch (err) {
+      console.error('New Gama Homepage Supabase Error:', err);
       container.innerHTML =
-        '<div style="padding:25px;text-align:center">Products could not be loaded: ' +
-        escapeHTML(error.message || "Unknown error") +
-        "</div>";
+        '<div class="customer-empty">Could not load products: ' + esc(err.message || 'Unknown error') + '</div>';
     }
   }
 
-  document.addEventListener("DOMContentLoaded", loadHomepageProducts);
-  window.addEventListener("pageshow", loadHomepageProducts);
-  window.loadHomepageProductsFromSupabase = loadHomepageProducts;
+  document.addEventListener('DOMContentLoaded', loadProducts, { once:true });
+  window.addEventListener('pageshow', function() {
+    // Reload on browser back/forward without creating another client.
+    loadProducts();
+  });
+
+  window.loadNewGamaProducts = loadProducts;
 })();
 </script>
 
