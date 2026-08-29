@@ -6,430 +6,329 @@
 <title>Owner Dashboard | New Gama Earthmovers</title>
 <link rel="icon" type="image/png" href="new-gama-logo.png">
 <style>
-:root{
-  --yellow:#f5b400;
-  --dark:#171717;
-  --dark2:#242424;
-  --light:#f5f6f7;
-  --white:#fff;
-  --text:#242424;
-  --muted:#777;
-  --border:#e6e6e6;
-}
+:root{--yellow:#f5b400;--dark:#171717;--dark2:#242424;--light:#f5f6f7;--white:#fff;--text:#242424;--muted:#777;--border:#e6e6e6}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;background:var(--light);color:var(--text)}
 button{font:inherit;cursor:pointer}
-.app{min-height:100vh}
-
-/* Top Header */
-.topbar{
-  height:70px;background:var(--dark);color:#fff;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 22px;position:sticky;top:0;z-index:50;
-}
+.topbar{height:70px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:50}
 .top-left{display:flex;align-items:center;gap:14px}
-.menu-btn{
-  width:42px;height:42px;border:0;background:transparent;color:#fff;
-  font-size:26px;border-radius:7px;
-}
+.menu-btn{width:42px;height:42px;border:0;background:transparent;color:#fff;font-size:26px;border-radius:7px}
 .menu-btn:hover{background:#303030}
-.brand{display:flex;align-items:center;gap:10px}
-.brand img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
-.brand b{font-size:16px}
-.brand small{display:block;color:#aaa;font-size:11px;margin-top:3px}
-.owner{font-size:13px;color:#ccc}
-
-/* Sidebar */
-.sidebar{
-  position:fixed;left:0;top:70px;bottom:0;width:260px;
-  background:var(--dark2);color:#eee;
-  transform:translateX(-100%);
-  transition:transform .25s ease;
-  z-index:40;padding:20px 12px;
-  box-shadow:8px 0 30px rgba(0,0,0,.18);
-}
-.sidebar.open{transform:translateX(0)}
-.sidebar-title{color:#aaa;font-size:11px;font-weight:bold;padding:5px 12px 12px;letter-spacing:.7px}
-.nav-item{
-  width:100%;border:0;background:transparent;color:#eee;
-  display:flex;align-items:center;gap:13px;text-align:left;
-  padding:14px 14px;border-radius:8px;margin:4px 0;font-weight:bold;
-}
-.nav-item:hover,.nav-item.active{background:#343434}
-.nav-item.active{color:var(--yellow)}
-.nav-icon{width:24px;text-align:center;font-size:18px}
-.logout{margin-top:18px;color:#ffb0a8}
-.sidebar-backdrop{
-  display:none;position:fixed;inset:70px 0 0 0;background:rgba(0,0,0,.35);z-index:35;
-}
-.sidebar-backdrop.show{display:block}
-
-/* Main */
-main{max-width:1250px;margin:auto;padding:28px 22px 50px}
-.page{display:none}
-.page.active{display:block}
-.page-header{margin-bottom:24px}
-.page-header h1{font-size:28px;margin-bottom:6px}
-.page-header p{color:var(--muted)}
-
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
-.stat{background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)}
-.stat b{display:block;font-size:28px;margin-top:8px}
-.stat span{font-size:13px;color:var(--muted)}
-
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px}
-.card h2{font-size:19px;margin-bottom:15px}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
+.brand b{font-size:16px}.brand small{display:block;color:#aaa;font-size:11px;margin-top:3px}.owner{font-size:13px;color:#ccc}
+.sidebar{position:fixed;left:0;top:70px;bottom:0;width:260px;background:var(--dark2);color:#eee;transform:translateX(-100%);transition:transform .25s ease;z-index:40;padding:20px 12px;box-shadow:8px 0 30px rgba(0,0,0,.18)}
+.sidebar.open{transform:translateX(0)}.sidebar-title{color:#aaa;font-size:11px;font-weight:bold;padding:5px 12px 12px;letter-spacing:.7px}
+.nav-item{width:100%;border:0;background:transparent;color:#eee;display:flex;align-items:center;gap:13px;text-align:left;padding:14px;border-radius:8px;margin:4px 0;font-weight:bold}
+.nav-item:hover,.nav-item.active{background:#343434}.nav-item.active{color:var(--yellow)}.nav-icon{width:24px;text-align:center;font-size:18px}.logout{margin-top:18px;color:#ffb0a8}
+.backdrop{display:none;position:fixed;inset:70px 0 0;background:rgba(0,0,0,.35);z-index:35}.backdrop.show{display:block}
+main{max-width:1250px;margin:auto;padding:28px 22px 50px}.page{display:none}.page.active{display:block}.page-header{margin-bottom:24px}
+.page-header h1{font-size:28px;margin-bottom:6px}.page-header p{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}.stat{background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)}
+.stat b{display:block;font-size:28px;margin-top:8px}.stat span{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px}.card h2{font-size:19px;margin-bottom:15px}
 .empty{padding:35px 15px;text-align:center;color:var(--muted);border:1px dashed #ccc;border-radius:9px}
-
 label{display:block;font-size:13px;font-weight:bold;margin:15px 0 7px}
-input,textarea,select{
-  width:100%;border:1px solid #dcdcdc;border-radius:7px;
-  padding:13px;font:inherit;outline:none;background:#fff;
-}
-input:focus,textarea:focus,select:focus{border-color:var(--yellow)}
-textarea{min-height:100px;resize:vertical}
-.primary{
-  background:var(--yellow);border:0;border-radius:7px;
-  padding:13px 22px;font-weight:bold;margin-top:18px;
-}
-.secondary{
-  background:#eee;border:0;border-radius:7px;
-  padding:13px 22px;font-weight:bold;margin-top:18px;
-}
-
-.item-form{max-width:720px}
-.item-list{display:grid;gap:12px}
-.item-row{
-  display:flex;align-items:center;justify-content:space-between;gap:15px;
-  padding:16px;border:1px solid var(--border);border-radius:9px;
-}
-.item-row small{display:block;color:var(--muted);margin-top:4px}
-.remove{border:0;background:#fff0ef;color:#c73b2d;padding:9px 12px;border-radius:6px}
-
-@media(max-width:850px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .grid{grid-template-columns:1fr}
-}
-@media(max-width:550px){
-  .topbar{padding:0 12px}.owner{display:none}
-  .brand b{font-size:13px}
-  main{padding:22px 14px 40px}
-  .stats{grid-template-columns:1fr 1fr;gap:10px}
-  .stat{padding:15px}.stat b{font-size:23px}
-}
+input,textarea,select{width:100%;border:1px solid #dcdcdc;border-radius:7px;padding:13px;font:inherit;outline:none;background:#fff}
+input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-height:100px;resize:vertical}
+.primary{background:var(--yellow);border:0;border-radius:7px;padding:13px 22px;font-weight:bold;margin-top:18px}
+.secondary{background:#eee;border:0;border-radius:7px;padding:13px 22px;font-weight:bold;margin-top:18px}
+.add-product-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.product-preview{position:sticky;top:92px}.preview-card{overflow:hidden;padding:0}
+.preview-image-wrap{height:300px;background:#f3f3f3;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border)}
+.preview-image-wrap img{width:100%;height:100%;object-fit:contain;display:none;background:#fff}
+.preview-placeholder{text-align:center;color:#999;padding:30px}.camera{font-size:42px;display:block;margin-bottom:10px}
+.preview-details{padding:20px}.preview-category{font-size:12px;font-weight:bold;color:#9a7200;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.preview-title{font-size:22px;margin-bottom:8px;word-break:break-word}.preview-part{font-size:13px;color:var(--muted);margin-bottom:12px}
+.preview-price{font-size:26px;font-weight:bold;margin:10px 0}.preview-description{color:#666;font-size:14px;white-space:pre-wrap}
+.image-upload-box{border:2px dashed #d2d2d2;border-radius:9px;padding:18px;background:#fafafa}.image-help{font-size:12px;color:#777;margin-top:8px}
+.item-list{display:grid;gap:12px}.item-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:16px;border:1px solid var(--border);border-radius:9px}
+.item-row small{display:block;color:var(--muted);margin-top:4px}.remove{border:0;background:#fff0ef;color:#c73b2d;padding:9px 12px;border-radius:6px}
+.category-box{display:flex;gap:10px;align-items:center}.category-box input{flex:1}.category-box button{margin:0;padding:12px 18px}
+.category-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.chip{background:#fff8df;border:1px solid #f0d274;padding:8px 10px;border-radius:20px;font-size:13px;font-weight:bold}
+.chip button{margin-left:7px;border:0;background:transparent;color:#b52f24;font-weight:bold}
+.category-note{font-size:12px;color:#777;margin-top:8px}
+.category-select-row{display:flex;gap:10px}.category-select-row select{flex:1}.category-select-row button{margin:0;padding:10px 15px;background:#eee}
+.product-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.product-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}.product-card img{width:100%;height:180px;object-fit:contain;background:#fafafa;border-bottom:1px solid var(--border)}
+.product-card-body{padding:15px}.product-card-body h3{font-size:17px;margin-bottom:7px}.product-meta{font-size:12px;color:#777;margin:4px 0}.product-price{font-size:21px;font-weight:bold;margin-top:10px}
+.badge{display:inline-block;font-size:11px;background:#fff3c9;padding:5px 8px;border-radius:12px;margin-bottom:8px}
+@media(max-width:850px){.stats{grid-template-columns:repeat(2,1fr)}.grid,.add-product-layout{grid-template-columns:1fr}.product-preview{position:static}}
+@media(max-width:550px){.topbar{padding:0 12px}.owner{display:none}.brand b{font-size:13px}main{padding:22px 14px 40px}.stats{gap:10px}.stat{padding:15px}.stat b{font-size:23px}.category-select-row{flex-direction:column}}
 </style>
 </head>
 <body>
-<script>
-if(sessionStorage.getItem('newGamaOwnerAuthorized') !== 'true'){
-  window.location.replace('index.html');
-}
 
+<header class="topbar">
+  <div class="top-left">
+    <button class="menu-btn" id="menuBtn">☰</button>
+    <div class="brand">
+      <img src="new-gama-logo.png" alt="New Gama Earthmovers">
+      <div><b>NEW GAMA EARTHMOVERS</b><small>Owner Dashboard</small></div>
+    </div>
+  </div>
+  <div class="owner">Shop Owner Admin</div>
+</header>
 
-async function hashOwnerPin(pin){
-  const data = new TextEncoder().encode(pin);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-title">OWNER MENU</div>
+  <button class="nav-item" data-page="home"><span class="nav-icon">⌂</span> Home</button>
+  <button class="nav-item active" data-page="dashboard"><span class="nav-icon">▦</span> Dashboard</button>
+  <button class="nav-item" data-page="add-items"><span class="nav-icon">＋</span> Add Items</button>
+  <button class="nav-item" data-page="manage-profile"><span class="nav-icon">⚙</span> Manage Profile</button>
+  <button class="nav-item logout" id="logoutBtn"><span class="nav-icon">↪</span> Logout</button>
+</aside>
+<div class="backdrop" id="backdrop"></div>
 
-document.getElementById('changeSecurityBtn').addEventListener('click', async () => {
-  const current = document.getElementById('currentSecurityPin').value.trim();
-  const next = document.getElementById('newSecurityPin').value.trim();
-  const confirmNext = document.getElementById('confirmSecurityPin').value.trim();
-  const saved = localStorage.getItem('newGamaOwnerPinHash');
-  if(!saved){ alert('No security PIN found. Return to the website and open the dashboard using the 5-click logo trigger.'); return; }
-  if(!/^\d{4,12}$/.test(next)){ alert('New PIN must contain 4 to 12 digits.'); return; }
-  if(next !== confirmNext){ alert('New PINs do not match.'); return; }
-  if(await hashOwnerPin(current) !== saved){ alert('Current security PIN is incorrect.'); return; }
-  localStorage.setItem('newGamaOwnerPinHash', await hashOwnerPin(next));
-  document.getElementById('currentSecurityPin').value='';
-  document.getElementById('newSecurityPin').value='';
-  document.getElementById('confirmSecurityPin').value='';
-  alert('Owner security PIN changed successfully.');
-});
+<main>
+<section class="page" id="home">
+  <div class="page-header"><h1>Welcome, Shop Owner 👋</h1><p>Manage your parts store from one place.</p></div>
+  <div class="grid">
+    <div class="card"><h2>Quick Actions</h2><p style="color:#777">Create categories and add your products.</p><button class="primary" onclick="openPage('add-items')">Add New Item</button></div>
+    <div class="card"><h2>Store Status</h2><div class="empty"><strong>Your store is ready.</strong><br>Products you add will appear in your Dashboard list.</div></div>
+  </div>
+</section>
 
-</script>
-<div class="app">
+<section class="page active" id="dashboard">
+  <div class="page-header"><h1>Dashboard</h1><p>All products added by the shop owner are shown here.</p></div>
+  <div class="stats">
+    <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
+    <div class="stat"><span>Total Categories</span><b id="categoryCount">0</b></div>
+    <div class="stat"><span>Total Orders</span><b>0</b></div>
+    <div class="stat"><span>Store Status</span><b style="font-size:18px;color:#159447">Active</b></div>
+  </div>
+  <div class="card">
+    <h2>Item List</h2>
+    <div class="product-card-grid" id="itemList"><div class="empty">No products have been added yet.</div></div>
+  </div>
+</section>
 
-  <header class="topbar">
-    <div class="top-left">
-      <button class="menu-btn" id="menuBtn" aria-label="Open dashboard menu">☰</button>
-      <div class="brand">
-        <img src="new-gama-logo.png" alt="New Gama Earthmovers">
-        <div><b>NEW GAMA EARTHMOVERS</b><small>Owner Dashboard</small></div>
+<section class="page" id="add-items">
+  <div class="page-header"><h1>Add New Product</h1><p>Create your own machine/brand categories and add products with live preview.</p></div>
+
+  <div class="card" style="margin-bottom:22px">
+    <h2>Create / Manage Categories</h2>
+    <div class="category-box">
+      <input id="newCategory" placeholder="Example: JCB, Terex, L&T, Tractor, Komatsu">
+      <button class="primary" id="addCategoryBtn" style="margin:0">Create Category</button>
+    </div>
+    <div class="category-note">You can create any category yourself. No demo category is required.</div>
+    <div class="category-chips" id="categoryChips"><span style="color:#777;font-size:13px">No categories created yet.</span></div>
+  </div>
+
+  <div class="add-product-layout">
+    <div class="card">
+      <h2>Product Details</h2>
+
+      <label>Product Image</label>
+      <div class="image-upload-box">
+        <input id="productImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+        <div class="image-help">Upload product image. Live preview appears on the right.</div>
+      </div>
+
+      <label>Item / Part Name</label>
+      <input id="itemName" placeholder="Enter product or part name">
+
+      <label>Part Number</label>
+      <input id="partNumber" placeholder="Enter part number">
+
+      <label>Category</label>
+      <div class="category-select-row">
+        <select id="category"><option value="">Select category</option></select>
+        <button type="button" onclick="document.getElementById('newCategory').focus()">+ Create</button>
+      </div>
+
+      <label>Price</label>
+      <input id="price" type="number" min="0" placeholder="Enter price">
+
+      <label>Currency</label>
+      <select id="currency">
+        <option value="INR">Indian Rupee (₹ INR)</option>
+        <option value="NPR">Nepalese Rupee (रु NPR)</option>
+      </select>
+
+      <label>Item Description</label>
+      <textarea id="description" placeholder="Enter product details"></textarea>
+
+      <button class="primary" id="addItemBtn">Add Product</button>
+    </div>
+
+    <div class="product-preview">
+      <div class="card preview-card">
+        <div class="preview-image-wrap">
+          <img id="previewImage" alt="Product preview">
+          <div id="previewPlaceholder" class="preview-placeholder"><span class="camera">📷</span>Product image preview</div>
+        </div>
+        <div class="preview-details">
+          <div class="preview-category" id="previewCategory">CATEGORY</div>
+          <h2 class="preview-title" id="previewTitle">Product Name</h2>
+          <div class="preview-part" id="previewPart">Part No: —</div>
+          <div class="preview-price" id="previewPrice">₹ 0</div>
+          <div class="preview-description" id="previewDescription">Product description will appear here.</div>
+        </div>
       </div>
     </div>
-    <div class="owner">Shop Owner Admin</div>
-  </header>
+  </div>
+</section>
 
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-title">OWNER MENU</div>
-
-    <button class="nav-item" data-page="home">
-      <span class="nav-icon">⌂</span> Home
-    </button>
-    <button class="nav-item active" data-page="dashboard">
-      <span class="nav-icon">▦</span> Dashboard
-    </button>
-    <button class="nav-item" data-page="add-items">
-      <span class="nav-icon">＋</span> Add Items
-    </button>
-    <button class="nav-item" data-page="manage-profile">
-      <span class="nav-icon">⚙</span> Manage Profile
-    </button>
-    <button class="nav-item logout" id="logoutBtn">
-      <span class="nav-icon">↪</span> Logout
-    </button>
-  </aside>
-
-  <div class="sidebar-backdrop" id="backdrop"></div>
-
-  <main>
-    <!-- HOME -->
-    <section class="page" id="home">
-      <div class="page-header">
-        <h1>Welcome, Shop Owner 👋</h1>
-        <p>Manage your New Gama Earthmovers store from one place.</p>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <h2>Quick Actions</h2>
-          <p style="color:#777">Add your first parts and configure your shop details.</p>
-          <button class="primary" onclick="openPage('add-items')">Add New Item</button>
-          <button class="secondary" onclick="openPage('manage-profile')">Manage Profile</button>
-        </div>
-
-        <div class="card">
-          <h2>Store Status</h2>
-          <div class="empty">
-            <strong>Your store is ready.</strong><br>
-            Add items and complete your profile to start receiving customer orders.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- DASHBOARD -->
-    <section class="page active" id="dashboard">
-      <div class="page-header">
-        <h1>Dashboard</h1>
-        <p>Overview of your store activity.</p>
-      </div>
-
-      <div class="stats">
-        <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
-        <div class="stat"><span>Total Orders</span><b>0</b></div>
-        <div class="stat"><span>Customers</span><b>0</b></div>
-        <div class="stat"><span>Store Status</span><b style="font-size:18px;color:#159447">Active</b></div>
-      </div>
-
-      <div class="card">
-        <h2>Item List</h2>
-        <div class="item-list" id="itemList">
-          <div class="empty">No items have been added yet.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ADD ITEMS -->
-    <section class="page" id="add-items">
-      <div class="page-header">
-        <h1>Add Items</h1>
-        <p>Add spare parts and products to your customer website.</p>
-      </div>
-
-      <div class="card item-form">
-        <h2>New Spare Part</h2>
-
-        <label>Item / Part Name</label>
-        <input id="itemName" placeholder="Enter item name">
-
-        <label>Part Number</label>
-        <input id="partNumber" placeholder="Enter part number">
-
-        <label>Category</label>
-        <input id="category" placeholder="Example: Engine, Hydraulic, Filter">
-
-        <label>Price</label>
-        <input id="price" type="number" min="0" placeholder="Enter price">
-
-        <label>Currency</label>
-        <select id="currency">
-          <option value="INR">Indian Rupee (₹ INR)</option>
-          <option value="NPR">Nepalese Rupee (रु NPR)</option>
-        </select>
-
-        <label>Item Description</label>
-        <textarea id="description" placeholder="Enter item details"></textarea>
-
-        <button class="primary" id="addItemBtn">Add Item</button>
-      </div>
-    </section>
-
-    <!-- MANAGE PROFILE -->
-    <section class="page" id="manage-profile">
-      <div class="page-header">
-        <h1>Manage Profile</h1>
-        <p>Update the details that customers will see on your website.</p>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <h2>Shop Information</h2>
-          <label>Shop Name</label>
-          <input value="New Gama Earthmovers">
-
-          <label>Shop Address</label>
-          <textarea placeholder="Enter complete shop address"></textarea>
-
-          <label>Country</label>
-          <select>
-            <option>India</option>
-            <option>Nepal</option>
-          </select>
-        </div>
-
-        <div class="card">
-          <h2>Contact Information</h2>
-          <label>Contact Number</label>
-          <input type="tel" placeholder="Enter contact number">
-
-          <label>WhatsApp Number</label>
-          <input type="tel" placeholder="Enter WhatsApp number">
-
-          <label>Email Address</label>
-          <input type="email" placeholder="Enter email address">
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:20px;max-width:620px">
-        <h2>Owner Security</h2>
-        <p style="color:#777;font-size:14px">Change the PIN required after the hidden 5-click logo trigger.</p>
-        <label>Current Security PIN</label>
-        <input id="currentSecurityPin" type="password" inputmode="numeric" maxlength="12" placeholder="Enter current PIN">
-        <label>New Security PIN</label>
-        <input id="newSecurityPin" type="password" inputmode="numeric" maxlength="12" placeholder="4 to 12 digit PIN">
-        <label>Confirm New PIN</label>
-        <input id="confirmSecurityPin" type="password" inputmode="numeric" maxlength="12" placeholder="Enter new PIN again">
-        <button class="primary" type="button" id="changeSecurityBtn">Change Security PIN</button>
-      </div>
-
-      <button class="primary" onclick="alert('Profile saving will be connected to the database next.')">Save Profile</button>
-    </section>
-  </main>
-</div>
+<section class="page" id="manage-profile">
+  <div class="page-header"><h1>Manage Profile</h1><p>Update the details customers will see.</p></div>
+  <div class="grid">
+    <div class="card"><h2>Shop Information</h2><label>Shop Name</label><input value="New Gama Earthmovers"><label>Shop Address</label><textarea placeholder="Enter complete shop address"></textarea><label>Country</label><select><option>India</option><option>Nepal</option></select></div>
+    <div class="card"><h2>Contact Information</h2><label>Contact Number</label><input placeholder="Enter contact number"><label>WhatsApp Number</label><input placeholder="Enter WhatsApp number"><label>Email Address</label><input type="email" placeholder="Enter email address"></div>
+  </div>
+</section>
+</main>
 
 <script>
-const menuBtn = document.getElementById('menuBtn');
-const sidebar = document.getElementById('sidebar');
-const backdrop = document.getElementById('backdrop');
+const menuBtn=document.getElementById('menuBtn');
+const sidebar=document.getElementById('sidebar');
+const backdrop=document.getElementById('backdrop');
 
-function toggleMenu(forceClose=false){
-  if(forceClose){
-    sidebar.classList.remove('open');
-    backdrop.classList.remove('show');
-  }else{
-    sidebar.classList.toggle('open');
-    backdrop.classList.toggle('show');
-  }
+function toggleMenu(close=false){
+  if(close){sidebar.classList.remove('open');backdrop.classList.remove('show')}
+  else{sidebar.classList.toggle('open');backdrop.classList.toggle('show')}
 }
+menuBtn.addEventListener('click',()=>toggleMenu());
+backdrop.addEventListener('click',()=>toggleMenu(true));
 
-menuBtn.addEventListener('click', () => toggleMenu());
-backdrop.addEventListener('click', () => toggleMenu(true));
-
-function openPage(pageId){
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
-
-  document.querySelectorAll('.nav-item[data-page]').forEach(b => {
-    b.classList.toggle('active', b.dataset.page === pageId);
-  });
-
+function openPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
   toggleMenu(true);
-  window.scrollTo({top:0, behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Owner Dashboard?'))window.location.href='index.html'});
+
+const categories=[];
+const items=[];
+let selectedImageData='';
+
+function escapeHtml(v){const d=document.createElement('div');d.textContent=v||'';return d.innerHTML}
+
+function renderCategories(){
+  const chips=document.getElementById('categoryChips');
+  const select=document.getElementById('category');
+  document.getElementById('categoryCount').textContent=categories.length;
+
+  chips.innerHTML=categories.length
+    ? categories.map((c,i)=>`<span class="chip">${escapeHtml(c)} <button type="button" onclick="removeCategory(${i})">×</button></span>`).join('')
+    : '<span style="color:#777;font-size:13px">No categories created yet.</span>';
+
+  const current=select.value;
+  select.innerHTML='<option value="">Select category</option>'+categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  if(categories.includes(current))select.value=current;
 }
 
-document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
-  btn.addEventListener('click', () => openPage(btn.dataset.page));
+function addCategory(){
+  const input=document.getElementById('newCategory');
+  const value=input.value.trim();
+  if(!value){alert('Please enter a category name.');return}
+  if(categories.some(c=>c.toLowerCase()===value.toLowerCase())){alert('This category already exists.');return}
+  categories.push(value);
+  input.value='';
+  renderCategories();
+  document.getElementById('category').value=value;
+  updateProductPreview();
+}
+
+function removeCategory(index){
+  const removed=categories[index];
+  if(!confirm('Remove category "'+removed+'"?'))return;
+  categories.splice(index,1);
+  renderCategories();
+  updateProductPreview();
+}
+
+document.getElementById('addCategoryBtn').addEventListener('click',addCategory);
+document.getElementById('newCategory').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCategory()}});
+
+const productImageInput=document.getElementById('productImage');
+const previewImage=document.getElementById('previewImage');
+const previewPlaceholder=document.getElementById('previewPlaceholder');
+
+function updateProductPreview(){
+  const name=document.getElementById('itemName').value.trim()||'Product Name';
+  const part=document.getElementById('partNumber').value.trim();
+  const category=document.getElementById('category').value||'CATEGORY';
+  const price=document.getElementById('price').value.trim();
+  const currency=document.getElementById('currency').value;
+  const description=document.getElementById('description').value.trim()||'Product description will appear here.';
+  document.getElementById('previewTitle').textContent=name;
+  document.getElementById('previewPart').textContent=part?'Part No: '+part:'Part No: —';
+  document.getElementById('previewCategory').textContent=category;
+  document.getElementById('previewPrice').textContent=(currency==='INR'?'₹ ':'रु ')+(price||'0');
+  document.getElementById('previewDescription').textContent=description;
+}
+
+['itemName','partNumber','category','price','description','currency'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',updateProductPreview);
+  document.getElementById(id).addEventListener('change',updateProductPreview);
 });
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  if(confirm('Logout from Owner Dashboard?')){
-    sessionStorage.removeItem('newGamaOwnerAuthorized');
-    window.location.href = 'index.html';
-  }
+productImageInput.addEventListener('change',function(){
+  const file=this.files&&this.files[0];
+  if(!file){selectedImageData='';previewImage.style.display='none';previewPlaceholder.style.display='block';return}
+  const reader=new FileReader();
+  reader.onload=e=>{selectedImageData=e.target.result;previewImage.src=selectedImageData;previewImage.style.display='block';previewPlaceholder.style.display='none'};
+  reader.readAsDataURL(file);
 });
 
-const items = [];
+document.getElementById('addItemBtn').addEventListener('click',()=>{
+  const name=document.getElementById('itemName').value.trim();
+  const part=document.getElementById('partNumber').value.trim();
+  const category=document.getElementById('category').value;
+  const price=document.getElementById('price').value.trim();
+  const currency=document.getElementById('currency').value;
+  const description=document.getElementById('description').value.trim();
 
-document.getElementById('addItemBtn').addEventListener('click', () => {
-  const name = document.getElementById('itemName').value.trim();
-  const part = document.getElementById('partNumber').value.trim();
-  const category = document.getElementById('category').value.trim();
-  const price = document.getElementById('price').value.trim();
-  const currency = document.getElementById('currency').value;
-  const description = document.getElementById('description').value.trim();
+  if(!name){alert('Please enter Product / Part Name.');return}
+  if(!category){alert('Please create or select a category.');return}
+  if(!selectedImageData){alert('Please select a Product Image.');return}
 
-  if(!name){
-    alert('Please enter Item / Part Name.');
-    return;
-  }
+  items.push({name,part,category,price,currency,description,image:selectedImageData});
+  document.getElementById('itemCount').textContent=items.length;
 
-  items.push({name, part, category, price, currency, description});
-  document.getElementById('itemCount').textContent = items.length;
-
-  ['itemName','partNumber','category','price','description'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-
+  ['itemName','partNumber','price','description'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('category').value='';
+  productImageInput.value='';
+  selectedImageData='';
+  previewImage.removeAttribute('src');
+  previewImage.style.display='none';
+  previewPlaceholder.style.display='block';
+  updateProductPreview();
   renderItems();
-  alert('Item added successfully.');
+  alert('Product added successfully.');
   openPage('dashboard');
 });
 
-function escapeHtml(value){
-  const div = document.createElement('div');
-  div.textContent = value || '';
-  return div.innerHTML;
-}
-
 function renderItems(){
-  const list = document.getElementById('itemList');
-
-  if(!items.length){
-    list.innerHTML = '<div class="empty">No items have been added yet.</div>';
-    return;
-  }
-
-  list.innerHTML = items.map((item, index) => `
-    <div class="item-row">
-      <div>
-        <b>${escapeHtml(item.name)}</b>
-        <small>
-          ${item.part ? 'Part No: ' + escapeHtml(item.part) + ' • ' : ''}
-          ${item.category ? escapeHtml(item.category) : ''}
-          ${item.price ? ' • ' + (item.currency === 'INR' ? '₹' : 'रु') + escapeHtml(item.price) : ''}
-        </small>
+  const list=document.getElementById('itemList');
+  if(!items.length){list.innerHTML='<div class="empty">No products have been added yet.</div>';return}
+  list.innerHTML=items.map((item,index)=>`
+    <div class="product-card">
+      <img src="${item.image}" alt="">
+      <div class="product-card-body">
+        <span class="badge">${escapeHtml(item.category)}</span>
+        <h3>${escapeHtml(item.name)}</h3>
+        ${item.part?`<div class="product-meta">Part No: ${escapeHtml(item.part)}</div>`:''}
+        ${item.description?`<div class="product-meta">${escapeHtml(item.description)}</div>`:''}
+        <div class="product-price">${item.currency==='INR'?'₹':'रु'} ${escapeHtml(item.price||'0')}</div>
+        <button class="remove" style="margin-top:12px" onclick="removeItem(${index})">Remove Item</button>
       </div>
-      <button class="remove" onclick="removeItem(${index})">Remove</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function removeItem(index){
-  items.splice(index, 1);
-  document.getElementById('itemCount').textContent = items.length;
+  if(!confirm('Remove this product?'))return;
+  items.splice(index,1);
+  document.getElementById('itemCount').textContent=items.length;
   renderItems();
 }
-</script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  if (typeof openPage === 'function') openPage('dashboard');
-});
+renderCategories();
+updateProductPreview();
 </script>
-
 </body>
 </html>
