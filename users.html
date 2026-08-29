@@ -20,8 +20,8 @@ button.submit{width:100%;border:0;background:#f5b400;padding:14px;border-radius:
 </form><a class="back" href="index.html">← Back to Homepage</a></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL='REPLACE_WITH_YOUR_SUPABASE_URL';
-const SUPABASE_KEY='REPLACE_WITH_YOUR_PUBLISHABLE_OR_ANON_KEY';
+const SUPABASE_URL='https://gozvchqatiyebpnycubl.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
 let client=null,mode='login';
 function show(t,kind){const m=document.getElementById('msg');m.className='msg '+kind;m.textContent=t;m.style.display='block'}
 function validConfig(){return !SUPABASE_URL.startsWith('REPLACE_')&&!SUPABASE_KEY.startsWith('REPLACE_')}
