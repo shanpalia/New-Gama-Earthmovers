@@ -71,6 +71,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 @media(max-width:850px){.stats{grid-template-columns:repeat(2,1fr)}.grid,.add-product-layout{grid-template-columns:1fr}.product-preview{position:static}}
 @media(max-width:550px){.topbar{padding:0 12px}.owner{display:none}.brand b{font-size:13px}main{padding:22px 14px 40px}.stats{gap:10px}.stat{padding:15px}.stat b{font-size:23px}.category-select-row{flex-direction:column}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -533,6 +534,245 @@ document.addEventListener('DOMContentLoaded', function () {
     back.classList.remove('show');
   }, true);
 });
+</script>
+
+
+<script>
+/* New Gama Earthmovers - Supabase Cloud Bridge */
+(() => {
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  const BUCKET = 'new-gama-product-images';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let cloudItems = [];
+  let cloudCategories = [];
+  let bridgeReady = false;
+
+  const q = (s) => document.querySelector(s);
+
+  function currencyText(v) {
+    return String(v || 'INR').toUpperCase() === 'NPR' ? 'NPR' : 'INR';
+  }
+
+  async function loadCloudData() {
+    const [catRes, productRes] = await Promise.all([
+      sb.from('new_gama_categories').select('*').order('name', {ascending:true}),
+      sb.from('new_gama_products').select('*').order('created_at', {ascending:false})
+    ]);
+    if (catRes.error) throw catRes.error;
+    if (productRes.error) throw productRes.error;
+
+    cloudCategories = catRes.data || [];
+    cloudItems = (productRes.data || []).map(p => ({
+      id:p.id,
+      name:p.name || '',
+      part:p.part_number || '',
+      category_id:p.category_id || '',
+      category:(cloudCategories.find(c => c.id === p.category_id) || {}).name || '',
+      price:p.price ?? 0,
+      currency:currencyText(p.currency),
+      description:p.description || '',
+      images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+    }));
+
+    // Sync legacy UI globals if present.
+    try {
+      categories = cloudCategories.map(c => c.name);
+      items = cloudItems;
+      if (typeof renderCategories === 'function') renderCategories();
+      if (typeof renderItems === 'function') renderItems();
+    } catch(e) { console.warn(e); }
+  }
+
+  async function uploadImage(dataUrl, productId, position) {
+    if (!dataUrl) return null;
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const path = `products/${productId}/${position}.jpg`;
+    const up = await sb.storage.from(BUCKET).upload(path, blob, {
+      upsert:true,
+      contentType:'image/jpeg',
+      cacheControl:'31536000'
+    });
+    if (up.error) throw up.error;
+    return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+
+  async function cloudSaveProduct(product, editingId) {
+    const productId = editingId || crypto.randomUUID();
+    const old = cloudItems.find(x => x.id === editingId);
+    const images = [...(product.images || [])];
+    while(images.length < 5) images.push('');
+
+    const urls = [];
+    for (let i=0; i<5; i++) {
+      if (images[i] && images[i].startsWith('http')) {
+        urls[i] = images[i];
+      } else if (images[i]) {
+        urls[i] = await uploadImage(images[i], productId, i+1);
+      } else {
+        urls[i] = old?.images?.[i] || null;
+      }
+    }
+
+    let categoryId = product.category_id || '';
+    if (!categoryId && product.category) {
+      const found = cloudCategories.find(c => c.name.toLowerCase() === String(product.category).toLowerCase());
+      categoryId = found?.id || '';
+    }
+
+    const row = {
+      id: productId,
+      name: product.name,
+      part_number: product.part || null,
+      category_id: categoryId || null,
+      price: Number(product.price || 0),
+      currency: currencyText(product.currency),
+      description: product.description || null,
+      main_image_url: urls[0],
+      image_2_url: urls[1],
+      image_3_url: urls[2],
+      image_4_url: urls[3],
+      image_5_url: urls[4],
+      updated_at: new Date().toISOString()
+    };
+
+    const result = await sb.from('new_gama_products').upsert(row, {onConflict:'id'});
+    if (result.error) throw result.error;
+    return productId;
+  }
+
+  async function cloudDeleteProduct(id) {
+    const del = await sb.from('new_gama_products').delete().eq('id', id);
+    if (del.error) throw del.error;
+    await sb.storage.from(BUCKET).remove([
+      `products/${id}/1.jpg`, `products/${id}/2.jpg`, `products/${id}/3.jpg`,
+      `products/${id}/4.jpg`, `products/${id}/5.jpg`
+    ]);
+  }
+
+  async function cloudAddCategory(name) {
+    name = String(name || '').trim();
+    if (!name) return;
+    const r = await sb.from('new_gama_categories').insert({name}).select().single();
+    if (r.error) {
+      if (String(r.error.message).toLowerCase().includes('duplicate')) return;
+      throw r.error;
+    }
+    cloudCategories.push(r.data);
+    try { categories = cloudCategories.map(c => c.name); if(typeof renderCategories==='function') renderCategories(); } catch(e){}
+  }
+
+  // Override category creation if legacy UI uses addCategory.
+  window.addCategory = async function() {
+    const input = q('#categoryName') || q('#newCategoryName');
+    const name = input?.value?.trim();
+    if (!name) return alert('Please enter a category name.');
+    try {
+      await cloudAddCategory(name);
+      input.value = '';
+      alert('Category created successfully.');
+      await loadCloudData();
+    } catch(err) {
+      console.error(err);
+      alert('Category save error: ' + (err.message || 'Please check Supabase policies.'));
+    }
+  };
+
+  // Patch legacy save form by capturing submit/click events.
+  async function interceptSave(e) {
+    const target = e.target;
+    const saveButton = target.closest && target.closest('#saveProduct, #saveItem, button[type="submit"]');
+    if (!saveButton && target.tagName !== 'FORM') return;
+
+    const form = target.tagName === 'FORM' ? target : target.closest('form');
+    if (!form) return;
+
+    const nameEl = q('#productName') || q('[name="productName"]') || q('[name="name"]');
+    const partEl = q('#partNumber') || q('#productPart') || q('[name="part"]');
+    const categoryEl = q('#productCategory') || q('#category');
+    const priceEl = q('#productPrice') || q('#price');
+    const currencyEl = q('#currency') || q('#productCurrency');
+    const descEl = q('#productDescription') || q('#description');
+
+    if (!nameEl || !priceEl) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const imgs = (window.selectedImages || []).filter(Boolean);
+    if (imgs.length < 5) {
+      alert('Please upload all 5 product images.');
+      return false;
+    }
+
+    const selectedCategory = categoryEl?.value || '';
+    const catObj = cloudCategories.find(c => c.name === selectedCategory);
+
+    const editingId = (typeof window.editingIndex !== 'undefined' && window.editingIndex !== null)
+      ? (cloudItems[window.editingIndex]?.id || null)
+      : null;
+
+    const product = {
+      name:nameEl.value.trim(),
+      part:partEl?.value?.trim() || '',
+      category:selectedCategory,
+      category_id:catObj?.id || '',
+      price:priceEl.value,
+      currency:currencyEl?.value || 'INR',
+      description:descEl?.value?.trim() || '',
+      images:window.selectedImages
+    };
+
+    if (!product.name) return alert('Please enter product name.');
+
+    saveButton?.setAttribute('disabled','disabled');
+    try {
+      await cloudSaveProduct(product, editingId);
+      alert(editingId ? 'Product updated successfully.' : 'Product saved successfully.');
+      await loadCloudData();
+      if (typeof window.clearProductForm === 'function') window.clearProductForm();
+      if (typeof window.openPage === 'function') window.openPage('dashboard');
+    } catch(err) {
+      console.error(err);
+      alert('Product save error: ' + (err.message || 'Please check Supabase setup and Storage policies.'));
+    } finally {
+      saveButton?.removeAttribute('disabled');
+    }
+    return false;
+  }
+
+  document.addEventListener('submit', interceptSave, true);
+  document.addEventListener('click', interceptSave, true);
+
+  // Delete cloud product when clicking legacy delete controls.
+  document.addEventListener('click', async function(e) {
+    const btn = e.target.closest && e.target.closest('[data-delete-id]');
+    if (!btn) return;
+    const id = btn.dataset.deleteId;
+    if (!id) return;
+    e.preventDefault();
+    if (!confirm('Delete this product?')) return;
+    try {
+      await cloudDeleteProduct(id);
+      await loadCloudData();
+    } catch(err) {
+      alert('Delete error: ' + (err.message || 'Unknown error'));
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await loadCloudData();
+      bridgeReady = true;
+      console.log('New Gama Supabase connected');
+    } catch(err) {
+      console.error('Supabase load error', err);
+      alert('Supabase connection error: ' + (err.message || 'Check tables, policies and internet connection.'));
+    }
+  });
+})();
 </script>
 
 </body>

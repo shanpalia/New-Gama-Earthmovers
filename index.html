@@ -80,6 +80,7 @@
 @media(max-width:800px){.product-detail{grid-template-columns:1fr}.gallery-main{height:330px}.product-info{padding:22px}}
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="top">🚜 Heavy Equipment Spare Parts & Solutions</div>
@@ -386,6 +387,94 @@
 
   // Also refresh periodically so products saved in another open tab appear automatically.
   setInterval(renderCustomerProducts,2000);
+})();
+</script>
+
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function esc(v) {
+    const d=document.createElement('div'); d.textContent=v||''; return d.innerHTML;
+  }
+  function price(item) {
+    return (String(item.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ')+(item.price ?? 0);
+  }
+
+  async function loadProducts() {
+    const list=document.getElementById('customerProductList');
+    if(!list) return;
+    list.innerHTML='<div class="customer-empty">Loading products...</div>';
+
+    const [catRes, prodRes] = await Promise.all([
+      sb.from('new_gama_categories').select('id,name'),
+      sb.from('new_gama_products').select('*').order('created_at',{ascending:false})
+    ]);
+    if(catRes.error) throw catRes.error;
+    if(prodRes.error) throw prodRes.error;
+
+    const catMap = Object.fromEntries((catRes.data||[]).map(c=>[c.id,c.name]));
+    const items=(prodRes.data||[]).map(p=>({
+      ...p,
+      category:catMap[p.category_id]||'',
+      images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+    }));
+
+    if(!items.length) {
+      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
+      return;
+    }
+
+    list.innerHTML=items.map((item,i)=>{
+      const image=item.images[0]||'';
+      return `<article class="customer-card" data-index="${i}">
+        <img src="${image}" alt="${esc(item.name)}" loading="lazy">
+        <div class="customer-card-body">
+          <span class="customer-badge">${esc(item.category)}</span>
+          <h3>${esc(item.name)}</h3>
+          ${item.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(item.part_number)}</div>`:''}
+          <div class="customer-price">${price(item)}</div>
+        </div>
+      </article>`;
+    }).join('');
+
+    list.querySelectorAll('.customer-card').forEach(card=>card.addEventListener('click',()=>showProduct(items[Number(card.dataset.index)])));
+  }
+
+  function showProduct(item) {
+    const modal=document.getElementById('productModal');
+    const main=document.getElementById('galleryMain');
+    const thumbs=document.getElementById('galleryThumbs');
+    const images=item.images||[];
+
+    document.getElementById('modalCategory').textContent=item.category||'';
+    document.getElementById('modalName').textContent=item.name||'Product';
+    document.getElementById('modalPart').textContent=item.part_number?'Part No: '+item.part_number:'';
+    document.getElementById('modalPrice').textContent=price(item);
+    document.getElementById('modalDescription').textContent=item.description||'';
+
+    main.src=images[0]||'';
+    thumbs.innerHTML=images.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}" data-i="${i}">`).join('');
+    thumbs.querySelectorAll('img').forEach(img=>img.addEventListener('click',()=>{
+      main.src=images[Number(img.dataset.i)];
+      thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
+      img.classList.add('active');
+    }));
+    modal.classList.add('show');
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    loadProducts().catch(err=>{
+      console.error(err);
+      const list=document.getElementById('customerProductList');
+      if(list) list.innerHTML='<div class="customer-empty">Could not load products.</div>';
+    });
+    document.getElementById('productClose')?.addEventListener('click',()=>document.getElementById('productModal').classList.remove('show'));
+    document.getElementById('productModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show')});
+  });
 })();
 </script>
 
