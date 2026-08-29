@@ -190,67 +190,53 @@ async function post(table, payload) {
   return text ? JSON.parse(text) : [];
 }
 function imagesOf(p) {
-  const raw = [];
+  const found = [];
 
-  // First use the known image columns.
-  [
-    "main_image_url", "main_image", "image_url",
-    "image_1_url", "image_2_url", "image_3_url", "image_4_url", "image_5_url",
-    "image1_url", "image2_url", "image3_url", "image4_url", "image5_url",
-    "image_1", "image_2", "image_3", "image_4", "image_5",
-    "image1", "image2", "image3", "image4", "image5",
-    "product_image", "photo_url"
-  ].forEach(function(key) {
-    const value = p[key];
-    if (typeof value === "string" && value.trim()) raw.push(value.trim());
-  });
-
-  // Also automatically detect any future database column whose name contains "image".
-  Object.keys(p).forEach(function(key) {
-    if (!/image/i.test(key)) return;
-    const value = p[key];
-
-    if (Array.isArray(value)) {
-      value.forEach(function(item) {
-        if (typeof item === "string" && item.trim()) raw.push(item.trim());
-      });
-    } else if (typeof value === "string" && value.trim()) {
+  function add(value) {
+    if (value == null) return;
+    if (typeof value === "string") {
       const text = value.trim();
+      if (!text) return;
       try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
-          parsed.forEach(function(item) {
-            if (typeof item === "string" && item.trim()) raw.push(item.trim());
-          });
-        } else if (typeof parsed === "string" && parsed.trim()) {
-          raw.push(parsed.trim());
-        } else {
-          raw.push(text);
+        if ((text.startsWith("[") && text.endsWith("]")) || (text.startsWith("{") && text.endsWith("}"))) {
+          add(JSON.parse(text));
+          return;
         }
-      } catch (e) {
-        // Support comma-separated image URLs.
-        if (text.includes(",")) {
-          text.split(",").forEach(function(item) {
-            if (item.trim()) raw.push(item.trim());
-          });
-        } else {
-          raw.push(text);
-        }
+      } catch (_) {}
+      if (text.includes(",") && /^https?:|^\//i.test(text)) {
+        text.split(",").forEach(add);
+        return;
       }
+      if (!found.includes(text)) found.push(text);
+      return;
     }
+    if (Array.isArray(value)) {
+      value.forEach(add);
+      return;
+    }
+    if (typeof value === "object") {
+      Object.values(value).forEach(add);
+    }
+  }
+
+  // Read every field likely to contain an image, including image, photo, gallery and media fields.
+  Object.keys(p || {}).forEach(function(key) {
+    if (/(image|photo|gallery|media|picture|thumb)/i.test(key)) add(p[key]);
   });
 
-  // Keep valid URLs/paths only and remove duplicates.
-  const unique = [];
-  raw.forEach(function(url) {
-    if (typeof url !== "string") return;
-    const clean = url.trim();
-    if (!clean) return;
-    if (!unique.includes(clean)) unique.push(clean);
-  });
+  console.log("New Gama: images from product row:", found.length, found);
+  return found;
+}
 
-  console.log("New Gama: all product images found", unique.length, unique);
-  return unique;
+function mergeImages(baseImages, extraRows) {
+  const out = Array.isArray(baseImages) ? baseImages.slice() : [];
+  (extraRows || []).forEach(function(row) {
+    imagesOf(row).forEach(function(url) {
+      if (url && !out.includes(url)) out.push(url);
+    });
+  });
+  console.log("New Gama: total gallery images:", out.length, out);
+  return out;
 }
 function categoryOf(p) {
   return categoryMap[String(p.categroy_id)] || categoryMap[String(p.category_id)] || p.category || "";
@@ -274,7 +260,7 @@ function totalPriceText() {
 }
 function renderProduct() {
   const root = document.getElementById("productRoot");
-  const images = imagesOf(product);
+  const images = (Array.isArray(product._gallery_images) && product._gallery_images.length) ? product._gallery_images : imagesOf(product);
   console.log("New Gama product images found:", images.length, images);
   const mainImage = images[0] || "new-gama-logo.png";
   const cat = categoryOf(product);
@@ -468,6 +454,24 @@ async function init() {
     const rows = await get("new_gama_products?select=*&id=eq." + encodeURIComponent(productId));
     product = rows[0];
     if (!product) throw new Error("Product not found.");
+
+    // Some versions of the owner dashboard save additional images in a separate table.
+    // Try common table names and merge any available rows into the product gallery.
+    const imageTables = ["new_gama_product_images", "new_gama_images", "product_images"];
+    const extraImageRows = [];
+
+    for (const tableName of imageTables) {
+      try {
+        const imageRows = await get(
+          tableName + "?select=*&product_id=eq." + encodeURIComponent(productId) + "&order=sort_order.asc"
+        );
+        if (Array.isArray(imageRows)) extraImageRows.push(...imageRows);
+      } catch (imageTableError) {
+        console.log("New Gama: optional image table unavailable:", tableName);
+      }
+    }
+
+    product._gallery_images = mergeImages(imagesOf(product), extraImageRows);
     renderProduct();
     loadReviews();
   } catch (err) {
