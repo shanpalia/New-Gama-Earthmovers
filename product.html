@@ -21,8 +21,8 @@ nav{max-width:1200px;margin:auto;padding:10px 20px;display:flex;align-items:cent
 .product-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(350px,.85fr);gap:26px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 5px 22px #0000000c}
 .gallery-main{height:500px;border:1px solid #e7e7e7;border-radius:14px;overflow:hidden;background:#fafafa;display:flex;align-items:center;justify-content:center}
 .gallery-main img{width:100%;height:100%;object-fit:contain;display:block}
-.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.thumbs img{width:78px;height:78px;object-fit:cover;border:2px solid transparent;border-radius:9px;cursor:pointer;background:#fff}
+.gallery-label{font-weight:800;margin-top:18px;margin-bottom:10px;font-size:16px}.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:0}
+.thumbs img{width:82px;height:82px;object-fit:cover;border:2px solid #e2e2e2;border-radius:9px;cursor:pointer;background:#fff;display:block}
 .thumbs img.active{border-color:var(--yellow)}
 .category{display:inline-block;background:#fff2be;color:#765400;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:bold;margin-bottom:12px}
 h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin-bottom:10px}
@@ -37,7 +37,7 @@ h1{font-size:clamp(28px,4vw,42px);line-height:1.15;margin-bottom:10px}
 .qty-control input{width:58px;height:42px;border:0;text-align:center;font-size:16px;font-weight:bold;outline:0}
 .primary{width:100%;border:0;border-radius:10px;background:var(--yellow);color:#1b1b1b;padding:15px;font-size:16px;font-weight:800;cursor:pointer}
 .primary:hover{filter:brightness(.96)}
-.note{font-size:12px;color:#777;margin-top:10px}
+.order-total{display:flex;align-items:center;justify-content:space-between;gap:15px;background:#fff8df;border:1px solid #f0d676;border-radius:10px;padding:14px 16px;margin:5px 0 16px;font-size:15px}.order-total strong{font-size:22px;color:#1b1b1b}.note{font-size:12px;color:#777;margin-top:10px}
 .section{background:#fff;border-radius:16px;padding:24px;margin-top:24px;box-shadow:0 5px 22px #0000000c}
 .section h2{margin-bottom:18px}
 .review-summary{display:flex;align-items:center;gap:16px;border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px}
@@ -169,8 +169,42 @@ async function post(table, payload) {
   return text ? JSON.parse(text) : [];
 }
 function imagesOf(p) {
-  return [p.main_image_url,p.image_1_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url,p.image_url,p.product_image,p.photo_url]
-    .filter(x => typeof x === "string" && x.trim());
+  const raw = [
+    p.main_image_url,
+    p.image_1_url,
+    p.image_2_url,
+    p.image_3_url,
+    p.image_4_url,
+    p.image_5_url,
+    p.image1_url,
+    p.image2_url,
+    p.image3_url,
+    p.image4_url,
+    p.image5_url,
+    p.image_url,
+    p.product_image,
+    p.photo_url
+  ];
+
+  // Support array/JSON/comma-separated image fields too.
+  ["images", "image_urls", "product_images"].forEach(key => {
+    const value = p[key];
+    if (Array.isArray(value)) raw.push(...value);
+    else if (typeof value === "string" && value.trim()) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) raw.push(...parsed);
+        else raw.push(value);
+      } catch {
+        raw.push(...value.split(","));
+      }
+    }
+  });
+
+  return [...new Set(raw
+    .map(x => typeof x === "string" ? x.trim() : "")
+    .filter(Boolean)
+  )];
 }
 function categoryOf(p) {
   return categoryMap[String(p.categroy_id)] || categoryMap[String(p.category_id)] || p.category || "";
@@ -183,10 +217,19 @@ function stars(n) {
   return "★★★★★".split("").map((s,i)=>i<x?"★":"☆").join("");
 }
 
+function totalPrice() {
+  const unit = Number(product && product.price != null ? product.price : 0);
+  return unit * quantity;
+}
+function totalPriceText() {
+  const currency = String(product && product.currency || "INR").toUpperCase();
+  const symbol = currency === "NPR" ? "रु " : "₹ ";
+  return symbol + totalPrice().toLocaleString("en-IN");
+}
 function renderProduct() {
   const root = document.getElementById("productRoot");
   const images = imagesOf(product);
-  const mainImage = images[0] || "new-gama-logo.png";
+  console.log("New Gama product images found:", images.length, images);\n  const mainImage = images[0] || "new-gama-logo.png";
   const cat = categoryOf(product);
   document.title = (product.name || "Product") + " | New Gama Earthmovers";
   document.getElementById("crumb").textContent = product.name || "Product Details";
@@ -195,9 +238,11 @@ function renderProduct() {
     <section class="product-layout">
       <div>
         <div class="gallery-main"><img id="mainImage" src="${esc(mainImage)}" alt="${esc(product.name)}" onerror="this.src='new-gama-logo.png'"></div>
+        ${images.length > 1 ? `
+        <div class="gallery-label">More Product Images</div>
         <div class="thumbs" id="thumbs">
-          ${images.map((src,i)=>`<img class="${i===0?"active":""}" src="${esc(src)}" data-src="${esc(src)}" alt="Product image ${i+1}">`).join("")}
-        </div>
+          ${images.map((src,i)=>`<img class="${i===0?"active":""}" src="${esc(src)}" data-src="${esc(src)}" alt="Product image ${i+1}" title="View image ${i+1}">`).join("")}
+        </div>` : ""}
       </div>
       <div>
         ${cat?`<span class="category">${esc(cat)}</span>`:""}
@@ -216,6 +261,10 @@ function renderProduct() {
             </div>
             <span style="color:#777">Quantity</span>
           </div>
+          <div class="order-total">
+            <span>Total Amount</span>
+            <strong id="totalAmount">${priceOf(product)}</strong>
+          </div>
           <button class="primary" id="buyNow" type="button">Order This Product</button>
           <div class="note">Your order request will be sent to New Gama Earthmovers.</div>
         </div>
@@ -232,6 +281,8 @@ function renderProduct() {
   function setQty(v) {
     quantity = Math.max(1, Math.min(999, Number(v)||1));
     qtyInput.value = quantity;
+    const totalEl = document.getElementById("totalAmount");
+    if (totalEl) totalEl.textContent = totalPriceText();
   }
   document.getElementById("minusQty").onclick=()=>setQty(quantity-1);
   document.getElementById("plusQty").onclick=()=>setQty(quantity+1);
@@ -239,7 +290,7 @@ function renderProduct() {
 
   document.getElementById("buyNow").onclick=()=>{
     document.getElementById("orderProductText").textContent =
-      (product.name || "Product") + " • Quantity: " + quantity + " • " + priceOf(product);
+      (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
     document.getElementById("orderModal").classList.add("show");
   };
 }
@@ -308,6 +359,7 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
       customer_note: document.getElementById("customerNote").value.trim(),
       currency: product.currency || "INR",
       unit_price: product.price ?? 0,
+      total_amount: totalPrice(),
       order_status: "new"
     });
     msg.textContent = "Order sent successfully! The shop owner can now see your order.";
