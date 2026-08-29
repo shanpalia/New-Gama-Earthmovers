@@ -229,7 +229,8 @@ function totalPriceText() {
 function renderProduct() {
   const root = document.getElementById("productRoot");
   const images = imagesOf(product);
-  console.log("New Gama product images found:", images.length, images);\n  const mainImage = images[0] || "new-gama-logo.png";
+  console.log("New Gama product images found:", images.length, images);
+  const mainImage = images[0] || "new-gama-logo.png";
   const cat = categoryOf(product);
   document.title = (product.name || "Product") + " | New Gama Earthmovers";
   document.getElementById("crumb").textContent = product.name || "Product Details";
