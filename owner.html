@@ -424,7 +424,7 @@ function updateProductPreview(){
 function clearProductForm(){
   ['itemName','partNumber','price','description'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('category').value='';
-  selectedImages=[];editingIndex=null;
+  selectedImages=[];editingIndex=null;window.__editingProductId=null;
   document.getElementById('addItemBtn').textContent='Add Product';
   renderSelectedImages();updateProductPreview();
 }
@@ -609,9 +609,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       const categoryId = await getOrCreateCategory(sb, categoryName);
-      const productId = (typeof editingIndex !== "undefined" && editingIndex !== null && items[editingIndex] && items[editingIndex].id)
-        ? items[editingIndex].id
-        : crypto.randomUUID();
+      const productId = (window.__editingProductId)
+        ? window.__editingProductId
+        : ((typeof editingIndex !== "undefined" && editingIndex !== null && items[editingIndex] && items[editingIndex].id)
+          ? items[editingIndex].id
+          : crypto.randomUUID());
 
       // Upload every selected image to the existing product image bucket.
       const uploaded = [];
@@ -700,6 +702,89 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", activateBridge);
   else activateBridge();
+})();
+</script>
+
+
+<script>
+/* ===== FINAL DUPLICATE-PROOF PRODUCT SYNC ===== */
+(function () {
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+
+  async function syncProductsFromSupabase() {
+    try {
+      if (!window.supabase || !window.supabase.createClient) return;
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
+      });
+
+      const {data: products, error} = await sb
+        .from("new_gama_products")
+        .select("*")
+        .order("updated_at",{ascending:false});
+
+      if (error) throw error;
+
+      const {data: gallery} = await sb
+        .from("new_gama_product_images")
+        .select("product_id,image_url,sort_order")
+        .order("sort_order",{ascending:true});
+
+      const byProduct = {};
+      (gallery || []).forEach(row => {
+        if (!byProduct[row.product_id]) byProduct[row.product_id] = [];
+        byProduct[row.product_id].push(row.image_url);
+      });
+
+      // IMPORTANT: every dashboard item gets the exact Supabase UUID.
+      items = (products || []).map(p => ({
+        id: p.id,
+        name: p.name || "",
+        part: p.part_number || p.part || "",
+        category: p.category || p.category_name || "",
+        category_id: p.category_id || null,
+        price: p.price ?? "",
+        currency: p.currency || "INR",
+        description: p.description || "",
+        images: byProduct[p.id] && byProduct[p.id].length
+          ? byProduct[p.id]
+          : [p.main_image_url || p.image_url || p.image || ""].filter(Boolean)
+      }));
+
+      // Keep localStorage only as a cache, never as the source for product IDs.
+      saveData();
+      renderItems();
+      console.log("New Gama: synced", items.length, "products with Supabase IDs.");
+    } catch (err) {
+      console.error("New Gama product sync failed:", err);
+    }
+  }
+
+  // Edit protection: capture the original UUID directly before opening the form.
+  const originalEditItem = window.editItem;
+  window.editItem = function(index) {
+    const item = items[index];
+    if (item && item.id) {
+      window.__editingProductId = item.id;
+    } else {
+      window.__editingProductId = null;
+    }
+    return originalEditItem(index);
+  };
+
+  // Run after the page's original initialization.
+  window.addEventListener("load", function() {
+    setTimeout(syncProductsFromSupabase, 300);
+  });
+
+  // Also refresh whenever dashboard/manage page is opened.
+  const originalOpenPage = window.openPage;
+  window.openPage = function(id) {
+    const result = originalOpenPage(id);
+    if (id === "dashboard" || id === "manage-items") syncProductsFromSupabase();
+    return result;
+  };
 })();
 </script>
 
