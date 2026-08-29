@@ -854,5 +854,45 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
+
+<script>
+/* ===== NEW GAMA REAL-TIME ORDER NOTIFICATIONS ===== */
+(function(){
+ const URL="https://gozvchqatiyebpnycubl.supabase.co";
+ const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+ let known=new Set(), client;
+ function get(){client=client||window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});return client}
+ function bell(){
+   if(document.getElementById("ngBell"))return;
+   document.body.insertAdjacentHTML("beforeend",`<button id="ngBell" style="position:fixed;right:22px;top:22px;z-index:9999;border:0;background:#fff;border-radius:50%;width:52px;height:52px;font-size:23px;box-shadow:0 5px 20px #0002;cursor:pointer">🔔<b id="ngBadge" style="display:none;position:absolute;right:-4px;top:-4px;background:#e53935;color:#fff;border-radius:20px;min-width:20px;padding:2px 5px;font-size:12px">0</b></button><div id="ngOrdersPanel" style="display:none;position:fixed;right:18px;top:82px;width:min(430px,calc(100vw - 36px));max-height:70vh;overflow:auto;z-index:9999;background:#fff;border:1px solid #e3e6ea;border-radius:16px;padding:16px;box-shadow:0 15px 45px #0003"><h2 style="margin:0 0 12px">📦 New Orders</h2><div id="ngOrdersList">Loading...</div></div>`);
+   document.getElementById("ngBell").onclick=()=>{const p=document.getElementById("ngOrdersPanel");p.style.display=p.style.display==="none"?"block":"none";load()};
+ }
+ async function load(){
+   try{
+     const {data,error}=await get().from("new_gama_orders").select("*").order("created_at",{ascending:false});
+     if(error)throw error;
+     const fresh=(data||[]).filter(x=>x.status==="new");
+     document.getElementById("ngBadge").textContent=fresh.length;
+     document.getElementById("ngBadge").style.display=fresh.length?"block":"none";
+     document.getElementById("ngOrdersList").innerHTML=(data||[]).length?(data||[]).map(x=>`<div style="border:1px solid #eee;border-radius:12px;padding:12px;margin:8px 0"><b>${x.product_name||"Product"}</b><br>Customer: ${x.customer_name||""}<br>Mobile: ${x.customer_phone||""}<br>Qty: ${x.quantity||1} • Amount: ₹${x.total_amount||0}<br><small>${new Date(x.created_at).toLocaleString()}</small></div>`).join(""):"No orders yet.";
+     (data||[]).forEach(x=>known.add(x.id));
+   }catch(e){console.error("Orders:",e)}
+ }
+ function notify(row){
+   if(known.has(row.id))return; known.add(row.id);
+   if(Notification && Notification.permission==="granted") new Notification("New Gama: New Order",{body:(row.product_name||"Product")+" • Qty "+(row.quantity||1)});
+   alert("🔔 New Order Received!\n"+(row.product_name||"Product")+"\nQty: "+(row.quantity||1)+"\nAmount: ₹"+(row.total_amount||0));
+   load();
+ }
+ function init(){
+   if(!window.supabase)return setTimeout(init,200);
+   bell(); load();
+   if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
+   get().channel("new-gama-orders").on("postgres_changes",{event:"INSERT",schema:"public",table:"new_gama_orders"},payload=>notify(payload.new)).subscribe();
+   setInterval(load,15000);
+ }
+ document.readyState==="loading"?document.addEventListener("DOMContentLoaded",init):init();
+})();
+</script>
 </body>
 </html>
