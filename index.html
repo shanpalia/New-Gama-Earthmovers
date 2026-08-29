@@ -44,6 +44,14 @@
       .hero{min-height:460px}.search{margin:-25px 12px 0;flex-direction:column}
       .search button{padding:14px}.contact .container{grid-template-columns:1fr}.btn.outline{margin:10px 0 0}
     }
+
+    .security-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    .security-modal.show{display:flex}
+    .security-box{width:min(430px,100%);background:#fff;border-radius:14px;padding:28px;box-shadow:0 20px 70px rgba(0,0,0,.45)}
+    .security-icon{width:58px;height:58px;border-radius:50%;background:#fff5cc;display:grid;place-items:center;font-size:28px;margin-bottom:12px}
+    .security-box h2{font-size:24px;margin-bottom:8px}.security-box p{color:#666;font-size:14px;line-height:1.5}
+    .security-box label{display:block;font-weight:bold;font-size:13px;margin:16px 0 7px}.security-box input{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;font-size:16px}
+    .security-actions{display:flex;gap:10px;margin-top:18px}.security-actions button{padding:13px 18px;border-radius:7px}.cancel-btn{background:#eee;color:#222}.security-error{display:none;color:#c62828;font-size:13px;margin-top:10px}
   </style>
 </head>
 <body>
@@ -120,27 +128,101 @@
         : '<strong>Please enter a Part Name or Part Number.</strong>';
     }
 
-    // Hidden Owner/Admin Panel trigger:
-    // Click the header PNG logo 5 times within 3 seconds.
-    let ownerClicks = 0;
-    let ownerClickTimer = null;
+    const SECURITY_KEY = 'newGamaOwnerPinHash';
+    const modal = document.getElementById('securityModal');
+    const pinInput = document.getElementById('ownerPin');
+    const confirmInput = document.getElementById('confirmPin');
+    const confirmWrap = document.getElementById('confirmPinWrap');
+    const securityTitle = document.getElementById('securityTitle');
+    const securityText = document.getElementById('securityText');
+    const pinLabel = document.getElementById('pinLabel');
+    const securityError = document.getElementById('securityError');
+    let setupMode = false;
 
-    const ownerTrigger = document.getElementById('ownerTrigger');
+    async function hashPin(pin){
+      const data = new TextEncoder().encode(pin);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
 
-    ownerTrigger.addEventListener('click', function () {
-      ownerClicks++;
-      clearTimeout(ownerClickTimer);
-
-      if (ownerClicks >= 5) {
-        ownerClicks = 0;
-        window.location.href = 'owner.html';
-        return;
+    function showSecurity(){
+      setupMode = !localStorage.getItem(SECURITY_KEY);
+      securityError.style.display='none';
+      pinInput.value=''; confirmInput.value='';
+      if(setupMode){
+        securityTitle.textContent='Create Owner Security';
+        securityText.textContent='First time setup: create a 4 to 12 digit security PIN. You will need this PIN every time you open the Owner Dashboard.';
+        pinLabel.textContent='Create Security PIN';
+        confirmWrap.style.display='block';
+      }else{
+        securityTitle.textContent='Owner Security';
+        securityText.textContent='Enter your owner security PIN to open the dashboard.';
+        pinLabel.textContent='Security PIN';
+        confirmWrap.style.display='none';
       }
+      modal.classList.add('show');
+      setTimeout(()=>pinInput.focus(),50);
+    }
 
-      ownerClickTimer = setTimeout(function () {
-        ownerClicks = 0;
-      }, 3000);
+    function closeSecurity(){ modal.classList.remove('show'); }
+
+    document.getElementById('securityCancel').addEventListener('click', closeSecurity);
+    document.getElementById('securitySubmit').addEventListener('click', async function(){
+      const pin = pinInput.value.trim();
+      securityError.style.display='none';
+      if(!/^\d{4,12}$/.test(pin)){
+        securityError.textContent='Please enter a 4 to 12 digit PIN.';
+        securityError.style.display='block'; return;
+      }
+      if(setupMode){
+        if(pin !== confirmInput.value.trim()){
+          securityError.textContent='PINs do not match. Please try again.';
+          securityError.style.display='block'; return;
+        }
+        localStorage.setItem(SECURITY_KEY, await hashPin(pin));
+      }else{
+        const saved = localStorage.getItem(SECURITY_KEY);
+        if(await hashPin(pin) !== saved){
+          securityError.textContent='Incorrect security PIN.';
+          securityError.style.display='block'; return;
+        }
+      }
+      sessionStorage.setItem('newGamaOwnerAuthorized','true');
+      window.location.href='owner.html';
+    });
+
+    pinInput.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('securitySubmit').click(); });
+    confirmInput.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('securitySubmit').click(); });
+
+    // Hidden Owner/Admin Panel trigger: click header PNG logo 5 times within 3 seconds.
+    let ownerClicks = 0, ownerClickTimer = null;
+    const ownerTrigger = document.getElementById('ownerTrigger');
+    ownerTrigger.addEventListener('click', function(){
+      ownerClicks++; clearTimeout(ownerClickTimer);
+      if(ownerClicks >= 5){ ownerClicks=0; showSecurity(); return; }
+      ownerClickTimer=setTimeout(()=>ownerClicks=0,3000);
     });
   </script>
+
+  <div class="security-modal" id="securityModal" role="dialog" aria-modal="true">
+    <div class="security-box">
+      <div class="security-icon">🔐</div>
+      <h2 id="securityTitle">Owner Security</h2>
+      <p id="securityText">Enter your owner security PIN to open the dashboard.</p>
+      <div id="confirmPinWrap" style="display:none">
+        <label for="confirmPin">Confirm Security PIN</label>
+        <input id="confirmPin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Enter PIN again" maxlength="12">
+      </div>
+      <div id="pinWrap">
+        <label for="ownerPin" id="pinLabel">Security PIN</label>
+        <input id="ownerPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4 to 12 digit PIN" maxlength="12">
+      </div>
+      <div class="security-error" id="securityError"></div>
+      <div class="security-actions">
+        <button type="button" id="securitySubmit">Continue</button>
+        <button type="button" class="cancel-btn" id="securityCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -121,6 +121,35 @@ textarea{min-height:100px;resize:vertical}
 </style>
 </head>
 <body>
+<script>
+if(sessionStorage.getItem('newGamaOwnerAuthorized') !== 'true'){
+  window.location.replace('index.html');
+}
+
+
+async function hashOwnerPin(pin){
+  const data = new TextEncoder().encode(pin);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+document.getElementById('changeSecurityBtn').addEventListener('click', async () => {
+  const current = document.getElementById('currentSecurityPin').value.trim();
+  const next = document.getElementById('newSecurityPin').value.trim();
+  const confirmNext = document.getElementById('confirmSecurityPin').value.trim();
+  const saved = localStorage.getItem('newGamaOwnerPinHash');
+  if(!saved){ alert('No security PIN found. Return to the website and open the dashboard using the 5-click logo trigger.'); return; }
+  if(!/^\d{4,12}$/.test(next)){ alert('New PIN must contain 4 to 12 digits.'); return; }
+  if(next !== confirmNext){ alert('New PINs do not match.'); return; }
+  if(await hashOwnerPin(current) !== saved){ alert('Current security PIN is incorrect.'); return; }
+  localStorage.setItem('newGamaOwnerPinHash', await hashOwnerPin(next));
+  document.getElementById('currentSecurityPin').value='';
+  document.getElementById('newSecurityPin').value='';
+  document.getElementById('confirmSecurityPin').value='';
+  alert('Owner security PIN changed successfully.');
+});
+
+</script>
 <div class="app">
 
   <header class="topbar">
@@ -275,6 +304,18 @@ textarea{min-height:100px;resize:vertical}
         </div>
       </div>
 
+      <div class="card" style="margin-top:20px;max-width:620px">
+        <h2>Owner Security</h2>
+        <p style="color:#777;font-size:14px">Change the PIN required after the hidden 5-click logo trigger.</p>
+        <label>Current Security PIN</label>
+        <input id="currentSecurityPin" type="password" inputmode="numeric" maxlength="12" placeholder="Enter current PIN">
+        <label>New Security PIN</label>
+        <input id="newSecurityPin" type="password" inputmode="numeric" maxlength="12" placeholder="4 to 12 digit PIN">
+        <label>Confirm New PIN</label>
+        <input id="confirmSecurityPin" type="password" inputmode="numeric" maxlength="12" placeholder="Enter new PIN again">
+        <button class="primary" type="button" id="changeSecurityBtn">Change Security PIN</button>
+      </div>
+
       <button class="primary" onclick="alert('Profile saving will be connected to the database next.')">Save Profile</button>
     </section>
   </main>
@@ -316,6 +357,7 @@ document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
   if(confirm('Logout from Owner Dashboard?')){
+    sessionStorage.removeItem('newGamaOwnerAuthorized');
     window.location.href = 'index.html';
   }
 });
