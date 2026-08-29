@@ -1,70 +1,386 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Owner Admin | New Gama Earthmovers</title>
-  <link rel="icon" type="image/png" href="new-gama-logo.png">
-  <style>
-    :root{--yellow:#f5b400;--dark:#181818}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;color:#222}
-    .top{height:70px;background:var(--dark);color:#fff;display:flex;align-items:center;padding:0 25px;gap:12px}
-    .top img{width:42px;height:42px;border-radius:50%;object-fit:cover}
-    .top small{display:block;color:#aaa;margin-top:3px}
-    main{max-width:1100px;margin:35px auto;padding:0 20px}
-    .notice{background:#fff3cd;border-left:4px solid var(--yellow);padding:15px;margin-bottom:20px;border-radius:6px}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-    .panel{background:#fff;border-radius:10px;padding:25px;box-shadow:0 5px 20px #00000010}
-    h2{margin-bottom:18px;font-size:21px}
-    label{display:block;font-size:13px;font-weight:bold;margin:14px 0 6px}
-    input,textarea,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font:inherit}
-    textarea{min-height:100px;resize:vertical}
-    button{margin-top:18px;background:var(--yellow);border:0;padding:13px 22px;border-radius:6px;font-weight:bold;cursor:pointer}
-    .full{grid-column:1/-1}
-    @media(max-width:700px){.grid{grid-template-columns:1fr}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Owner Dashboard | New Gama Earthmovers</title>
+<link rel="icon" type="image/png" href="new-gama-logo.png">
+<style>
+:root{
+  --yellow:#f5b400;
+  --dark:#171717;
+  --dark2:#242424;
+  --light:#f5f6f7;
+  --white:#fff;
+  --text:#242424;
+  --muted:#777;
+  --border:#e6e6e6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--light);color:var(--text)}
+button{font:inherit;cursor:pointer}
+.app{min-height:100vh}
+
+/* Top Header */
+.topbar{
+  height:70px;background:var(--dark);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;position:sticky;top:0;z-index:50;
+}
+.top-left{display:flex;align-items:center;gap:14px}
+.menu-btn{
+  width:42px;height:42px;border:0;background:transparent;color:#fff;
+  font-size:26px;border-radius:7px;
+}
+.menu-btn:hover{background:#303030}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--yellow)}
+.brand b{font-size:16px}
+.brand small{display:block;color:#aaa;font-size:11px;margin-top:3px}
+.owner{font-size:13px;color:#ccc}
+
+/* Sidebar */
+.sidebar{
+  position:fixed;left:0;top:70px;bottom:0;width:260px;
+  background:var(--dark2);color:#eee;
+  transform:translateX(-100%);
+  transition:transform .25s ease;
+  z-index:40;padding:20px 12px;
+  box-shadow:8px 0 30px rgba(0,0,0,.18);
+}
+.sidebar.open{transform:translateX(0)}
+.sidebar-title{color:#aaa;font-size:11px;font-weight:bold;padding:5px 12px 12px;letter-spacing:.7px}
+.nav-item{
+  width:100%;border:0;background:transparent;color:#eee;
+  display:flex;align-items:center;gap:13px;text-align:left;
+  padding:14px 14px;border-radius:8px;margin:4px 0;font-weight:bold;
+}
+.nav-item:hover,.nav-item.active{background:#343434}
+.nav-item.active{color:var(--yellow)}
+.nav-icon{width:24px;text-align:center;font-size:18px}
+.logout{margin-top:18px;color:#ffb0a8}
+.sidebar-backdrop{
+  display:none;position:fixed;inset:70px 0 0 0;background:rgba(0,0,0,.35);z-index:35;
+}
+.sidebar-backdrop.show{display:block}
+
+/* Main */
+main{max-width:1250px;margin:auto;padding:28px 22px 50px}
+.page{display:none}
+.page.active{display:block}
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:28px;margin-bottom:6px}
+.page-header p{color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
+.stat{background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)}
+.stat b{display:block;font-size:28px;margin-top:8px}
+.stat span{font-size:13px;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px}
+.card h2{font-size:19px;margin-bottom:15px}
+.empty{padding:35px 15px;text-align:center;color:var(--muted);border:1px dashed #ccc;border-radius:9px}
+
+label{display:block;font-size:13px;font-weight:bold;margin:15px 0 7px}
+input,textarea,select{
+  width:100%;border:1px solid #dcdcdc;border-radius:7px;
+  padding:13px;font:inherit;outline:none;background:#fff;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--yellow)}
+textarea{min-height:100px;resize:vertical}
+.primary{
+  background:var(--yellow);border:0;border-radius:7px;
+  padding:13px 22px;font-weight:bold;margin-top:18px;
+}
+.secondary{
+  background:#eee;border:0;border-radius:7px;
+  padding:13px 22px;font-weight:bold;margin-top:18px;
+}
+
+.item-form{max-width:720px}
+.item-list{display:grid;gap:12px}
+.item-row{
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  padding:16px;border:1px solid var(--border);border-radius:9px;
+}
+.item-row small{display:block;color:var(--muted);margin-top:4px}
+.remove{border:0;background:#fff0ef;color:#c73b2d;padding:9px 12px;border-radius:6px}
+
+@media(max-width:850px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr}
+}
+@media(max-width:550px){
+  .topbar{padding:0 12px}.owner{display:none}
+  .brand b{font-size:13px}
+  main{padding:22px 14px 40px}
+  .stats{grid-template-columns:1fr 1fr;gap:10px}
+  .stat{padding:15px}.stat b{font-size:23px}
+}
+</style>
 </head>
 <body>
-  <div class="top">
-    <img src="new-gama-logo.png" alt="Logo">
-    <div><b>NEW GAMA EARTHMOVERS</b><small>Owner Admin Panel</small></div>
-  </div>
+<div class="app">
+
+  <header class="topbar">
+    <div class="top-left">
+      <button class="menu-btn" id="menuBtn" aria-label="Open dashboard menu">☰</button>
+      <div class="brand">
+        <img src="new-gama-logo.png" alt="New Gama Earthmovers">
+        <div><b>NEW GAMA EARTHMOVERS</b><small>Owner Dashboard</small></div>
+      </div>
+    </div>
+    <div class="owner">Shop Owner Admin</div>
+  </header>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">OWNER MENU</div>
+
+    <button class="nav-item active" data-page="home">
+      <span class="nav-icon">⌂</span> Home
+    </button>
+    <button class="nav-item" data-page="dashboard">
+      <span class="nav-icon">▦</span> Dashboard
+    </button>
+    <button class="nav-item" data-page="add-items">
+      <span class="nav-icon">＋</span> Add Items
+    </button>
+    <button class="nav-item" data-page="manage-profile">
+      <span class="nav-icon">⚙</span> Manage Profile
+    </button>
+    <button class="nav-item logout" id="logoutBtn">
+      <span class="nav-icon">↪</span> Logout
+    </button>
+  </aside>
+
+  <div class="sidebar-backdrop" id="backdrop"></div>
 
   <main>
-    <div class="notice">
-      <b>Admin Panel Ready.</b> This is the hidden panel opened by clicking the website PNG logo 5 times.
-      Database saving and secure owner authentication will be connected in the next phase.
-    </div>
+    <!-- HOME -->
+    <section class="page active" id="home">
+      <div class="page-header">
+        <h1>Welcome, Shop Owner 👋</h1>
+        <p>Manage your New Gama Earthmovers store from one place.</p>
+      </div>
 
-    <div class="grid">
-      <section class="panel">
-        <h2>Shop Information</h2>
-        <label>Shop Name</label>
-        <input value="New Gama Earthmovers">
-        <label>Shop Address</label>
-        <textarea placeholder="Enter complete shop address"></textarea>
-        <label>Country</label>
-        <select><option>India</option><option>Nepal</option></select>
-      </section>
+      <div class="grid">
+        <div class="card">
+          <h2>Quick Actions</h2>
+          <p style="color:#777">Add your first parts and configure your shop details.</p>
+          <button class="primary" onclick="openPage('add-items')">Add New Item</button>
+          <button class="secondary" onclick="openPage('manage-profile')">Manage Profile</button>
+        </div>
 
-      <section class="panel">
-        <h2>Contact Information</h2>
-        <label>Contact Number</label>
-        <input type="tel" placeholder="Enter contact number">
-        <label>WhatsApp Number</label>
-        <input type="tel" placeholder="Enter WhatsApp number">
-        <label>Email Address</label>
-        <input type="email" placeholder="Enter email address">
-      </section>
+        <div class="card">
+          <h2>Store Status</h2>
+          <div class="empty">
+            <strong>Your store is ready.</strong><br>
+            Add items and complete your profile to start receiving customer orders.
+          </div>
+        </div>
+      </div>
+    </section>
 
-      <section class="panel full">
-        <h2>Currency Settings</h2>
-        <label>Default Currency</label>
-        <select><option>Indian Rupee (₹ INR)</option><option>Nepalese Rupee (रु NPR)</option></select>
-        <button type="button" onclick="alert('Database connection will be added next.');">Save Changes</button>
-      </section>
-    </div>
+    <!-- DASHBOARD -->
+    <section class="page" id="dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Overview of your store activity.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
+        <div class="stat"><span>Total Orders</span><b>0</b></div>
+        <div class="stat"><span>Customers</span><b>0</b></div>
+        <div class="stat"><span>Store Status</span><b style="font-size:18px;color:#159447">Active</b></div>
+      </div>
+
+      <div class="card">
+        <h2>Item List</h2>
+        <div class="item-list" id="itemList">
+          <div class="empty">No items have been added yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADD ITEMS -->
+    <section class="page" id="add-items">
+      <div class="page-header">
+        <h1>Add Items</h1>
+        <p>Add spare parts and products to your customer website.</p>
+      </div>
+
+      <div class="card item-form">
+        <h2>New Spare Part</h2>
+
+        <label>Item / Part Name</label>
+        <input id="itemName" placeholder="Enter item name">
+
+        <label>Part Number</label>
+        <input id="partNumber" placeholder="Enter part number">
+
+        <label>Category</label>
+        <input id="category" placeholder="Example: Engine, Hydraulic, Filter">
+
+        <label>Price</label>
+        <input id="price" type="number" min="0" placeholder="Enter price">
+
+        <label>Currency</label>
+        <select id="currency">
+          <option value="INR">Indian Rupee (₹ INR)</option>
+          <option value="NPR">Nepalese Rupee (रु NPR)</option>
+        </select>
+
+        <label>Item Description</label>
+        <textarea id="description" placeholder="Enter item details"></textarea>
+
+        <button class="primary" id="addItemBtn">Add Item</button>
+      </div>
+    </section>
+
+    <!-- MANAGE PROFILE -->
+    <section class="page" id="manage-profile">
+      <div class="page-header">
+        <h1>Manage Profile</h1>
+        <p>Update the details that customers will see on your website.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Shop Information</h2>
+          <label>Shop Name</label>
+          <input value="New Gama Earthmovers">
+
+          <label>Shop Address</label>
+          <textarea placeholder="Enter complete shop address"></textarea>
+
+          <label>Country</label>
+          <select>
+            <option>India</option>
+            <option>Nepal</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <h2>Contact Information</h2>
+          <label>Contact Number</label>
+          <input type="tel" placeholder="Enter contact number">
+
+          <label>WhatsApp Number</label>
+          <input type="tel" placeholder="Enter WhatsApp number">
+
+          <label>Email Address</label>
+          <input type="email" placeholder="Enter email address">
+        </div>
+      </div>
+
+      <button class="primary" onclick="alert('Profile saving will be connected to the database next.')">Save Profile</button>
+    </section>
   </main>
+</div>
+
+<script>
+const menuBtn = document.getElementById('menuBtn');
+const sidebar = document.getElementById('sidebar');
+const backdrop = document.getElementById('backdrop');
+
+function toggleMenu(forceClose=false){
+  if(forceClose){
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('show');
+  }else{
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('show');
+  }
+}
+
+menuBtn.addEventListener('click', () => toggleMenu());
+backdrop.addEventListener('click', () => toggleMenu(true));
+
+function openPage(pageId){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+
+  document.querySelectorAll('.nav-item[data-page]').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === pageId);
+  });
+
+  toggleMenu(true);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => openPage(btn.dataset.page));
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  if(confirm('Logout from Owner Dashboard?')){
+    window.location.href = 'index.html';
+  }
+});
+
+const items = [];
+
+document.getElementById('addItemBtn').addEventListener('click', () => {
+  const name = document.getElementById('itemName').value.trim();
+  const part = document.getElementById('partNumber').value.trim();
+  const category = document.getElementById('category').value.trim();
+  const price = document.getElementById('price').value.trim();
+  const currency = document.getElementById('currency').value;
+  const description = document.getElementById('description').value.trim();
+
+  if(!name){
+    alert('Please enter Item / Part Name.');
+    return;
+  }
+
+  items.push({name, part, category, price, currency, description});
+  document.getElementById('itemCount').textContent = items.length;
+
+  ['itemName','partNumber','category','price','description'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  renderItems();
+  alert('Item added successfully.');
+  openPage('dashboard');
+});
+
+function escapeHtml(value){
+  const div = document.createElement('div');
+  div.textContent = value || '';
+  return div.innerHTML;
+}
+
+function renderItems(){
+  const list = document.getElementById('itemList');
+
+  if(!items.length){
+    list.innerHTML = '<div class="empty">No items have been added yet.</div>';
+    return;
+  }
+
+  list.innerHTML = items.map((item, index) => `
+    <div class="item-row">
+      <div>
+        <b>${escapeHtml(item.name)}</b>
+        <small>
+          ${item.part ? 'Part No: ' + escapeHtml(item.part) + ' • ' : ''}
+          ${item.category ? escapeHtml(item.category) : ''}
+          ${item.price ? ' • ' + (item.currency === 'INR' ? '₹' : 'रु') + escapeHtml(item.price) : ''}
+        </small>
+      </div>
+      <button class="remove" onclick="removeItem(${index})">Remove</button>
+    </div>
+  `).join('');
+}
+
+function removeItem(index){
+  items.splice(index, 1);
+  document.getElementById('itemCount').textContent = items.length;
+  renderItems();
+}
+</script>
 </body>
 </html>
