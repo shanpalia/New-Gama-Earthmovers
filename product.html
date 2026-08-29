@@ -171,24 +171,18 @@ body{background:#f7f8fa!important}
 
 </style>
 
-<style id="ngCheckoutStyles">
-#ngCheckoutModal{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:999999;display:none;align-items:center;justify-content:center;padding:14px}
+<style id="ng-clean-checkout-css">
+#ngCheckoutModal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000000;display:none;align-items:center;justify-content:center;padding:14px}
 #ngCheckoutModal.show{display:flex}
-.ng-checkout-card{background:#fff;color:#1f2937;width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.ng-checkout-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;padding-bottom:14px;margin-bottom:16px}
-.ng-close{border:0;background:#f3f4f6;border-radius:50%;width:38px;height:38px;font-size:22px;cursor:pointer}
-.ng-cart-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee}
-.ng-cart-name{font-weight:800}
-.ng-qty{display:flex;align-items:center;gap:8px;margin-top:7px}
-.ng-qty button{width:30px;height:30px;border:1px solid #ddd;background:#fff;border-radius:7px;font-weight:800;cursor:pointer}
-.ng-buy-more,.ng-proceed,.ng-final{border:0;border-radius:10px;padding:14px 18px;font-weight:800;cursor:pointer}
-.ng-buy-more{background:#f3f4f6;color:#111827}
-.ng-proceed,.ng-final{background:#f5ad00;color:#1f2937}
-.ng-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-.ng-total{margin-top:16px;padding:15px;background:#f8fafc;border-radius:12px;font-size:18px;font-weight:900;display:flex;justify-content:space-between}
-.ng-field{width:100%;box-sizing:border-box;padding:13px;margin:7px 0 13px;border:1px solid #d1d5db;border-radius:9px}
-.ng-step{display:none}.ng-step.active{display:block}
-.ng-pickup{padding:12px;border-radius:10px;background:#fff7dd;border:1px solid #f5ad00;margin-bottom:14px}
+.ng-card{background:#fff;color:#1f2937;width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:22px;box-shadow:0 25px 70px rgba(0,0,0,.35)}
+.ng-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;padding-bottom:13px;margin-bottom:16px}
+.ng-close{width:38px;height:38px;border:0;border-radius:50%;font-size:22px;cursor:pointer}
+.ng-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee}
+.ng-qty{display:flex;gap:7px;align-items:center;margin-top:7px}.ng-qty button{width:30px;height:30px;border:1px solid #ddd;border-radius:7px;background:#fff;cursor:pointer;font-weight:800}
+.ng-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.ng-actions button{padding:13px 18px;border:0;border-radius:10px;font-weight:800;cursor:pointer}
+.ng-secondary{background:#f1f3f5}.ng-primary{background:#f5ad00;color:#1f2937}.ng-total{display:flex;justify-content:space-between;padding:15px;margin-top:14px;border-radius:12px;background:#f8fafc;font-size:18px;font-weight:900}
+.ng-step{display:none}.ng-step.active{display:block}.ng-field{width:100%;box-sizing:border-box;padding:13px;margin:7px 0 12px;border:1px solid #d1d5db;border-radius:9px}
+.ng-pickup{background:#fff7dd;border:1px solid #f5ad00;border-radius:10px;padding:13px;margin-bottom:14px}
 </style>
 
 </head>
@@ -244,46 +238,7 @@ body{background:#f7f8fa!important}
   </div>
 </div>
 
-<div class="modal" id="orderModal">
-  <div class="modal-card">
-    <button class="close" id="closeOrder" type="button">×</button>
-    <h2>Place Your Order</h2>
-    <p id="orderProductText" style="color:#666;margin:8px 0 18px"></p>
-    <form id="orderForm" class="review-form" style="border-top:0;padding-top:0">
-      <div class="form-grid">
-        <input id="customerName" placeholder="Full name" required>
-        <input id="customerPhone" placeholder="Mobile / WhatsApp number" required>
-      </div>
-
-      <div class="pickup-info">
-        <strong>🏪 Shop Pickup Only</strong>
-        <small>Customer will collect the product directly from the shop.</small>
-      </div>
-
-      <h3 style="margin-top:8px">Payment Method</h3>
-      <div class="choice-grid">
-        <label class="choice-card">
-          <input type="radio" name="paymentMethod" value="cash" checked>
-          <span><strong>Cash</strong><small>Pay in cash</small></span>
-        </label>
-        <label class="choice-card">
-          <input type="radio" name="paymentMethod" value="upi">
-          <span><strong>UPI</strong><small>Pay using UPI</small></span>
-        </label>
-      </div>
-
-      <div id="upiInfo" class="upi-box" style="display:none">
-        <strong>UPI Payment</strong>
-        <div id="upiAmount" style="margin-top:6px"></div>
-        <small>After confirming, payment details/QR can be configured for your shop.</small>
-      </div>
-
-      <textarea id="customerNote" placeholder="Order note (optional)"></textarea>
-      <button class="primary" type="submit">Confirm Order</button>
-      <div id="orderMessage" class="note"></div>
-    </form>
-  </div>
-</div><footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
+<footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
 
 <script>
 (() => {
@@ -443,15 +398,15 @@ function renderProduct() {
             Customer will collect this product directly from the shop.
           </div>
 
-          <div class="payment-mini">
-            <span>💵 Cash Available</span>
-            <span>📱 UPI Available</span>
+          <div class="pickup-strip">
+            <strong>🛒 MULTIPLE PRODUCTS AVAILABLE</strong>
+            Add this product to your cart, then buy more products before checkout.
           </div>
         </div>
       </div>
 
       <div class="full-order-wrap">
-        <button class="full-order-btn" id="buyNow" type="button">🛒 ORDER THIS PRODUCT</button>
+        <button class="full-order-btn" id="buyNow" type="button">🛒 ADD TO CART & PROCEED</button>
       </div>
 
       <div class="trust-row">
@@ -491,10 +446,7 @@ function renderProduct() {
   qtyInput.onchange = () => setQty(qtyInput.value);
 
   document.getElementById("buyNow").onclick = () => {
-    document.getElementById("orderProductText").textContent =
-      (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
-    updateOrderOptions();
-    document.getElementById("orderModal").classList.add("show");
+    window.NGCheckout.addCurrentProduct();
   };
 }
 async function loadReviews() {
@@ -541,73 +493,6 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
     console.error(err);
   }
 });
-
-document.getElementById("closeOrder").onclick=()=>document.getElementById("orderModal").classList.remove("show");
-document.getElementById("orderModal").onclick=e=>{if(e.target.id==="orderModal")e.currentTarget.classList.remove("show")};
-
-function selectedValue(name) {
-  const el = document.querySelector('input[name="' + name + '"]:checked');
-  return el ? el.value : "";
-}
-
-function updateOrderOptions() {
-  const paymentMethod = selectedValue("paymentMethod");
-  const upiInfo = document.getElementById("upiInfo");
-  const upiAmount = document.getElementById("upiAmount");
-
-  upiInfo.style.display = paymentMethod === "upi" ? "block" : "none";
-  upiAmount.textContent = "Amount to pay: " + totalPriceText();
-}
-
-document.querySelectorAll('input[name="paymentMethod"]').forEach(function(el) {
-  el.addEventListener("change", updateOrderOptions);
-});
-
-document.getElementById("orderForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-  const msg = document.getElementById("orderMessage");
-  const fulfillment = "shop_pickup";
-  const paymentMethod = selectedValue("paymentMethod");
-
-  msg.textContent = "Sending order...";
-
-  try {
-    await post("new_gama_orders", {
-      product_id: productId,
-      product_name: product.name || "",
-      part_number: product.part_number || "",
-      quantity: quantity,
-      customer_name: document.getElementById("customerName").value.trim(),
-      customer_phone: document.getElementById("customerPhone").value.trim(),
-      customer_address: "",
-      customer_note: document.getElementById("customerNote").value.trim(),
-      fulfillment_method: fulfillment,
-      payment_method: paymentMethod,
-      payment_status: paymentMethod === "cash" ? "pending_cash" : "pending_upi",
-      currency: product.currency || "INR",
-      unit_price: product.price ?? 0,
-      total_amount: totalPrice(),
-      order_status: "new"
-    });
-
-    if (paymentMethod === "upi") {
-      msg.textContent = "Order placed. Please complete the UPI payment as instructed by the shop.";
-    } else {
-      msg.textContent = "Order placed successfully. Please pay cash when you pick up the product from the shop.";
-    }
-
-    setTimeout(() => {
-      document.getElementById("orderModal").classList.remove("show");
-      this.reset();
-      updateOrderOptions();
-    }, 1800);
-
-  } catch (err) {
-    msg.textContent = "Order could not be sent. Please update the orders table SQL.";
-    console.error(err);
-  }
-});
-
 
 (function setupZoom() {
   const modal = document.getElementById("zoomModal");
@@ -689,149 +574,58 @@ init();
 })();
 </script>
 
-<script>
-/* ===== NEW GAMA ORDERS + OWNER NOTIFICATION ===== */
-(function(){
- const URL="https://gozvchqatiyebpnycubl.supabase.co";
- const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
- function sb(){return window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})}
- async function saveOrder(){
-   const name=(document.getElementById("ngCustomerName")?.value||"").trim();
-   const phone=(document.getElementById("ngCustomerPhone")?.value||"").trim();
-   if(!name||!phone){alert("Please enter your name and mobile number.");return}
-   const qty=Number(window.qty||document.getElementById("qtyInput")?.value||1);
-   const price=Number(product?.price||0);
-   const row={product_id:product?.id||null,product_name:product?.name||"",customer_name:name,customer_phone:phone,quantity:qty,total_amount:price*qty,status:"new",payment_status:"pending",pickup_only:true,created_at:new Date().toISOString()};
-   const {error}=await sb().from("new_gama_orders").insert(row);
-   if(error){alert("Order could not be placed: "+error.message);return}
-   alert("Order placed successfully! The shop owner has been notified.");
-   const m=document.getElementById("ngOrderModal"); if(m)m.remove();
- }
- window.ngPlaceOrder=function(){
-   if(document.getElementById("ngOrderModal"))return;
-   document.body.insertAdjacentHTML("beforeend",`<div id="ngOrderModal" style="position:fixed;inset:0;background:#0008;z-index:99999;display:grid;place-items:center;padding:16px"><div style="background:#fff;max-width:460px;width:100%;padding:24px;border-radius:18px"><h2 style="margin-top:0">Complete Your Order</h2><p>Shop Pickup Only</p><input id="ngCustomerName" placeholder="Your full name" style="width:100%;box-sizing:border-box;padding:13px;margin:7px 0;border:1px solid #ddd;border-radius:9px"><input id="ngCustomerPhone" placeholder="Mobile number" inputmode="numeric" style="width:100%;box-sizing:border-box;padding:13px;margin:7px 0;border:1px solid #ddd;border-radius:9px"><div style="display:flex;gap:10px;margin-top:15px"><button onclick="document.getElementById('ngOrderModal').remove()" style="flex:1;padding:13px;border:1px solid #ddd;background:#fff;border-radius:9px">Cancel</button><button id="ngConfirmOrder" style="flex:1;padding:13px;border:0;background:#f5ad00;border-radius:9px;font-weight:800">Place Order</button></div></div></div>`);
-   document.getElementById("ngConfirmOrder").onclick=saveOrder;
- }
- function hook(){
-   [...document.querySelectorAll("button,a")].filter(x=>/order this product|place order/i.test(x.textContent||"")).forEach(x=>{
-     if(x.dataset.ngOrderHook)return; x.dataset.ngOrderHook="1";
-     x.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();window.ngPlaceOrder()},true);
-   });
- }
- document.addEventListener("DOMContentLoaded",hook); setTimeout(hook,800);
-})();
-</script>
 
 <div id="ngCheckoutModal">
- <div class="ng-checkout-card">
-  <div class="ng-checkout-head">
-   <div><h2 style="margin:0">🛒 Checkout</h2><div style="color:#6b7280;font-size:13px;margin-top:4px">Shop Pickup Only</div></div>
-   <button class="ng-close" onclick="NGCheckout.close()">×</button>
+ <div class="ng-card">
+  <div class="ng-head"><div><h2 style="margin:0">🛒 Your Cart</h2><small>Shop Pickup Only</small></div><button class="ng-close" onclick="NGCheckout.close()">×</button></div>
+  <div id="ngCartStep" class="ng-step active">
+   <h3>Order Summary</h3><div id="ngCartRows"></div><div id="ngCartTotal" class="ng-total"></div>
+   <div class="ng-actions"><button class="ng-secondary" onclick="NGCheckout.buyMore()">← Buy More Products</button><button class="ng-primary" onclick="NGCheckout.billing()">Proceed to Checkout →</button></div>
   </div>
-  <div id="ngStepCart" class="ng-step active">
-   <h3>Order Summary</h3>
-   <div id="ngCartItems"></div>
-   <div id="ngCartTotal" class="ng-total"></div>
-   <div class="ng-actions">
-    <button class="ng-buy-more" onclick="NGCheckout.buyMore()">← Buy More Products</button>
-    <button class="ng-proceed" onclick="NGCheckout.showBilling()">Proceed to Checkout →</button>
-   </div>
-  </div>
-  <div id="ngStepBilling" class="ng-step">
-   <h3>Billing Summary</h3>
-   <div class="ng-pickup"><b>📍 Pickup Order Only</b><br><span style="font-size:13px">Delivery address is not required. Collect your order directly from the shop.</span></div>
-   <div id="ngBillingItems"></div>
-   <div id="ngBillingTotal" class="ng-total"></div>
-   <h3 style="margin-top:20px">Customer Details</h3>
-   <input id="ngCustomerName" class="ng-field" placeholder="Customer Name *">
-   <input id="ngCustomerPhone" class="ng-field" inputmode="numeric" placeholder="Mobile Number *">
-   <div class="ng-actions">
-    <button class="ng-buy-more" onclick="NGCheckout.showCart()">← Back</button>
-    <button class="ng-buy-more" onclick="NGCheckout.buyMore()">Buy More Products</button>
-    <button class="ng-final" onclick="NGCheckout.placeOrder()">Place Pickup Order</button>
-   </div>
+  <div id="ngBillingStep" class="ng-step">
+   <h3>Billing Summary</h3><div class="ng-pickup"><b>📍 SHOP PICKUP ONLY</b><br><small>Delivery address is not required. Collect all products directly from the shop.</small></div>
+   <div id="ngBillingRows"></div><div id="ngBillingTotal" class="ng-total"></div>
+   <h3 style="margin-top:20px">Customer Details</h3><input id="ngName" class="ng-field" placeholder="Customer Name *"><input id="ngPhone" class="ng-field" placeholder="Mobile Number *" inputmode="numeric">
+   <div class="ng-actions"><button class="ng-secondary" onclick="NGCheckout.cart()">← Back</button><button class="ng-secondary" onclick="NGCheckout.buyMore()">Buy More Products</button><button class="ng-primary" onclick="NGCheckout.place()">Place Pickup Order</button></div>
   </div>
  </div>
 </div>
 
-
-<script id="ngCheckoutScript">
+<script id="ng-clean-checkout-js">
 (function(){
- const CART_KEY='new_gama_customer_cart_v2';
- const SB_URL='https://gozvchqatiyebpnycubl.supabase.co';
- const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
- let cart=[];
- function load(){try{cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]')}catch(e){cart=[]}}
- function save(){localStorage.setItem(CART_KEY,JSON.stringify(cart))}
- function money(n){return '₹'+Number(n||0).toLocaleString('en-IN')}
- function productData(){
-   const name=(window.product&& (product.name||product.title)) ||
-     document.querySelector('h1')?.textContent?.trim() || 'Product';
-   const id=(window.product&&product.id) || new URLSearchParams(location.search).get('id') || name;
-   let price=(window.product&&(product.price||product.selling_price||product.sellingPrice)) || 0;
-   if(!price){
-     const t=[...document.querySelectorAll('*')].map(x=>x.childElementCount?'' : x.textContent||'').find(x=>/₹\s*[\d,]+/.test(x));
-     if(t){const m=t.match(/₹\s*([\d,]+)/); if(m)price=Number(m[1].replace(/,/g,''))}
-   }
-   return {id:String(id),name,price:Number(price)||0,image:(window.product&&(product.main_image_url||product.image_url||product.image))||''};
- }
- function addCurrent(){
-   const p=productData(); const old=cart.find(x=>x.id===p.id);
-   const q=Number(document.querySelector('#quantity,input[name="quantity"],.quantity input')?.value||1);
-   if(old)old.quantity+=q; else cart.push({...p,quantity:q});
-   save(); render(); open();
- }
+ const KEY='new_gama_cart_clean_v1'; let cart=[];
+ const URL='https://gozvchqatiyebpnycubl.supabase.co';
+ const APIKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+ try{cart=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){cart=[]}
+ const save=()=>localStorage.setItem(KEY,JSON.stringify(cart));
+ const money=n=>{const sym=(window.product&&String(product.currency).toUpperCase()==='NPR')?'रु ':'₹ ';return sym+Number(n||0).toLocaleString('en-IN')};
+ const total=()=>cart.reduce((s,x)=>s+Number(x.price||0)*x.quantity,0);
+ const qty=()=>cart.reduce((s,x)=>s+x.quantity,0);
  function render(){
-   const list=document.getElementById('ngCartItems'), bill=document.getElementById('ngBillingItems');
-   if(!list)return;
-   const rows=cart.map((x,i)=>`<div class="ng-cart-row"><div><div class="ng-cart-name">${x.name}</div><div class="ng-qty"><button onclick="NGCheckout.change(${i},-1)">−</button><b>${x.quantity}</b><button onclick="NGCheckout.change(${i},1)">+</button><button onclick="NGCheckout.remove(${i})" style="margin-left:8px;width:auto;padding:0 8px">Remove</button></div></div><b>${money(x.price*x.quantity)}</b></div>`).join('') || '<p>Your cart is empty.</p>';
-   list.innerHTML=rows; bill.innerHTML=cart.map(x=>`<div class="ng-cart-row"><span>${x.name} × ${x.quantity}</span><b>${money(x.price*x.quantity)}</b></div>`).join('');
-   const total=cart.reduce((a,x)=>a+x.price*x.quantity,0), qty=cart.reduce((a,x)=>a+x.quantity,0);
-   document.getElementById('ngCartTotal').innerHTML=`<span>Total (${qty} items)</span><span>${money(total)}</span>`;
-   document.getElementById('ngBillingTotal').innerHTML=`<span>Grand Total</span><span>${money(total)}</span>`;
+  const rows=cart.map((x,i)=>`<div class="ng-row"><div><b>${x.name}</b><div class="ng-qty"><button onclick="NGCheckout.change(${i},-1)">−</button><b>${x.quantity}</b><button onclick="NGCheckout.change(${i},1)">+</button><button onclick="NGCheckout.remove(${i})">Remove</button></div></div><b>${money(x.price*x.quantity)}</b></div>`).join('')||'<p>Cart is empty.</p>';
+  document.getElementById('ngCartRows').innerHTML=rows;
+  document.getElementById('ngBillingRows').innerHTML=cart.map(x=>`<div class="ng-row"><span>${x.name} × ${x.quantity}</span><b>${money(x.price*x.quantity)}</b></div>`).join('');
+  document.getElementById('ngCartTotal').innerHTML=`<span>Total (${qty()} items)</span><span>${money(total())}</span>`;
+  document.getElementById('ngBillingTotal').innerHTML=`<span>Grand Total</span><span>${money(total())}</span>`;
  }
- function open(){render();document.getElementById('ngCheckoutModal').classList.add('show');showCart()}
- function close(){document.getElementById('ngCheckoutModal').classList.remove('show')}
- function showCart(){document.getElementById('ngStepCart').classList.add('active');document.getElementById('ngStepBilling').classList.remove('active')}
- function showBilling(){if(!cart.length)return alert('Please add a product first.');document.getElementById('ngStepCart').classList.remove('active');document.getElementById('ngStepBilling').classList.add('active');render()}
- async function placeOrder(){
-   const customer_name=document.getElementById('ngCustomerName').value.trim();
-   const customer_phone=document.getElementById('ngCustomerPhone').value.trim();
-   if(!customer_name||!customer_phone)return alert('Please enter Customer Name and Mobile Number.');
-   const total=cart.reduce((a,x)=>a+x.price*x.quantity,0);
-   const row={
-     customer_name,customer_phone,
-     product_name:cart.map(x=>x.name+' × '+x.quantity).join(', '),
-     quantity:cart.reduce((a,x)=>a+x.quantity,0),
-     total_amount:total,status:'new',payment_status:'pending',pickup_only:true,
-     created_at:new Date().toISOString()
-   };
-   try{
-     if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase SDK not loaded');
-     const sb=window.__ngOrderSB||(window.__ngOrderSB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}));
-     const {error}=await sb.from('new_gama_orders').insert(row);
-     if(error)throw error;
-     cart=[];save();render();close();
-     alert('✓ Pickup Order placed successfully! Shop owner has been notified.');
-   }catch(e){console.error(e);alert('Order could not be sent: '+e.message)}
+ function open(){render();document.getElementById('ngCheckoutModal').classList.add('show');cartStep()}
+ function cartStep(){document.getElementById('ngCartStep').classList.add('active');document.getElementById('ngBillingStep').classList.remove('active')}
+ function billing(){if(!cart.length)return alert('Please add a product first.');render();document.getElementById('ngCartStep').classList.remove('active');document.getElementById('ngBillingStep').classList.add('active')}
+ async function place(){
+  const customer_name=document.getElementById('ngName').value.trim(),customer_phone=document.getElementById('ngPhone').value.trim();
+  if(!customer_name||!customer_phone)return alert('Please enter Customer Name and Mobile Number.');
+  const row={customer_name,customer_phone,product_name:cart.map(x=>x.name+' × '+x.quantity).join(', '),quantity:qty(),total_amount:total(),status:'new',payment_status:'pending',pickup_only:true,created_at:new Date().toISOString()};
+  try{
+   const r=await fetch(URL+'/rest/v1/new_gama_orders',{method:'POST',headers:{apikey:APIKEY,Authorization:'Bearer '+APIKEY,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(row)});
+   const text=await r.text(); if(!r.ok)throw new Error('HTTP '+r.status+': '+text);
+   cart=[];save();render();document.getElementById('ngCheckoutModal').classList.remove('show');alert('✓ Pickup Order placed successfully! The shop owner can now see the order.');
+  }catch(e){console.error(e);alert('Order could not be sent: '+e.message)}
  }
- function buyMore(){close();location.href='index.html'}
- window.NGCheckout={addCurrent,open,close,render,showCart,showBilling,placeOrder,buyMore,
-   change:(i,d)=>{cart[i].quantity=Math.max(1,cart[i].quantity+d);save();render()},
-   remove:(i)=>{cart.splice(i,1);save();render()}
+ window.NGCheckout={
+  addCurrentProduct(){const p=window.product;if(!p)return alert('Product is still loading.');const q=Math.max(1,Number(document.getElementById('qty')?.value||1));const id=String(p.id||location.search);let x=cart.find(a=>a.id===id);if(x)x.quantity+=q;else cart.push({id,name:p.name||'Product',price:Number(p.price||0),quantity:q});save();open()},
+  close(){document.getElementById('ngCheckoutModal').classList.remove('show')},cart:cartStep,billing,buyMore(){location.href='index.html'},place,
+  change(i,d){cart[i].quantity=Math.max(1,cart[i].quantity+d);save();render()},remove(i){cart.splice(i,1);save();render()}
  };
- function hook(){
-   const candidates=[...document.querySelectorAll('button,a,input[type="button"],input[type="submit"]')];
-   candidates.forEach(el=>{
-     const txt=(el.textContent||el.value||'').trim().toLowerCase();
-     if(/order this product|place order|buy now|proceed to checkout/.test(txt)){
-       if(el.dataset.ngCheckoutHook)return;
-       el.dataset.ngCheckoutHook='1';
-       el.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();NGCheckout.addCurrent()},true);
-     }
-   });
- }
- load();document.addEventListener('DOMContentLoaded',()=>{render();hook();setTimeout(hook,800);setTimeout(hook,2000)});
 })();
 </script>
 
