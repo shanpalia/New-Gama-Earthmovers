@@ -96,13 +96,41 @@
   }
 
   function container() {
-    return document.getElementById('customerProductList') ||
-           document.getElementById('productList') ||
-           document.getElementById('productsList') ||
-           document.getElementById('productsGrid') ||
-           document.querySelector('.products-grid') ||
-           document.querySelector('.product-grid') ||
-           document.querySelector('[data-products]');
+    let box =
+      document.getElementById('customerProductList') ||
+      document.getElementById('productList') ||
+      document.getElementById('productsList') ||
+      document.getElementById('productsGrid') ||
+      document.querySelector('.products-grid') ||
+      document.querySelector('.product-grid') ||
+      document.querySelector('[data-products]');
+
+    if (box) return box;
+
+    // Current homepage has no product container. Create one automatically.
+    const section =
+      document.querySelector('#products') ||
+      document.querySelector('.products') ||
+      document.querySelector('main') ||
+      document.querySelector('.container') ||
+      document.body;
+
+    const title = document.createElement('h2');
+    title.className = 'supabase-products-title';
+    title.textContent = 'Products';
+
+    box = document.createElement('div');
+    box.id = 'customerProductList';
+    box.className = 'customer-product-list products-grid';
+
+    if (section === document.body) {
+      document.body.appendChild(title);
+      document.body.appendChild(box);
+    } else {
+      section.appendChild(title);
+      section.appendChild(box);
+    }
+    return box;
   }
 
   async function api(path) {
