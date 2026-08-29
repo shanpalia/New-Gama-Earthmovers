@@ -41,16 +41,16 @@ input{width:100%;padding:13px;border:1px solid #ddd;border-radius:8px;font-size:
       <button id="signupTab" onclick="setMode('signup')">Create Account</button>
     </div>
 
-    <form id="authForm">
+    <form id="authForm" autocomplete="off">
       <div id="nameWrap" style="display:none">
         <label>Full Name</label>
         <input id="fullName" placeholder="Enter your name">
       </div>
       <label>Email</label>
-      <input id="email" type="email" required placeholder="Enter email">
+      <input id="email" name="user-login-email" type="email" autocomplete="off" readonly required placeholder="Enter email" onfocus="this.removeAttribute('readonly')">
 
       <label>Password</label>
-      <input id="password" type="password" required minlength="6" placeholder="Minimum 6 characters">
+      <input id="password" name="user-login-password" type="password" autocomplete="new-password" readonly required minlength="6" placeholder="Minimum 6 characters" onfocus="this.removeAttribute('readonly')">
 
       <button class="primary" id="submitBtn" type="submit">Login</button>
       <div id="msg" class="msg"></div>
@@ -112,6 +112,15 @@ document.getElementById('authForm').addEventListener('submit',async e=>{
     if(mode==='login') btn.textContent='Login';
     else btn.textContent='Create Account';
   }
+});
+</script>
+
+<script id="ng-clear-auth-fields">
+window.addEventListener('pageshow',function(){
+  setTimeout(function(){
+    const e=document.getElementById('email'),p=document.getElementById('password');
+    if(e)e.value=''; if(p)p.value='';
+  },50);
 });
 </script>
 </body>

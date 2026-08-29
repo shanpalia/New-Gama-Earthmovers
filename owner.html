@@ -110,11 +110,13 @@ window.NG_SUPABASE = window.NG_SUPABASE || window.supabase.createClient('https:/
 .order-stat-card small{display:block;color:#777;margin-top:6px;font-size:11px}
 </style>
 
-</head>
-<body>
 
-<button id="ngOwnerBell" aria-label="Owner order notifications">🔔<span id="ngOwnerBellBadge">0</span></button>
-<div id="ngOwnerNoticePanel"><b>New Order Notifications</b><div id="ngOwnerNoticeList"></div></div>
+<style id="ng-total-orders-hard-click">
+#totalOrdersCard{cursor:pointer!important}
+#totalOrdersCard:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,0,0,.12)}
+</style>
+</head>
+<body></div>
 
 
 <header class="topbar">
@@ -153,7 +155,7 @@ window.NG_SUPABASE = window.NG_SUPABASE || window.supabase.createClient('https:/
   <div class="stats">
     <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
     <div class="stat"><span>Total Categories</span><b id="categoryCount">0</b></div>
-    <div class="stat order-stat-card" id="totalOrdersCard" title="Click to view all orders">
+    <div class="stat order-stat-card" id="totalOrdersCard" title="Click to view all orders" role="button" tabindex="0" onclick="location.href='orders.html'">
         <span>Total Orders</span><b id="totalOrderCount">0</b>
         <small>Click to view orders</small>
       </div>
@@ -988,66 +990,36 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 
-<script id="ng-owner-order-notification-script">
-(function(){
- const URL='https://gozvchqatiyebpnycubl.supabase.co';
- const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
- const bell=document.getElementById('ngOwnerBell'), badge=document.getElementById('ngOwnerBellBadge'), panel=document.getElementById('ngOwnerNoticePanel'), list=document.getElementById('ngOwnerNoticeList');
- let unread=0,sb,orders=[];
- function isOwner(){try{return location.pathname.toLowerCase().includes('owner')||sessionStorage.getItem('new_gama_owner_logged_in')==='true'||localStorage.getItem('new_gama_owner_logged_in')==='true'}catch(e){return location.pathname.toLowerCase().includes('owner')}}
- function updateCount(){const pending=orders.filter(o=>String(o.status||'new').toLowerCase()!=='completed').length;badge.textContent=pending>99?'99+':pending; }
- function add(o,fresh){
-   if(!isOwner())return;
-   orders=orders.filter(x=>x.id!==o.id);orders.unshift(o);updateCount();
-   const pay=o.payment_method==='upi'?'📱 UPI':'💵 Cash';
-   const d=document.createElement('div');d.className='ng-owner-notice'+(fresh?' new':'');
-   d.dataset.orderId=o.id;
-   d.innerHTML=`<b>${String(o.status||'new').toLowerCase()==='completed'?'✓ COMPLETED ORDER':'🔔 NEW PICKUP ORDER'}</b><br><b>${o.customer_name||''}</b> — ${o.product_name||''}<br><b>Total:</b> ₹${o.total_amount||0} · ${pay}`;
-   d.onclick=()=>{location.href='order.html?order='+encodeURIComponent(o.id)};
-   list.prepend(d);
-   if(fresh&&String(o.status||'new').toLowerCase()!=='completed'){
-     if('Notification'in window&&Notification.permission==='granted')new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});
-   }
- }
- async function init(){
-   if(!isOwner())return;
-   bell.classList.add('show');
-   if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
-   if(!window.supabase||!window.supabase.createClient)return;
-   sb=window.__ngOwnerNotifySB||window.NG_SUPABASE;
-   const {data}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(100);
-   list.innerHTML='';orders=[];(data||[]).forEach(o=>add(o,false));updateCount();
-   sb.channel('ng-owner-order-notifications-v2').on('postgres_changes',{event:'INSERT',schema:'public',table:'new_gama_orders'},p=>add(p.new,true)).on('postgres_changes',{event:'UPDATE',schema:'public',table:'new_gama_orders'},p=>{add(p.new,false)}).subscribe();
- }
- window.NGOwnerOrderNotificationRefresh=updateCount;
- bell.onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';};
- document.addEventListener('DOMContentLoaded',init);
-})();
-</script>
-
-
 <script id="ng-dashboard-total-order-count">
 (function(){
   async function updateTotalOrders(){
     const el=document.getElementById('totalOrderCount');
-    if(!el || !window.NG_SUPABASE) return;
+    if(!el) return;
     try{
-      const {count,error}=await window.NG_SUPABASE
-        .from('new_gama_orders')
-        .select('*',{count:'exact',head:true});
-      if(error) throw error;
-      el.textContent=count || 0;
-    }catch(e){ console.error('Total order count error:',e); }
+      const client=window.NG_SUPABASE;
+      if(!client) throw new Error('Supabase client not ready');
+      const r=await client.from('new_gama_orders').select('id');
+      if(r.error) throw r.error;
+      el.textContent=(r.data||[]).length;
+    }catch(e){
+      console.error('Total Orders error:',e);
+    }
   }
-  document.addEventListener('DOMContentLoaded',()=>{
-    document.getElementById('totalOrdersCard')?.addEventListener('click',()=>location.href='orders.html');
+  function boot(){
+    const card=document.getElementById('totalOrdersCard');
+    if(card){
+      card.onclick=function(){location.href='orders.html'};
+      card.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();location.href='orders.html'}};
+    }
     updateTotalOrders();
     if(window.NG_SUPABASE && !window.NG_DASH_ORDER_COUNT_CHANNEL){
-      window.NG_DASH_ORDER_COUNT_CHANNEL=window.NG_SUPABASE.channel('ng-dashboard-total-orders')
+      window.NG_DASH_ORDER_COUNT_CHANNEL=window.NG_SUPABASE.channel('ng-dashboard-total-orders-v2')
         .on('postgres_changes',{event:'*',schema:'public',table:'new_gama_orders'},updateTotalOrders)
         .subscribe();
     }
-  });
+    setInterval(updateTotalOrders,15000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
 

@@ -126,16 +126,35 @@ display:grid;place-items:center;text-decoration:none;font-size:18px;font-weight:
 #ngOwnerBell{display:inline-flex!important;align-items:center;justify-content:center}
 </style>
 
+
+<style id="ng-header-layout-fix">
+header nav{max-width:1200px;margin:auto;padding:10px 20px;display:flex;align-items:center;gap:16px}
+#ngOwnerBell{
+  position:static!important;display:inline-flex!important;align-items:center;justify-content:center;
+  flex:0 0 44px;width:44px!important;height:44px!important;border-radius:50%!important;
+  background:#fff!important;border:1px solid #e5e7eb!important;box-shadow:0 3px 10px rgba(0,0,0,.12)!important;
+  margin:0!important;z-index:auto!important
+}
+#ngOwnerNoticePanel{top:70px!important;left:18px!important;right:auto!important}
+.brand{flex:1;min-width:220px}
+.links{display:flex!important;justify-content:center;gap:20px;flex:1}
+.nav-user{margin-left:auto!important;flex:0 0 auto;order:5}
+@media(max-width:850px){
+  .brand{min-width:0}.brand>div{display:none}
+  .links a:not(.nav-user){display:none}
+  .links{justify-content:flex-end}
+}
+</style>
+
 </head>
 <body>
-
-<button id="ngOwnerBell" aria-label="Owner order notifications">🔔<span id="ngOwnerBellBadge">0</span></button>
 <div id="ngOwnerNoticePanel"><b>New Order Notifications</b><div id="ngOwnerNoticeList"></div></div>
 
   <div class="top">🚜 Heavy Equipment Spare Parts & Solutions</div>
 
   <header>
     <nav>
+      <button id="ngOwnerBell" aria-label="Order notifications">🔔<span id="ngOwnerBellBadge">0</span></button>
       <div class="brand">
         <img id="ownerTrigger" class="brand-logo" src="new-gama-logo.png" alt="New Gama Earthmovers Logo">
         <a href="#home">
@@ -144,13 +163,13 @@ display:grid;place-items:center;text-decoration:none;font-size:18px;font-weight:
       </div>
 
       <div class="links">
+        <a href="#parts">Parts</a>
+        <a href="#categories">Categories</a>
+        <a href="#contact">Contact Us</a>
         <a href="users.html" class="nav-user" id="ngUserAvatar" title="User Login">
           <span class="user-avatar" id="ngUserAvatarIcon">👤</span>
           <span class="user-name" id="ngUserAvatarName">Login</span>
         </a>
-        <a href="#parts">Parts</a>
-        <a href="#categories">Categories</a>
-        <a href="#contact">Contact Us</a>
       </div>
     </nav>
   </header>
@@ -168,7 +187,7 @@ display:grid;place-items:center;text-decoration:none;font-size:18px;font-weight:
     </section>
 
     <div class="search">
-      <input id="searchInput" placeholder="Search Part Name or Part Number">
+      <input id="searchInput" name="part-search-field" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search Part Name or Part Number">
       <button onclick="searchParts()">Search</button>
     </div>
 
@@ -341,9 +360,9 @@ display:grid;place-items:center;text-decoration:none;font-size:18px;font-weight:
 <script id="ng-home-unified-supabase">
 (function(){
   const URL='https://gozvchqatiyebpnycubl.supabase.co';
-  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
 
-  function getClient(){
+  function sb(){
     if(window.NG_SUPABASE) return window.NG_SUPABASE;
     if(!window.supabase || !window.supabase.createClient) throw new Error('Supabase SDK failed to load');
     window.NG_SUPABASE=window.supabase.createClient(URL,KEY,{
@@ -351,62 +370,57 @@ display:grid;place-items:center;text-decoration:none;font-size:18px;font-weight:
     });
     return window.NG_SUPABASE;
   }
-
-  function esc(v){
-    const d=document.createElement('div'); d.textContent=v??''; return d.innerHTML;
+  function esc(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
+  function imageList(p){
+    return [
+      p.main_image_url,p.image_url,p.image_1_url,p.image1_url,p.image_2_url,
+      p.image_3_url,p.image_4_url,p.image_5_url
+    ].filter(Boolean);
   }
-
-  function currency(p){
-    return String(p.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ';
-  }
-
-  let products=[];
 
   async function loadProducts(){
     const list=document.getElementById('customerProductList');
     if(!list) return;
     list.innerHTML='<div class="customer-empty">Loading products...</div>';
     try{
-      const sb=getClient();
-      const [pr,cr]=await Promise.all([
-        sb.from('new_gama_products').select('*').order('created_at',{ascending:false}),
-        sb.from('new_gama_categories').select('id,name')
-      ]);
+      const client=sb();
+      const pr=await client.from('new_gama_products').select('*').order('created_at',{ascending:false});
       if(pr.error) throw pr.error;
-      if(cr.error) throw cr.error;
 
-      const cats=Object.fromEntries((cr.data||[]).map(c=>[c.id,c.name]));
-      products=(pr.data||[]).map(x=>({
-        ...x,
-        category_name:cats[x.category_id]||'',
-        images:[x.main_image_url,x.image_2_url,x.image_3_url,x.image_4_url,x.image_5_url].filter(Boolean)
-      }));
+      let cats={};
+      try{
+        const cr=await client.from('new_gama_categories').select('id,name');
+        if(!cr.error) cats=Object.fromEntries((cr.data||[]).map(c=>[c.id,c.name]));
+      }catch(e){console.warn('Category names unavailable',e)}
 
-      if(!products.length){
+      const rows=pr.data||[];
+      if(!rows.length){
         list.innerHTML='<div class="customer-empty">No products available yet.</div>';
         return;
       }
 
-      list.innerHTML=products.map((p,i)=>{
-        const img=p.images[0]||'new-gama-logo.png';
-        return `<article class="customer-card" data-product-id="${i}">
-          <img src="${img}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='new-gama-logo.png'">
+      list.innerHTML=rows.map(p=>{
+        const images=imageList(p);
+        const img=images[0]||'new-gama-logo.png';
+        const cat=cats[p.category_id]||p.category_name||'';
+        const currency=(p.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ';
+        return `<article class="customer-card" data-id="${esc(p.id)}">
+          <img src="${esc(img)}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='new-gama-logo.png'">
           <div class="customer-card-body">
-            <span class="customer-badge">${esc(p.category_name)}</span>
+            ${cat?`<span class="customer-badge">${esc(cat)}</span>`:''}
             <h3>${esc(p.name)}</h3>
             ${p.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(p.part_number)}</div>`:''}
-            <div class="customer-price">${currency(p)}${p.price??0}</div>
+            <div class="customer-price">${currency}${esc(p.price??0)}</div>
           </div>
         </article>`;
       }).join('');
 
-      list.querySelectorAll('.customer-card').forEach(card=>card.addEventListener('click',()=>{
-        const product=products[Number(card.dataset.productId)];
-        if(product && product.id) location.href='product.html?id='+encodeURIComponent(product.id);
-      }));
+      list.querySelectorAll('.customer-card').forEach(card=>{
+        card.addEventListener('click',()=>location.href='product.html?id='+encodeURIComponent(card.dataset.id));
+      });
     }catch(err){
       console.error('Homepage product load error:',err);
-      list.innerHTML='<div class="customer-empty">Products could not be loaded. Please refresh the page.</div>';
+      list.innerHTML='<div class="customer-empty">Products could not be loaded: '+esc(err.message||'Unknown error')+'</div>';
     }
   }
 
@@ -415,72 +429,65 @@ display:grid;place-items:center;text-decoration:none;font-size:18px;font-weight:
     const name=document.getElementById('ngUserAvatarName');
     if(!avatar||!name) return;
     try{
-      const sb=getClient();
-      const {data}=await sb.auth.getUser();
-      const user=data?.user;
+      const {data}=await sb().auth.getUser();
+      const user=data&&data.user;
       if(user){
         const n=user.user_metadata?.full_name || user.email || 'Account';
         name.textContent=n.split('@')[0];
-        avatar.href='users.html';
-        avatar.title='My Account';
-      } else {
+        document.getElementById('ngUserAvatarIcon').textContent='👤';
+      }else{
         name.textContent='Login';
-        avatar.href='users.html';
       }
-    }catch(e){ name.textContent='Login'; avatar.href='users.html'; }
+    }catch(e){name.textContent='Login'}
   }
 
   const bell=document.getElementById('ngOwnerBell');
   const badge=document.getElementById('ngOwnerBellBadge');
   const panel=document.getElementById('ngOwnerNoticePanel');
   const noticeList=document.getElementById('ngOwnerNoticeList');
-  let orderRows=[];
+  let rows=[];
 
-  function renderOrders(){
-    const pending=orderRows.filter(o=>String(o.status||'new').toLowerCase()!=='completed');
+  function renderBell(){
+    const pending=rows.filter(o=>String(o.status||'new').toLowerCase()!=='completed');
     badge.textContent=pending.length>99?'99+':pending.length;
-    noticeList.innerHTML=pending.length ? pending.map(o=>`<div class="ng-owner-notice" data-id="${o.id}">
-      <b>🔔 NEW PICKUP ORDER</b><br>
-      <b>${esc(o.customer_name||'Customer')}</b> — ${esc(o.product_name||'Product')}<br>
-      ₹${esc(o.total_amount||0)} · ${o.payment_method==='upi'?'UPI':'Cash'}
-    </div>`).join('') : '<div class="ng-owner-notice">No pending orders.</div>';
-
-    noticeList.querySelectorAll('[data-id]').forEach(x=>x.addEventListener('click',()=>{
-      const id=x.dataset.id;
-      const isAdmin=sessionStorage.getItem('newGamaOwnerAuthorized')==='true' || localStorage.getItem('new_gama_owner_logged_in')==='true';
-      location.href=isAdmin ? 'order.html?order='+encodeURIComponent(id) : 'owner.html';
-    }));
+    noticeList.innerHTML=pending.length?pending.map(o=>`
+      <div class="ng-owner-notice" data-id="${esc(o.id)}">
+        <b>🔔 New Pickup Order</b><br>
+        <b>${esc(o.customer_name||'Customer')}</b> — ${esc(o.product_name||'Product')}<br>
+        ₹${esc(o.total_amount||0)} · ${o.payment_method==='upi'?'UPI':'Cash'}
+      </div>`).join(''):'<div class="ng-owner-notice">No pending orders.</div>';
+    noticeList.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>{
+      location.href='order.html?order='+encodeURIComponent(el.dataset.id);
+    });
   }
 
-  async function loadNotifications(){
+  async function loadBell(){
     try{
-      const sb=getClient();
-      const {data,error}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(100);
-      if(error) throw error;
-      orderRows=data||[];
-      renderOrders();
+      const client=sb();
+      const r=await client.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(100);
+      if(r.error) throw r.error;
+      rows=r.data||[];
+      renderBell();
       if(!window.NG_HOME_ORDER_CHANNEL){
-        window.NG_HOME_ORDER_CHANNEL=sb.channel('ng-home-order-bell')
+        window.NG_HOME_ORDER_CHANNEL=client.channel('ng-home-order-bell-v2')
           .on('postgres_changes',{event:'*',schema:'public',table:'new_gama_orders'},payload=>{
             const row=payload.new||payload.old;
-            if(!row) return;
-            const idx=orderRows.findIndex(x=>x.id===row.id);
-            if(payload.eventType==='DELETE'){ if(idx>=0) orderRows.splice(idx,1); }
-            else if(idx>=0) orderRows[idx]=row;
-            else orderRows.unshift(row);
-            renderOrders();
+            if(!row)return;
+            const i=rows.findIndex(x=>x.id===row.id);
+            if(payload.eventType==='DELETE'){if(i>=0)rows.splice(i,1)}
+            else if(i>=0)rows[i]=row;
+            else rows.unshift(row);
+            renderBell();
           }).subscribe();
       }
-    }catch(err){ console.error('Homepage notification error:',err); }
+    }catch(e){console.error('Bell error:',e);badge.textContent='0'}
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
-    loadProducts();
-    loadUser();
-    loadNotifications();
-    bell?.addEventListener('click',()=>{
-      panel.style.display=panel.style.display==='block'?'none':'block';
-    });
+    const search=document.getElementById('searchInput');
+    if(search) search.value='';
+    loadProducts();loadUser();loadBell();
+    bell?.addEventListener('click',()=>panel.style.display=panel.style.display==='block'?'none':'block');
   });
 })();
 </script>
