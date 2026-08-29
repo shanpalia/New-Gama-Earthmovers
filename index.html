@@ -85,12 +85,17 @@
 /* =========================================================
    NEW GAMA EARTHMOVERS - CLEAN SINGLE SUPABASE CLIENT
    ========================================================= */
-(function () {
+window.addEventListener('DOMContentLoaded', function () {
   const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
 
   // Exactly ONE client. Auth persistence disabled because this public homepage
   // does not need login, avoiding GoTrue multiple-client warnings.
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+    console.error('Supabase SDK failed to load. Please check internet/CDN access.');
+    return;
+  }
+
   window.newGamaSupabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY,
@@ -191,7 +196,7 @@
   });
 
   window.loadNewGamaProducts = loadProducts;
-})();
+});
 </script>
 
 </body>
