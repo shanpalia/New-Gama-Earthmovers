@@ -89,6 +89,22 @@
 #ngOwnerNoticePanel{display:none;position:fixed;top:64px;right:18px;width:min(380px,calc(100vw - 36px));max-height:70vh;overflow:auto;background:#fff;color:#111;border-radius:14px;box-shadow:0 15px 45px rgba(0,0,0,.25);z-index:999999;padding:12px}
 .ng-owner-notice{padding:12px;border-bottom:1px solid #eee;font-size:13px}.ng-owner-notice.new{background:#fff8db}
 </style>
+
+<style id="ng-order-complete-css">
+#ngOwnerBell{position:fixed!important;top:10px;right:16px;z-index:1000001;background:#fff;border:1px solid #e5e7eb;border-radius:50%;box-shadow:0 4px 14px rgba(0,0,0,.18);width:46px;height:46px}
+#ngOwnerBellBadge{top:-3px!important;right:-3px!important}
+#ngOwnerNoticePanel{z-index:1000002!important;top:64px!important}
+.ng-owner-notice{cursor:pointer;border-radius:8px;margin:5px 0}.ng-owner-notice:hover{background:#f3f4f6}
+#ngOrderDetailModal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000005;display:none;align-items:center;justify-content:center;padding:15px}
+#ngOrderDetailModal.show{display:flex}
+.ng-order-detail-card{background:#fff;width:min(650px,100%);max-height:90vh;overflow:auto;border-radius:16px;padding:22px;color:#111}
+.ng-order-detail-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:12px;margin-bottom:14px}
+.ng-order-detail-close{border:0;background:#f1f3f5;border-radius:50%;width:36px;height:36px;font-size:21px;cursor:pointer}
+.ng-order-info{line-height:1.8}.ng-complete-btn{width:100%;margin-top:18px;padding:15px;border:0;border-radius:10px;background:#159447;color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+.ng-complete-btn:disabled{opacity:.6;cursor:not-allowed}
+.ng-order-status{display:inline-block;padding:4px 9px;border-radius:20px;background:#fff3c9;font-size:12px;font-weight:800}
+</style>
+
 </head>
 <body>
 
@@ -543,35 +559,34 @@
  const URL='https://gozvchqatiyebpnycubl.supabase.co';
  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
  const bell=document.getElementById('ngOwnerBell'), badge=document.getElementById('ngOwnerBellBadge'), panel=document.getElementById('ngOwnerNoticePanel'), list=document.getElementById('ngOwnerNoticeList');
- let unread=0, sb;
- function isOwner(){
-   try{
-     const q=new URLSearchParams(location.search);
-     return q.get('owner')==='1' || location.pathname.toLowerCase().includes('owner') ||
-       sessionStorage.getItem('new_gama_owner_logged_in')==='true' ||
-       localStorage.getItem('new_gama_owner_logged_in')==='true';
-   }catch(e){return location.pathname.toLowerCase().includes('owner')}
- }
- function showOwnerUI(){ if(isOwner()) bell.classList.add('show'); }
- function add(o, fresh){
-   if(!isOwner()) return;
+ let unread=0,sb,orders=[];
+ function isOwner(){try{return location.pathname.toLowerCase().includes('owner')||sessionStorage.getItem('new_gama_owner_logged_in')==='true'||localStorage.getItem('new_gama_owner_logged_in')==='true'}catch(e){return location.pathname.toLowerCase().includes('owner')}}
+ function updateCount(){const pending=orders.filter(o=>String(o.status||'new').toLowerCase()!=='completed').length;badge.textContent=pending>99?'99+':pending; const c=document.getElementById('orderCount');if(c)c.textContent=pending;}
+ function add(o,fresh){
+   if(!isOwner())return;
+   orders=orders.filter(x=>x.id!==o.id);orders.unshift(o);updateCount();
    const pay=o.payment_method==='upi'?'📱 UPI':'💵 Cash';
-   const status=o.payment_status||'Pending';
-   const d=document.createElement('div'); d.className='ng-owner-notice'+(fresh?' new':'');
-   d.innerHTML=`<b>🔔 NEW PICKUP ORDER</b><br><br><b>Customer:</b> ${o.customer_name||''}<br><b>Mobile:</b> ${o.customer_phone||''}<br><b>Products:</b> ${o.product_name||''}<br><b>Quantity:</b> ${o.quantity||''}<br><b>Total:</b> ₹${o.total_amount||0}<br><b>Payment:</b> ${pay}<br><b>Status:</b> ${status}<br><b>Order Type:</b> 🏪 Shop Pickup Only`;
+   const d=document.createElement('div');d.className='ng-owner-notice'+(fresh?' new':'');
+   d.dataset.orderId=o.id;
+   d.innerHTML=`<b>${String(o.status||'new').toLowerCase()==='completed'?'✓ COMPLETED ORDER':'🔔 NEW PICKUP ORDER'}</b><br><b>${o.customer_name||''}</b> — ${o.product_name||''}<br><b>Total:</b> ₹${o.total_amount||0} · ${pay}`;
+   d.onclick=()=>{location.href='owner.html?order='+encodeURIComponent(o.id)};
    list.prepend(d);
-   if(fresh){unread++;badge.textContent=unread; bell.classList.add('show'); if('Notification'in window&&Notification.permission==='granted') new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});}
+   if(fresh&&String(o.status||'new').toLowerCase()!=='completed'){
+     if('Notification'in window&&Notification.permission==='granted')new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});
+   }
  }
  async function init(){
-   showOwnerUI(); if(!isOwner()) return;
-   if('Notification'in window&&Notification.permission==='default') Notification.requestPermission();
-   if(!window.supabase||!window.supabase.createClient) return;
+   if(!isOwner())return;
+   bell.classList.add('show');
+   if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
+   if(!window.supabase||!window.supabase.createClient)return;
    sb=window.__ngOwnerNotifySB||window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-   const {data}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(20);
-   (data||[]).reverse().forEach(o=>add(o,false));
-   sb.channel('ng-owner-order-notifications').on('postgres_changes',{event:'INSERT',schema:'public',table:'new_gama_orders'},p=>add(p.new,true)).subscribe();
+   const {data}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(100);
+   list.innerHTML='';orders=[];(data||[]).forEach(o=>add(o,false));updateCount();
+   sb.channel('ng-owner-order-notifications-v2').on('postgres_changes',{event:'INSERT',schema:'public',table:'new_gama_orders'},p=>add(p.new,true)).on('postgres_changes',{event:'UPDATE',schema:'public',table:'new_gama_orders'},p=>{add(p.new,false)}).subscribe();
  }
- bell.onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';unread=0;badge.textContent='0';};
+ window.NGOwnerOrderNotificationRefresh=updateCount;
+ bell.onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';};
  document.addEventListener('DOMContentLoaded',init);
 })();
 </script>
