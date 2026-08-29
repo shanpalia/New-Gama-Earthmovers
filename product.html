@@ -134,6 +134,41 @@ h1{font-size:clamp(34px,4vw,58px);color:#f7f9fb}
   .full-order-btn{font-size:18px;padding:17px}
 }
 
+
+/* ===== WHITE PREMIUM THEME ===== */
+html,body{background:#f7f8fa!important;color:#20242a!important}
+body{background:#f7f8fa!important}
+.top,header{background:#fff!important;border-color:#e5e8ec!important}
+.page{background:#f7f8fa!important}
+.back{background:#fff!important;color:#20242a!important;border-color:#dfe4e9!important}
+.product-layout,.section,.review,.modal-card{background:#fff!important;border-color:#e1e5e9!important;box-shadow:0 10px 35px #1018200d!important;color:#20242a!important}
+.product-info h1,h1{color:#20242a!important}
+.part,.description,.gallery-note{color:#6d747d!important}
+.price{color:#20242a!important;border-color:#e5e8ec!important}
+.gallery-main{background:#fff!important;border-color:#e0e4e8!important}
+.thumb-btn{background:#fff!important;border-color:#dfe4e9!important}
+.thumb-btn.active{border-color:#f5ad00!important;box-shadow:0 0 0 3px #f5ad0022!important}
+.zoom-hint,.image-count{background:#ffffffed!important;color:#20242a!important;border-color:#d9dee4!important}
+.buy-box{background:#fff!important;border-color:#e1e5e9!important}
+.qty-control,.qty-control button,.qty-control input{background:#fff!important;color:#20242a!important;border-color:#dfe4e9!important}
+.order-total{background:#fffdf4!important;border-color:#ecd78b!important;color:#3a3f45!important}
+.order-total strong{color:#20242a!important}
+.pickup-strip{background:#f2fbf6!important;border-color:#b8e0c8!important;color:#286a49!important}
+.pickup-strip strong{color:#157746!important}
+.payment-mini span{background:#fff!important;color:#454b53!important;border-color:#dfe4e9!important}
+.full-order-wrap,.trust-row{border-color:#e5e8ec!important}
+.trust-item{border-color:#e5e8ec!important}.trust-item b{color:#252a31!important}.trust-item span{color:#737b85!important}
+.review-form input,.review-form select,.review-form textarea{background:#fff!important;color:#252a31!important;border-color:#dfe4e9!important}
+.choice-card{background:#fff!important;border-color:#dfe4e9!important}.choice-card small{color:#6e7680!important}
+.upi-box{background:#f7f8fa!important;border-color:#dfe4e9!important}
+#zoomModal{background:#000000d9!important}
+.zoom-card{background:#fff!important;border-color:#fff!important;overflow:hidden}
+.zoom-close,.zoom-tool{position:absolute;top:16px;width:44px;height:44px;border-radius:50%;border:1px solid #dfe4e9;background:#fff;color:#20242a;font-size:25px;font-weight:800;z-index:5;cursor:pointer}
+.zoom-close{right:16px}.zoom-tool-in{right:70px}.zoom-tool-out{right:122px}
+#zoomImage{transform-origin:center center;transition:transform .12s ease;cursor:grab;user-select:none}
+#zoomImage.dragging{cursor:grabbing;transition:none}
+.zoom-help{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#000000aa;color:#fff;padding:8px 13px;border-radius:20px;font-size:13px;z-index:5;white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -179,9 +214,12 @@ h1{font-size:clamp(34px,4vw,58px);color:#f7f9fb}
 
 
 <div id="zoomModal" aria-hidden="true">
-  <div class="zoom-card">
+  <div class="zoom-card" id="zoomCard">
     <button type="button" class="zoom-close" id="zoomClose">×</button>
+    <button type="button" id="zoomOutBtn" class="zoom-tool zoom-tool-out">−</button>
+    <button type="button" id="zoomInBtn" class="zoom-tool zoom-tool-in">+</button>
     <img id="zoomImage" src="" alt="Zoomed product image">
+    <div class="zoom-help">Use + / − or mouse wheel to zoom • Drag image to move</div>
   </div>
 </div>
 
@@ -268,41 +306,34 @@ async function post(table, payload) {
 }
 function imagesOf(p) {
   const found = [];
-
-  function add(value) {
+  const add = value => {
     if (value == null) return;
     if (typeof value === "string") {
       const text = value.trim();
       if (!text) return;
       try {
         if ((text.startsWith("[") && text.endsWith("]")) || (text.startsWith("{") && text.endsWith("}"))) {
-          add(JSON.parse(text));
-          return;
+          add(JSON.parse(text)); return;
         }
       } catch (_) {}
-      if (text.includes(",") && /^https?:|^\//i.test(text)) {
-        text.split(",").forEach(add);
-        return;
+      // Split comma/newline separated URLs.
+      if (/[\n,]/.test(text) && /(https?:\/\/|storage\/v1|\/storage\/|^\/)/i.test(text)) {
+        text.split(/[\n,]+/).forEach(add); return;
       }
       if (!found.includes(text)) found.push(text);
       return;
     }
-    if (Array.isArray(value)) {
-      value.forEach(add);
-      return;
-    }
-    if (typeof value === "object") {
-      Object.values(value).forEach(add);
-    }
-  }
+    if (Array.isArray(value)) { value.forEach(add); return; }
+    if (typeof value === "object") Object.values(value).forEach(add);
+  };
 
-  // Read every field likely to contain an image, including image, photo, gallery and media fields.
-  Object.keys(p || {}).forEach(function(key) {
-    if (/(image|photo|gallery|media|picture|thumb)/i.test(key)) add(p[key]);
+  Object.keys(p || {}).forEach(key => {
+    const value = p[key];
+    if (/(image|photo|gallery|media|picture|thumb|url)/i.test(key)) add(value);
   });
 
-  console.log("New Gama: images from product row:", found.length, found);
-  return found;
+  console.log("New Gama: detected images", found.length, found);
+  return found.filter(Boolean);
 }
 
 function mergeImages(baseImages, extraRows) {
@@ -423,10 +454,7 @@ function renderProduct() {
   });
 
   document.getElementById("galleryMain").addEventListener("click", () => {
-    const zoomImg = document.getElementById("zoomImage");
-    zoomImg.src = main.src;
-    zoomImg.alt = main.alt;
-    document.getElementById("zoomModal").classList.add("show");
+    if (window.openProductZoom) window.openProductZoom(main.src, main.alt);
   });
 
   const qtyInput = document.getElementById("qty");
@@ -560,51 +588,80 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
 });
 
 
-document.getElementById("zoomClose").onclick = () => document.getElementById("zoomModal").classList.remove("show");
-document.getElementById("zoomModal").addEventListener("click", function(e) {
-  if (e.target === this || e.target.id === "zoomImage") this.classList.remove("show");
-});
-document.addEventListener("keydown", function(e) {
-  if (e.key === "Escape") document.getElementById("zoomModal").classList.remove("show");
-});
+(function setupZoom() {
+  const modal = document.getElementById("zoomModal");
+  const img = document.getElementById("zoomImage");
+  let scale = 1, x = 0, y = 0, dragging = false, startX = 0, startY = 0;
+  const apply = () => { img.style.transform = `translate(${x}px,${y}px) scale(${scale})`; };
+  const reset = () => { scale = 1; x = 0; y = 0; apply(); };
+  const closeZoom = () => { modal.classList.remove("show"); modal.setAttribute("aria-hidden","true"); reset(); };
 
+  window.openProductZoom = function(src, alt) {
+    img.src = src; img.alt = alt || "Zoomed product image";
+    reset();
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden","false");
+  };
+
+  document.getElementById("zoomClose").onclick = closeZoom;
+  document.getElementById("zoomInBtn").onclick = () => { scale = Math.min(4, +(scale + .25).toFixed(2)); apply(); };
+  document.getElementById("zoomOutBtn").onclick = () => { scale = Math.max(1, +(scale - .25).toFixed(2)); if(scale === 1){x=0;y=0;} apply(); };
+
+  modal.addEventListener("wheel", e => {
+    if (!modal.classList.contains("show")) return;
+    e.preventDefault();
+    scale = Math.max(1, Math.min(4, scale + (e.deltaY < 0 ? .2 : -.2)));
+    if(scale === 1){x=0;y=0;}
+    apply();
+  }, {passive:false});
+
+  img.addEventListener("pointerdown", e => {
+    if (scale <= 1) return;
+    dragging = true; startX = e.clientX - x; startY = e.clientY - y;
+    img.classList.add("dragging"); img.setPointerCapture(e.pointerId);
+  });
+  img.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    x = e.clientX - startX; y = e.clientY - startY; apply();
+  });
+  img.addEventListener("pointerup", () => { dragging=false; img.classList.remove("dragging"); });
+
+  modal.addEventListener("click", e => { if(e.target === modal) closeZoom(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeZoom(); });
+})();
 async function init() {
-  if (!productId) {
-    document.getElementById("productRoot").innerHTML='<div class="error">Product not found. Please return to the product list.</div>';
-    return;
-  }
   try {
-    try {
-      const cats = await get("new_gama_categories?select=id,name");
-      cats.forEach(c=>categoryMap[String(c.id)] = c.name);
-    } catch(e) { console.warn("Categories unavailable", e); }
-
+    if (!productId) throw new Error("Product ID is missing.");
     const rows = await get("new_gama_products?select=*&id=eq." + encodeURIComponent(productId));
     product = rows[0];
     if (!product) throw new Error("Product not found.");
 
-    // Some versions of the owner dashboard save additional images in a separate table.
-    // Try common table names and merge any available rows into the product gallery.
-    const imageTables = ["new_gama_product_images", "new_gama_images", "product_images"];
-    const extraImageRows = [];
+    console.log("New Gama full product row:", product);
 
-    for (const tableName of imageTables) {
-      try {
-        const imageRows = await get(
-          tableName + "?select=*&product_id=eq." + encodeURIComponent(productId) + "&order=sort_order.asc"
-        );
-        if (Array.isArray(imageRows)) extraImageRows.push(...imageRows);
-      } catch (imageTableError) {
-        console.log("New Gama: optional image table unavailable:", tableName);
+    const extraImageRows = [];
+    const tables = ["new_gama_product_images","new_gama_images","product_images"];
+    const fields = ["product_id","item_id","product","parent_id"];
+
+    for (const table of tables) {
+      for (const field of fields) {
+        try {
+          const r = await get(table + "?select=*&" + field + "=eq." + encodeURIComponent(productId));
+          if (Array.isArray(r) && r.length) {
+            console.log("New Gama image rows:", table, field, r);
+            extraImageRows.push(...r);
+          }
+        } catch (_) {}
       }
     }
 
     product._gallery_images = mergeImages(imagesOf(product), extraImageRows);
+    console.log("New Gama FINAL gallery:", product._gallery_images);
     renderProduct();
     loadReviews();
   } catch (err) {
     console.error(err);
-    document.getElementById("productRoot").innerHTML='<div class="error"><strong>Product could not be loaded.</strong><br>' + esc(err.message) + '</div>';
+    document.getElementById("productRoot").innerHTML =
+      '<div class="error">Product could not be loaded.<br><small>' + esc(err.message || String(err)) + '</small></div>';
   }
 }
 init();
