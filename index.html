@@ -105,6 +105,17 @@
 .ng-order-status{display:inline-block;padding:4px 9px;border-radius:20px;background:#fff3c9;font-size:12px;font-weight:800}
 </style>
 
+
+<script id="ng-home-admin-mode">
+(function(){
+  try{
+    const q=new URLSearchParams(location.search);
+    if(q.get('admin')==='1') localStorage.setItem('new_gama_owner_logged_in','true');
+    if(q.get('admin')==='0') localStorage.removeItem('new_gama_owner_logged_in');
+  }catch(e){}
+})();
+</script>
+
 </head>
 <body>
 
@@ -569,7 +580,7 @@
    const d=document.createElement('div');d.className='ng-owner-notice'+(fresh?' new':'');
    d.dataset.orderId=o.id;
    d.innerHTML=`<b>${String(o.status||'new').toLowerCase()==='completed'?'✓ COMPLETED ORDER':'🔔 NEW PICKUP ORDER'}</b><br><b>${o.customer_name||''}</b> — ${o.product_name||''}<br><b>Total:</b> ₹${o.total_amount||0} · ${pay}`;
-   d.onclick=()=>{location.href='owner.html?order='+encodeURIComponent(o.id)};
+   d.onclick=()=>{location.href='order.html?order='+encodeURIComponent(o.id)};
    list.prepend(d);
    if(fresh&&String(o.status||'new').toLowerCase()!=='completed'){
      if('Notification'in window&&Notification.permission==='granted')new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Owner Dashboard | New Gama Earthmovers</title>
+<title>Dashboard | New Gama Earthmovers</title>
 <link rel="icon" type="image/png" href="new-gama-logo.png">
 <style>
 :root{--yellow:#f5b400;--dark:#171717;--dark2:#242424;--light:#f5f6f7;--white:#fff;--text:#242424;--muted:#777;--border:#e6e6e6}
@@ -108,10 +108,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
     <button class="menu-btn" id="menuBtn">☰</button>
     <div class="brand">
       <img src="new-gama-logo.png" alt="New Gama Earthmovers">
-      <div><b>NEW GAMA EARTHMOVERS</b><small>Owner Dashboard</small></div>
+      <div><b>NEW GAMA EARTHMOVERS</b><small>Dashboard</small></div>
     </div>
   </div>
-  <div class="owner">Shop Owner Admin</div>
+  <div class="owner">Admin</div>
 </header>
 
 <aside class="sidebar" id="sidebar">
@@ -127,7 +127,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 
 <main>
 <section class="page" id="home">
-  <div class="page-header"><h1>Welcome, Shop Owner 👋</h1><p>Manage your parts store from one place.</p></div>
+  <div class="page-header"><h1>Welcome, Admin 👋</h1><p>Manage your parts store from one place.</p></div>
   <div class="grid">
     <div class="card"><h2>Quick Actions</h2><p style="color:#777">Create categories and add your products.</p><button class="primary" onclick="openPage('add-items')">Add New Item</button></div>
     <div class="card"><h2>Store Status</h2><div class="empty"><strong>Your store is ready.</strong><br>Products you add will appear in your Dashboard list.</div></div>
@@ -282,7 +282,7 @@ function openPage(id){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
-document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Owner Dashboard?'))window.location.href='index.html'});
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?'))window.location.href='index.html'});
 
 const STORAGE_KEY='newGamaStoreDataV2';
 
@@ -334,7 +334,7 @@ function openPage(id){
 
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
 document.getElementById('homeRedirect').addEventListener('click',()=>window.location.href='index.html');
-document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Owner Dashboard?'))window.location.href='index.html'});
+document.getElementById('logoutBtn').addEventListener('click',()=>{if(confirm('Logout from Dashboard?'))window.location.href='index.html'});
 
 function renderCategories(){
   const chips=document.getElementById('categoryChips');
@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', function () {
    const d=document.createElement('div');d.className='ng-owner-notice'+(fresh?' new':'');
    d.dataset.orderId=o.id;
    d.innerHTML=`<b>${String(o.status||'new').toLowerCase()==='completed'?'✓ COMPLETED ORDER':'🔔 NEW PICKUP ORDER'}</b><br><b>${o.customer_name||''}</b> — ${o.product_name||''}<br><b>Total:</b> ₹${o.total_amount||0} · ${pay}`;
-   d.onclick=()=>{location.href='owner.html?order='+encodeURIComponent(o.id)};
+   d.onclick=()=>{location.href='order.html?order='+encodeURIComponent(o.id)};
    list.prepend(d);
    if(fresh&&String(o.status||'new').toLowerCase()!=='completed'){
      if('Notification'in window&&Notification.permission==='granted')new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});
