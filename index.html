@@ -80,8 +80,21 @@
 @media(max-width:800px){.product-detail{grid-template-columns:1fr}.gallery-main{height:330px}.product-info{padding:22px}}
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style id="ng-owner-order-notification-style">
+#ngOwnerBell{position:relative;background:transparent;border:0;font-size:25px;cursor:pointer;padding:7px;display:none}
+#ngOwnerBell.show{display:inline-block}
+#ngOwnerBellBadge{position:absolute;top:1px;right:0;min-width:17px;height:17px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center}
+#ngOwnerNoticePanel{display:none;position:fixed;top:64px;right:18px;width:min(380px,calc(100vw - 36px));max-height:70vh;overflow:auto;background:#fff;color:#111;border-radius:14px;box-shadow:0 15px 45px rgba(0,0,0,.25);z-index:999999;padding:12px}
+.ng-owner-notice{padding:12px;border-bottom:1px solid #eee;font-size:13px}.ng-owner-notice.new{background:#fff8db}
+</style>
 </head>
 <body>
+
+<button id="ngOwnerBell" aria-label="Owner order notifications">🔔<span id="ngOwnerBellBadge">0</span></button>
+<div id="ngOwnerNoticePanel"><b>New Order Notifications</b><div id="ngOwnerNoticeList"></div></div>
+
   <div class="top">🚜 Heavy Equipment Spare Parts & Solutions</div>
 
   <header>
@@ -120,9 +133,7 @@
 
     <section id="parts" class="container">
       <div class="title"><h2>Spare Parts</h2><p>Search and browse available parts.</p></div>
-      <div class="customer-grid" id="customerProductList">
-        <div class="customer-empty">Loading products...</div>
-      </div>
+      <div class="empty" id="result"><strong>No parts available yet.</strong><br>Parts added by the shop owner will appear here.</div>
     </section>
 
     <section id="categories" class="container">
@@ -146,6 +157,7 @@
   </main>
 
   <footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
+  </div>
 
 
   <div class="security-modal" id="securityModal" role="dialog" aria-modal="true">
@@ -167,11 +179,17 @@
         <button type="button" class="cancel-btn" id="securityCancel">Cancel</button>
       </div>
     </div>
-  </div>
+
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
 
+    function searchParts(){
+      const q = document.getElementById('searchInput').value.trim();
+      document.getElementById('result').innerHTML = q
+        ? '<strong>Search: ' + q.replace(/</g,'&lt;') + '</strong><br>Real parts search will be connected when the database is added.'
+        : '<strong>Please enter a Part Name or Part Number.</strong>';
+    }
 
     const SECURITY_KEY = 'newGamaOwnerPinHash';
     const modal = document.getElementById('securityModal');
@@ -253,6 +271,12 @@
 
 
 
+<section class="store-products" id="storeProducts">
+  <h2>Our Parts & Products</h2>
+  <p>Browse available parts. Click any product to view all 5 images and complete details.</p>
+  <div class="customer-grid" id="customerProductList"></div>
+</section>
+
 <div class="product-modal" id="productModal">
   <div class="product-modal-box">
     <button class="product-close" id="productClose">×</button>
@@ -272,265 +296,284 @@
   </div>
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script>
-/* NEW GAMA EARTHMOVERS - FINAL HOMEPAGE SUPABASE LOADER */
-(function () {
-  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+(function(){
+  const KEY='newGamaStoreDataV2';
 
-  let homepageProducts = [];
-  let categoryMap = {};
-
-  function esc(value) {
-    const div = document.createElement("div");
-    div.textContent = value == null ? "" : String(value);
-    return div.innerHTML;
-  }
-
-  async function getTable(path) {
-    const response = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
-      method: "GET",
-      headers: {
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-        "Accept": "application/json"
-      }
-    });
-
-    const raw = await response.text();
-
-    if (!response.ok) {
-      throw new Error(
-        "Supabase " + response.status + ": " + raw
-      );
+  function getItems(){
+    try{
+      const raw=localStorage.getItem(KEY);
+      const data=raw?JSON.parse(raw):{};
+      return Array.isArray(data.items)?data.items:[];
+    }catch(e){
+      console.error('Customer product load error',e);
+      return [];
     }
-
-    return raw ? JSON.parse(raw) : [];
   }
 
-  function getImages(product) {
-    const candidates = [
-      product.main_image_url,
-      product.image_1_url,
-      product.image_2_url,
-      product.image_3_url,
-      product.image_4_url,
-      product.image_5_url,
-      product.image1_url,
-      product.image2_url,
-      product.image3_url,
-      product.image4_url,
-      product.image5_url,
-      product.image_url,
-      product.product_image,
-      product.photo_url
-    ];
+  function esc(v){
+    const d=document.createElement('div');
+    d.textContent=v||'';
+    return d.innerHTML;
+  }
 
-    return candidates.filter(function (url) {
-      return typeof url === "string" && url.trim() !== "";
+  function price(item){
+    return (item.currency==='NPR'?'रु ':'₹ ')+(item.price||'0');
+  }
+
+  function showProduct(item){
+    const images=(item.images||[]).filter(Boolean);
+    if(!images.length)return;
+
+    document.getElementById('modalCategory').textContent=item.category||'';
+    document.getElementById('modalName').textContent=item.name||'Product';
+    document.getElementById('modalPart').textContent=item.part?'Part No: '+item.part:'';
+    document.getElementById('modalPrice').textContent=price(item);
+    document.getElementById('modalDescription').textContent=item.description||'';
+
+    const main=document.getElementById('galleryMain');
+    const thumbs=document.getElementById('galleryThumbs');
+    main.src=images[0];
+
+    thumbs.innerHTML=images.map((src,i)=>
+      '<img src="'+src+'" data-index="'+i+'" class="'+(i===0?'active':'')+'" alt="Product image '+(i+1)+'">'
+    ).join('');
+
+    thumbs.querySelectorAll('img').forEach(function(img){
+      img.addEventListener('click',function(){
+        main.src=images[Number(this.dataset.index)];
+        thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
+        this.classList.add('active');
+      });
     });
+
+    document.getElementById('productModal').classList.add('show');
   }
 
-  function formatPrice(product) {
-    const currency = String(product.currency || "INR").toUpperCase();
-    return (currency === "NPR" ? "रु " : "₹ ") +
-      (product.price == null ? 0 : product.price);
-  }
+  function renderCustomerProducts(){
+    const list=document.getElementById('customerProductList');
+    if(!list)return;
 
-  function categoryName(product) {
-    // IMPORTANT: actual database column is spelled "categroy_id".
-    return categoryMap[product.categroy_id] ||
-      categoryMap[product.category_id] ||
-      product.category ||
-      "";
-  }
+    const items=getItems();
 
-  function renderProducts(products) {
-    const grid = document.getElementById("customerProductList");
-
-    if (!grid) {
-      console.error("New Gama: customerProductList not found.");
+    if(!items.length){
+      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
       return;
     }
 
-    if (!Array.isArray(products) || products.length === 0) {
-      grid.innerHTML =
-        '<div class="customer-empty"><strong>No parts available yet.</strong><br>Parts added by the shop owner will appear here.</div>';
-      return;
-    }
+    list.innerHTML=items.map(function(item,index){
+      const images=(item.images||[]).filter(Boolean);
+      const mainImage=images[0]||'';
+      return '<article class="customer-card" data-product-index="'+index+'">'+
+        '<img src="'+mainImage+'" alt="'+esc(item.name)+'">'+
+        '<div class="customer-card-body">'+
+        '<span class="customer-badge">'+esc(item.category)+'</span>'+
+        '<h3>'+esc(item.name)+'</h3>'+
+        (item.part?'<div style="color:#777;font-size:13px">Part No: '+esc(item.part)+'</div>':'')+
+        '<div class="customer-price">'+price(item)+'</div>'+
+        '</div></article>';
+    }).join('');
 
-    grid.innerHTML = products.map(function (product) {
-      const images = getImages(product);
-      const image = images[0] || "new-gama-logo.png";
-      const category = categoryName(product);
-
-      return `
-        <article class="customer-card" data-product-id="${esc(product.id)}">
-          <img
-            src="${esc(image)}"
-            alt="${esc(product.name || "Product")}"
-            onerror="this.onerror=null;this.src='new-gama-logo.png'"
-          >
-          <div class="customer-card-body">
-            ${category ? `<span class="customer-badge">${esc(category)}</span>` : ""}
-            <h3>${esc(product.name || "Unnamed Product")}</h3>
-            ${product.part_number ? `<div style="color:#777;font-size:13px">Part No: ${esc(product.part_number)}</div>` : ""}
-            <div class="customer-price">${formatPrice(product)}</div>
-          </div>
-        </article>
-      `;
-    }).join("");
-
-    grid.querySelectorAll(".customer-card").forEach(function (card) {
-      card.addEventListener("click", function () {
-        const productId = card.dataset.productId;
-        window.location.href = "product.html?id=" + encodeURIComponent(productId);
+    list.querySelectorAll('.customer-card').forEach(function(card){
+      card.addEventListener('click',function(){
+        const items=getItems();
+        const item=items[Number(this.dataset.productIndex)];
+        if(item)showProduct(item);
       });
     });
   }
 
-  function openProduct(product) {
-    const images = getImages(product);
-    const main = document.getElementById("galleryMain");
-    const thumbs = document.getElementById("galleryThumbs");
+  document.getElementById('productClose').addEventListener('click',function(){
+    document.getElementById('productModal').classList.remove('show');
+  });
 
-    document.getElementById("modalCategory").textContent = categoryName(product);
-    document.getElementById("modalName").textContent = product.name || "Product";
-    document.getElementById("modalPart").textContent =
-      product.part_number ? "Part No: " + product.part_number : "";
-    document.getElementById("modalPrice").textContent = formatPrice(product);
-    document.getElementById("modalDescription").textContent =
-      product.description || product.descri || "";
+  document.getElementById('productModal').addEventListener('click',function(e){
+    if(e.target===this)this.classList.remove('show');
+  });
 
-    main.src = images[0] || "new-gama-logo.png";
+  // Load products immediately and again when returning from owner dashboard.
+  document.addEventListener('DOMContentLoaded',renderCustomerProducts);
+  window.addEventListener('focus',renderCustomerProducts);
+  window.addEventListener('pageshow',renderCustomerProducts);
+  window.addEventListener('storage',renderCustomerProducts);
 
-    thumbs.innerHTML = images.map(function (src, index) {
-      return '<img src="' + esc(src) + '" data-index="' + index +
-        '" class="' + (index === 0 ? "active" : "") +
-        '" alt="Product image ' + (index + 1) + '">';
-    }).join("");
-
-    thumbs.querySelectorAll("img").forEach(function (thumb) {
-      thumb.addEventListener("click", function () {
-        const index = Number(thumb.dataset.index);
-        main.src = images[index] || "new-gama-logo.png";
-        thumbs.querySelectorAll("img").forEach(function (item) {
-          item.classList.remove("active");
-        });
-        thumb.classList.add("active");
-      });
-    });
-
-    document.getElementById("productModal").classList.add("show");
-  }
-
-  async function loadHomepageProducts() {
-    const grid = document.getElementById("customerProductList");
-
-    if (!grid) {
-      console.error("New Gama: #customerProductList is missing.");
-      return;
-    }
-
-    grid.innerHTML =
-      '<div class="customer-empty">Loading products...</div>';
-
-    try {
-      // No created_at ordering here. This works even if that column does not exist.
-      homepageProducts = await getTable(
-        "new_gama_products?select=*"
-      );
-
-      // Category failure must never block products.
-      categoryMap = {};
-      try {
-        const categories = await getTable(
-          "new_gama_categories?select=id,name"
-        );
-        categories.forEach(function (category) {
-          categoryMap[String(category.id)] = category.name;
-        });
-      } catch (categoryError) {
-        console.warn("New Gama categories warning:", categoryError);
-      }
-
-      console.log(
-        "New Gama Homepage: loaded " +
-        homepageProducts.length +
-        " products from Supabase"
-      );
-
-      renderProducts(homepageProducts);
-
-    } catch (error) {
-      console.error("New Gama Homepage Supabase Error:", error);
-
-      grid.innerHTML =
-        '<div class="customer-empty"><strong>Products could not be loaded.</strong><br>' +
-        esc(error.message) +
-        '</div>';
-    }
-  }
-
-  window.searchParts = function () {
-    const query = (
-      document.getElementById("searchInput").value || ""
-    ).trim().toLowerCase();
-
-    const filtered = homepageProducts.filter(function (product) {
-      return (
-        String(product.name || "").toLowerCase().includes(query) ||
-        String(product.part_number || "").toLowerCase().includes(query) ||
-        String(categoryName(product)).toLowerCase().includes(query)
-      );
-    });
-
-    renderProducts(query ? filtered : homepageProducts);
-    document.getElementById("parts").scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  };
-
-  const closeButton = document.getElementById("productClose");
-  const modal = document.getElementById("productModal");
-
-  if (closeButton) {
-    closeButton.addEventListener("click", function () {
-      modal.classList.remove("show");
-    });
-  }
-
-  if (modal) {
-    modal.addEventListener("click", function (event) {
-      if (event.target === modal) {
-        modal.classList.remove("show");
-      }
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    loadHomepageProducts();
-  }, { once: true });
-
-  window.loadNewGamaProducts = loadHomepageProducts;
+  // Also refresh periodically so products saved in another open tab appear automatically.
+  setInterval(renderCustomerProducts,2000);
 })();
 </script>
 
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function esc(v) {
+    const d=document.createElement('div'); d.textContent=v||''; return d.innerHTML;
+  }
+  function price(item) {
+    return (String(item.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ')+(item.price ?? 0);
+  }
+
+  async function loadProducts() {
+    const list=document.getElementById('customerProductList');
+    if(!list) return;
+    list.innerHTML='<div class="customer-empty">Loading products...</div>';
+
+    const [catRes, prodRes] = await Promise.all([
+      sb.from('new_gama_categories').select('id,name'),
+      sb.from('new_gama_products').select('*').order('created_at',{ascending:false})
+    ]);
+    if(catRes.error) throw catRes.error;
+    if(prodRes.error) throw prodRes.error;
+
+    const catMap = Object.fromEntries((catRes.data||[]).map(c=>[c.id,c.name]));
+    const items=(prodRes.data||[]).map(p=>({
+      ...p,
+      category:catMap[p.category_id]||'',
+      images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+    }));
+
+    if(!items.length) {
+      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
+      return;
+    }
+
+    list.innerHTML=items.map((item,i)=>{
+      const image=item.images[0]||'new-gama-logo.png';
+      return `<article class="customer-card" data-index="${i}">
+        <img src="${image}" alt="${esc(item.name)}" loading="lazy">
+        <div class="customer-card-body">
+          <span class="customer-badge">${esc(item.category)}</span>
+          <h3>${esc(item.name)}</h3>
+          ${item.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(item.part_number)}</div>`:''}
+          <div class="customer-price">${price(item)}</div>
+        </div>
+      </article>`;
+    }).join('');
+
+    list.querySelectorAll('.customer-card').forEach(card=>card.addEventListener('click',()=>showProduct(items[Number(card.dataset.index)])));
+  }
+
+  function showProduct(item) {
+    const modal=document.getElementById('productModal');
+    const main=document.getElementById('galleryMain');
+    const thumbs=document.getElementById('galleryThumbs');
+    const images=item.images||[];
+
+    document.getElementById('modalCategory').textContent=item.category||'';
+    document.getElementById('modalName').textContent=item.name||'Product';
+    document.getElementById('modalPart').textContent=item.part_number?'Part No: '+item.part_number:'';
+    document.getElementById('modalPrice').textContent=price(item);
+    document.getElementById('modalDescription').textContent=item.description||'';
+
+    main.src=images[0]||'';
+    thumbs.innerHTML=images.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}" data-i="${i}">`).join('');
+    thumbs.querySelectorAll('img').forEach(img=>img.addEventListener('click',()=>{
+      main.src=images[Number(img.dataset.i)];
+      thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
+      img.classList.add('active');
+    }));
+    modal.classList.add('show');
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    loadProducts().catch(err=>{
+      console.error(err);
+      const list=document.getElementById('customerProductList');
+      if(list) list.innerHTML='<div class="customer-empty">Could not load products.</div>';
+    });
+    document.getElementById('productClose')?.addEventListener('click',()=>document.getElementById('productModal').classList.remove('show'));
+    document.getElementById('productModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show')});
+  });
+})();
+</script>
+
+
+<script>
+/* Reliable homepage product loader */
+(async function(){
+  const URL="https://gozvchqatiyebpnycubl.supabase.co";
+  const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  function esc(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
+  async function reloadProducts(){
+    const list=document.getElementById('customerProductList');
+    if(!list || !window.supabase) return;
+    try{
+      const sb=window.supabase.createClient(URL,KEY);
+      const [pr,cr]=await Promise.all([
+        sb.from('new_gama_products').select('*').order('created_at',{ascending:false}),
+        sb.from('new_gama_categories').select('id,name')
+      ]);
+      if(pr.error) throw pr.error;
+      if(cr.error) throw cr.error;
+      const cm=Object.fromEntries((cr.data||[]).map(c=>[c.id,c.name]));
+      const rows=pr.data||[];
+      if(!rows.length){
+        list.innerHTML='<div class="customer-empty">No products available yet.</div>';
+        return;
+      }
+      list.innerHTML=rows.map((p,i)=>{
+        const image=p.main_image_url||p.image_2_url||p.image_3_url||p.image_4_url||p.image_5_url||'new-gama-logo.png';
+        const symbol=String(p.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ';
+        return `<article class="customer-card" data-cloud-index="${i}">
+          <img src="${image}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='new-gama-logo.png'">
+          <div class="customer-card-body">
+            <span class="customer-badge">${esc(cm[p.category_id]||'')}</span>
+            <h3>${esc(p.name)}</h3>
+            ${p.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(p.part_number)}</div>`:''}
+            <div class="customer-price">${symbol}${p.price??0}</div>
+          </div>
+        </article>`;
+      }).join('');
+    }catch(err){
+      console.error('Homepage Supabase error:',err);
+      if(list) list.innerHTML='<div class="customer-empty">Products could not be loaded. Please refresh the page.</div>';
+    }
+  }
+  document.addEventListener('DOMContentLoaded',reloadProducts);
+  window.addEventListener('pageshow',reloadProducts);
+})();
+</script>
+
+
+<script id="ng-owner-order-notification-script">
+(function(){
+ const URL='https://gozvchqatiyebpnycubl.supabase.co';
+ const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+ const bell=document.getElementById('ngOwnerBell'), badge=document.getElementById('ngOwnerBellBadge'), panel=document.getElementById('ngOwnerNoticePanel'), list=document.getElementById('ngOwnerNoticeList');
+ let unread=0, sb;
+ function isOwner(){
+   try{
+     const q=new URLSearchParams(location.search);
+     return q.get('owner')==='1' || location.pathname.toLowerCase().includes('owner') ||
+       sessionStorage.getItem('new_gama_owner_logged_in')==='true' ||
+       localStorage.getItem('new_gama_owner_logged_in')==='true';
+   }catch(e){return location.pathname.toLowerCase().includes('owner')}
+ }
+ function showOwnerUI(){ if(isOwner()) bell.classList.add('show'); }
+ function add(o, fresh){
+   if(!isOwner()) return;
+   const pay=o.payment_method==='upi'?'📱 UPI':'💵 Cash';
+   const status=o.payment_status||'Pending';
+   const d=document.createElement('div'); d.className='ng-owner-notice'+(fresh?' new':'');
+   d.innerHTML=`<b>🔔 NEW PICKUP ORDER</b><br><br><b>Customer:</b> ${o.customer_name||''}<br><b>Mobile:</b> ${o.customer_phone||''}<br><b>Products:</b> ${o.product_name||''}<br><b>Quantity:</b> ${o.quantity||''}<br><b>Total:</b> ₹${o.total_amount||0}<br><b>Payment:</b> ${pay}<br><b>Status:</b> ${status}<br><b>Order Type:</b> 🏪 Shop Pickup Only`;
+   list.prepend(d);
+   if(fresh){unread++;badge.textContent=unread; bell.classList.add('show'); if('Notification'in window&&Notification.permission==='granted') new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});}
+ }
+ async function init(){
+   showOwnerUI(); if(!isOwner()) return;
+   if('Notification'in window&&Notification.permission==='default') Notification.requestPermission();
+   if(!window.supabase||!window.supabase.createClient) return;
+   sb=window.__ngOwnerNotifySB||window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+   const {data}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(20);
+   (data||[]).reverse().forEach(o=>add(o,false));
+   sb.channel('ng-owner-order-notifications').on('postgres_changes',{event:'INSERT',schema:'public',table:'new_gama_orders'},p=>add(p.new,true)).subscribe();
+ }
+ bell.onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';unread=0;badge.textContent='0';};
+ document.addEventListener('DOMContentLoaded',init);
+})();
+</script>
 </body>
 </html>

@@ -72,8 +72,20 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 @media(max-width:550px){.topbar{padding:0 12px}.owner{display:none}.brand b{font-size:13px}main{padding:22px 14px 40px}.stats{gap:10px}.stat{padding:15px}.stat b{font-size:23px}.category-select-row{flex-direction:column}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style id="ng-owner-order-notification-style">
+#ngOwnerBell{position:relative;background:transparent;border:0;font-size:25px;cursor:pointer;padding:7px;display:none}
+#ngOwnerBell.show{display:inline-block}
+#ngOwnerBellBadge{position:absolute;top:1px;right:0;min-width:17px;height:17px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center}
+#ngOwnerNoticePanel{display:none;position:fixed;top:64px;right:18px;width:min(380px,calc(100vw - 36px));max-height:70vh;overflow:auto;background:#fff;color:#111;border-radius:14px;box-shadow:0 15px 45px rgba(0,0,0,.25);z-index:999999;padding:12px}
+.ng-owner-notice{padding:12px;border-bottom:1px solid #eee;font-size:13px}.ng-owner-notice.new{background:#fff8db}
+</style>
 </head>
 <body>
+
+<button id="ngOwnerBell" aria-label="Owner order notifications">🔔<span id="ngOwnerBellBadge">0</span></button>
+<div id="ngOwnerNoticePanel"><b>New Order Notifications</b><div id="ngOwnerNoticeList"></div></div>
+
 
 <header class="topbar">
   <div class="top-left">
@@ -214,30 +226,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
     <div class="card"><h2>Contact Information</h2><label>Contact Number</label><input placeholder="Enter contact number"><label>WhatsApp Number</label><input placeholder="Enter WhatsApp number"><label>Email Address</label><input type="email" placeholder="Enter email address"></div>
   </div>
 </section>
-
-<!-- UPI ONLINE PAYMENT SETTINGS -->
-<div class="upi-settings-card" style="margin-top:24px;padding:22px;border:1px solid #e3e6ea;border-radius:16px;background:#fff">
-  <h2 style="margin:0 0 8px">💳 Online Payment Settings</h2>
-  <p style="margin:0 0 18px;color:#68717c">Apna UPI ID yahan save karein. Customer online payment choose karega to payment isi UPI account par jayega.</p>
-
-  <label style="display:block;font-weight:700;margin-bottom:7px">UPI ID</label>
-  <input id="ownerUpiId" type="text" placeholder="yourname@upi" style="width:100%;box-sizing:border-box;padding:13px;border:1px solid #dfe4e9;border-radius:10px;margin-bottom:14px">
-
-  <label style="display:block;font-weight:700;margin-bottom:7px">UPI Receiver / Shop Name</label>
-  <input id="ownerUpiName" type="text" placeholder="New Gama Earthmovers" style="width:100%;box-sizing:border-box;padding:13px;border:1px solid #dfe4e9;border-radius:10px;margin-bottom:14px">
-
-  <label style="display:block;font-weight:700;margin-bottom:7px">Payment Note (optional)</label>
-  <textarea id="ownerPaymentNote" rows="3" placeholder="Payment ke baad order confirmation karein." style="width:100%;box-sizing:border-box;padding:13px;border:1px solid #dfe4e9;border-radius:10px;margin-bottom:16px"></textarea>
-
-  <button type="button" id="saveUpiSettingsBtn" style="padding:13px 22px;border:0;border-radius:10px;background:#f5ad00;color:#222;font-weight:800;cursor:pointer">Save Payment Settings</button>
-  <span id="upiSaveStatus" style="margin-left:10px;font-weight:700"></span>
-
-  <div style="margin-top:18px;padding:14px;background:#f7f8fa;border-radius:12px">
-    <b>Customer Payment Preview</b>
-    <div id="upiPreview" style="margin-top:7px;color:#59616b">UPI details not added yet.</div>
-  </div>
-</div>
-
 </main>
 
 <script>
@@ -448,7 +436,7 @@ function updateProductPreview(){
 function clearProductForm(){
   ['itemName','partNumber','price','description'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('category').value='';
-  selectedImages=[];editingIndex=null;window.__editingProductId=null;
+  selectedImages=[];editingIndex=null;
   document.getElementById('addItemBtn').textContent='Add Product';
   renderSelectedImages();updateProductPreview();
 }
@@ -562,336 +550,446 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 <script>
-/* Supabase save bridge: saves product + all selected images */
+/* New Gama Earthmovers - Supabase Cloud Bridge */
 (() => {
   const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
-  const BUCKET = "new-gama-product-images";
+  const BUCKET = 'new-gama-product-images';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  function getClient() {
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error("Supabase SDK failed to load. Check internet/CDN access.");
-    }
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false }
-    });
+  let cloudItems = [];
+  let cloudCategories = [];
+  let bridgeReady = false;
+
+  const q = (s) => document.querySelector(s);
+
+  function currencyText(v) {
+    return String(v || 'INR').toUpperCase() === 'NPR' ? 'NPR' : 'INR';
   }
 
-  async function dataUrlToBlob(dataUrl) {
-    const response = await fetch(dataUrl);
-    return await response.blob();
+  async function loadCloudData() {
+    const [catRes, productRes] = await Promise.all([
+      sb.from('new_gama_categories').select('*').order('name', {ascending:true}),
+      sb.from('new_gama_products').select('*').order('created_at', {ascending:false})
+    ]);
+    if (catRes.error) throw catRes.error;
+    if (productRes.error) throw productRes.error;
+
+    cloudCategories = catRes.data || [];
+    cloudItems = (productRes.data || []).map(p => ({
+      id:p.id,
+      name:p.name || '',
+      part:p.part_number || '',
+      category_id:p.category_id || '',
+      category:(cloudCategories.find(c => c.id === p.category_id) || {}).name || '',
+      price:p.price ?? 0,
+      currency:currencyText(p.currency),
+      description:p.description || '',
+      images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+    }));
+
+    // Sync legacy UI globals if present.
+    try {
+      categories = cloudCategories.map(c => c.name);
+      items = cloudItems;
+      if (typeof renderCategories === 'function') renderCategories();
+      if (typeof renderItems === 'function') renderItems();
+    } catch(e) { console.warn(e); }
   }
 
-  async function uploadProductImage(sb, dataUrl, productId, position) {
-    const blob = await dataUrlToBlob(dataUrl);
-    const ext = (blob.type || "image/jpeg").split("/")[1] || "jpg";
-    const path = `products/${productId}/${position}.${ext}`;
+  async function uploadImage(dataUrl, productId, position) {
+    if (!dataUrl) return null;
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const path = `products/${productId}/${position}.jpg`;
     const up = await sb.storage.from(BUCKET).upload(path, blob, {
       upsert:true,
-      contentType:blob.type || "image/jpeg",
-      cacheControl:"31536000"
+      contentType:'image/jpeg',
+      cacheControl:'31536000'
     });
     if (up.error) throw up.error;
-    const pub = sb.storage.from(BUCKET).getPublicUrl(path);
-    if (!pub.data || !pub.data.publicUrl) throw new Error("Could not create public image URL.");
-    return pub.data.publicUrl;
+    return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
   }
 
-  async function getOrCreateCategory(sb, categoryName) {
-    const name = String(categoryName || "").trim();
-    if (!name) return null;
-    const existing = await sb.from("new_gama_categories").select("id,name").ilike("name", name).limit(1);
-    if (existing.error) throw existing.error;
-    if (existing.data && existing.data[0]) return existing.data[0].id;
+  async function cloudSaveProduct(product, editingId) {
+    const productId = editingId || crypto.randomUUID();
+    const old = cloudItems.find(x => x.id === editingId);
+    const images = [...(product.images || [])];
+    while(images.length < 5) images.push('');
 
-    const inserted = await sb.from("new_gama_categories").insert({name}).select("id").single();
-    if (inserted.error) throw inserted.error;
-    return inserted.data.id;
-  }
-
-  async function saveProductToSupabase() {
-    const btn = document.getElementById("addItemBtn");
-    const name = document.getElementById("itemName").value.trim();
-    const part = document.getElementById("partNumber").value.trim();
-    const categoryName = document.getElementById("category").value;
-    const price = document.getElementById("price").value.trim();
-    const currency = document.getElementById("currency").value;
-    const description = document.getElementById("description").value.trim();
-
-    if (!name) return alert("Please enter Product / Part Name.");
-    if (!categoryName) return alert("Please create or select a category.");
-
-    const images = Array.from(selectedImages || []);
-    const actualImages = images.filter(Boolean);
-    // Images are optional: 0 to 5 can be saved.
-    // If at least one is selected, image 1 remains the homepage main image.
-
-    const sb = getClient();
-    btn.disabled = true;
-    const oldText = btn.textContent;
-    btn.textContent = "Saving...";
-
-    try {
-      const categoryId = await getOrCreateCategory(sb, categoryName);
-      const productId = (window.__editingProductId)
-        ? window.__editingProductId
-        : ((typeof editingIndex !== "undefined" && editingIndex !== null && items[editingIndex] && items[editingIndex].id)
-          ? items[editingIndex].id
-          : crypto.randomUUID());
-
-      // Upload every selected image to the existing product image bucket.
-      const uploaded = [];
-      for (let i = 0; i < 5; i++) {
-        if (!images[i]) continue;
-        btn.textContent = `Uploading image ${i+1}...`;
-        const url = String(images[i]).startsWith("http")
-          ? images[i]
-          : await uploadProductImage(sb, images[i], productId, i + 1);
-        uploaded.push({ image_url:url, sort_order:i+1 });
-      }
-
-      const mainUrl = (uploaded.find(x => x.sort_order === 1) || {}).image_url || null;
-
-      btn.textContent = "Saving product...";
-      const productRow = {
-        id: productId,
-        name,
-        part_number: part || null,
-        category_id: categoryId,
-        price: Number(price || 0),
-        currency: currency || "INR",
-        description: description || null,
-        main_image_url: mainUrl,
-        updated_at: new Date().toISOString()
-      };
-
-      const productSave = await sb.from("new_gama_products").upsert(productRow, { onConflict:"id" });
-      if (productSave.error) throw productSave.error;
-
-      // IMPORTANT: save all available images in the new gallery table.
-      const oldGallery = await sb.from("new_gama_product_images").delete().eq("product_id", productId);
-      if (oldGallery.error) throw oldGallery.error;
-
-      if (uploaded.length) {
-        const galleryRows = uploaded.map(x => ({
-          product_id: productId,
-          image_url: x.image_url,
-          sort_order: x.sort_order
-        }));
-        const gallerySave = await sb.from("new_gama_product_images").insert(galleryRows);
-        if (gallerySave.error) throw gallerySave.error;
-      }
-
-      // Update local dashboard only as a UI cache; Supabase is the source of truth.
-      const savedItem = {
-        id: productId,
-        name, part, category: categoryName,
-        price, currency, description,
-        images: uploaded.sort((a,b)=>a.sort_order-b.sort_order).map(x=>x.image_url)
-      };
-      if (typeof editingIndex !== "undefined" && editingIndex !== null) items[editingIndex] = savedItem;
-      else items.unshift(savedItem);
-
-      if (typeof renderItems === "function") renderItems();
-      if (typeof clearProductForm === "function") clearProductForm();
-      if (typeof openPage === "function") openPage("dashboard");
-
-      alert(`Product saved successfully. ${uploaded.length} image(s) saved to the gallery.`);
-    } catch (err) {
-      console.error("New Gama save error:", err);
-      alert("Product save error: " + (err.message || "Unknown error"));
-    } finally {
-      btn.disabled = false;
-      if (!btn.textContent || btn.textContent === "Saving..." || btn.textContent.includes("Uploading") || btn.textContent.includes("Saving product")) {
-        btn.textContent = oldText || "Add Product";
+    const urls = [];
+    for (let i=0; i<5; i++) {
+      if (images[i] && images[i].startsWith('http')) {
+        urls[i] = images[i];
+      } else if (images[i]) {
+        urls[i] = await uploadImage(images[i], productId, i+1);
+      } else {
+        urls[i] = old?.images?.[i] || null;
       }
     }
+
+    let categoryId = product.category_id || '';
+    if (!categoryId && product.category) {
+      const found = cloudCategories.find(c => c.name.toLowerCase() === String(product.category).toLowerCase());
+      categoryId = found?.id || '';
+    }
+
+    const row = {
+      id: productId,
+      name: product.name,
+      part_number: product.part || null,
+      category_id: categoryId || null,
+      price: Number(product.price || 0),
+      currency: currencyText(product.currency),
+      description: product.description || null,
+      main_image_url: urls[0],
+      image_2_url: urls[1],
+      image_3_url: urls[2],
+      image_4_url: urls[3],
+      image_5_url: urls[4],
+      updated_at: new Date().toISOString()
+    };
+
+    const result = await sb.from('new_gama_products').upsert(row, {onConflict:'id'});
+    if (result.error) throw result.error;
+    return productId;
   }
 
-  function activateBridge() {
-    const oldBtn = document.getElementById("addItemBtn");
-    if (!oldBtn) return;
-
-    // Clone the button to remove the old localStorage click listener.
-    const btn = oldBtn.cloneNode(true);
-    oldBtn.replaceWith(btn);
-    btn.addEventListener("click", function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      saveProductToSupabase();
-    });
-
-    console.log("New Gama: Supabase 5-image gallery save is active.");
+  async function cloudDeleteProduct(id) {
+    const del = await sb.from('new_gama_products').delete().eq('id', id);
+    if (del.error) throw del.error;
+    await sb.storage.from(BUCKET).remove([
+      `products/${id}/1.jpg`, `products/${id}/2.jpg`, `products/${id}/3.jpg`,
+      `products/${id}/4.jpg`, `products/${id}/5.jpg`
+    ]);
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", activateBridge);
-  else activateBridge();
+  async function cloudAddCategory(name) {
+    name = String(name || '').trim();
+    if (!name) return;
+    const r = await sb.from('new_gama_categories').insert({name}).select().single();
+    if (r.error) {
+      if (String(r.error.message).toLowerCase().includes('duplicate')) return;
+      throw r.error;
+    }
+    cloudCategories.push(r.data);
+    try { categories = cloudCategories.map(c => c.name); if(typeof renderCategories==='function') renderCategories(); } catch(e){}
+  }
+
+  // Override category creation if legacy UI uses addCategory.
+  window.addCategory = async function() {
+    const input = q('#newCategory') || q('#categoryName') || q('#newCategoryName');
+    const name = input?.value?.trim();
+    if (!name) return alert('Please enter a category name.');
+    try {
+      await cloudAddCategory(name);
+      input.value = '';
+      alert('Category created successfully.');
+      await loadCloudData();
+    } catch(err) {
+      console.error(err);
+      alert('Category save error: ' + (err.message || 'Please check Supabase policies.'));
+    }
+  };
+
+  // Patch legacy save form by capturing submit/click events.
+  async function interceptSave(e) {
+    const target = e.target;
+    const saveButton = target.closest && target.closest('#addItemBtn, #saveProduct, #saveItem, button[type="submit"]');
+    if (!saveButton && target.tagName !== 'FORM') return;
+
+    const form = target.tagName === 'FORM' ? target : target.closest('form');
+    if (!form) return;
+
+    const nameEl = q('#itemName') || q('#productName') || q('[name="productName"]') || q('[name="name"]');
+    const partEl = q('#partNumber') || q('#productPart') || q('[name="part"]');
+    const categoryEl = q('#category') || q('#productCategory');
+    const priceEl = q('#price') || q('#productPrice');
+    const currencyEl = q('#currency') || q('#productCurrency');
+    const descEl = q('#description') || q('#productDescription');
+
+    if (!nameEl || !priceEl) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const imgs = (window.selectedImages || []).filter(Boolean);
+    if (imgs.length < 5) {
+      alert('Please upload all 5 product images.');
+      return false;
+    }
+
+    const selectedCategory = categoryEl?.value || '';
+    const catObj = cloudCategories.find(c => c.name === selectedCategory);
+
+    const editingId = (typeof window.editingIndex !== 'undefined' && window.editingIndex !== null)
+      ? (cloudItems[window.editingIndex]?.id || null)
+      : null;
+
+    const product = {
+      name:nameEl.value.trim(),
+      part:partEl?.value?.trim() || '',
+      category:selectedCategory,
+      category_id:catObj?.id || '',
+      price:priceEl.value,
+      currency:currencyEl?.value || 'INR',
+      description:descEl?.value?.trim() || '',
+      images:window.selectedImages
+    };
+
+    if (!product.name) return alert('Please enter product name.');
+
+    saveButton?.setAttribute('disabled','disabled');
+    try {
+      await cloudSaveProduct(product, editingId);
+      alert(editingId ? 'Product updated successfully.' : 'Product saved successfully.');
+      await loadCloudData();
+      if (typeof window.clearProductForm === 'function') window.clearProductForm();
+      if (typeof window.openPage === 'function') window.openPage('dashboard');
+    } catch(err) {
+      console.error(err);
+      alert('Product save error: ' + (err.message || 'Please check Supabase setup and Storage policies.'));
+    } finally {
+      saveButton?.removeAttribute('disabled');
+    }
+    return false;
+  }
+
+  
+  // Current UI uses a normal button (#addItemBtn), not a form submit button.
+  // Attach a direct capture handler so Supabase save runs before the legacy localStorage handler.
+  const actualAddButton = document.getElementById('addItemBtn');
+  if (actualAddButton) {
+    actualAddButton.addEventListener('click', interceptSave, true);
+  }
+
+document.addEventListener('submit', interceptSave, true);
+  document.addEventListener('click', interceptSave, true);
+
+  // Delete cloud product when clicking legacy delete controls.
+  document.addEventListener('click', async function(e) {
+    const btn = e.target.closest && e.target.closest('[data-delete-id]');
+    if (!btn) return;
+    const id = btn.dataset.deleteId;
+    if (!id) return;
+    e.preventDefault();
+    if (!confirm('Delete this product?')) return;
+    try {
+      await cloudDeleteProduct(id);
+      await loadCloudData();
+    } catch(err) {
+      alert('Delete error: ' + (err.message || 'Unknown error'));
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await loadCloudData();
+      bridgeReady = true;
+      console.log('New Gama Supabase connected');
+    } catch(err) {
+      console.error('Supabase load error', err);
+      alert('Supabase connection error: ' + (err.message || 'Check tables, policies and internet connection.'));
+    }
+  });
 })();
 </script>
 
 
 <script>
-/* ===== FINAL DUPLICATE-PROOF PRODUCT SYNC ===== */
-(function () {
+document.addEventListener('DOMContentLoaded', function(){
+  console.log('New Gama Supabase save patch active');
+});
+</script>
+
+
+<script>
+/* FINAL Supabase save override - replaces legacy localStorage button listeners */
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.supabase) return;
+
   const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+  const BUCKET = "new-gama-product-images";
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  async function syncProductsFromSupabase() {
-    try {
-      if (!window.supabase || !window.supabase.createClient) return;
-      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
-      });
-
-      const {data: products, error} = await sb
-        .from("new_gama_products")
-        .select("*")
-        .order("updated_at",{ascending:false});
-
-      if (error) throw error;
-
-      const {data: gallery} = await sb
-        .from("new_gama_product_images")
-        .select("product_id,image_url,sort_order")
-        .order("sort_order",{ascending:true});
-
-      const byProduct = {};
-      (gallery || []).forEach(row => {
-        if (!byProduct[row.product_id]) byProduct[row.product_id] = [];
-        byProduct[row.product_id].push(row.image_url);
-      });
-
-      // IMPORTANT: every dashboard item gets the exact Supabase UUID.
-      items = (products || []).map(p => ({
-        id: p.id,
-        name: p.name || "",
-        part: p.part_number || p.part || "",
-        category: p.category || p.category_name || "",
-        category_id: p.category_id || null,
-        price: p.price ?? "",
-        currency: p.currency || "INR",
-        description: p.description || "",
-        images: byProduct[p.id] && byProduct[p.id].length
-          ? byProduct[p.id]
-          : [p.main_image_url || p.image_url || p.image || ""].filter(Boolean)
-      }));
-
-      // Keep localStorage only as a cache, never as the source for product IDs.
-      saveData();
-      renderItems();
-      console.log("New Gama: synced", items.length, "products with Supabase IDs.");
-    } catch (err) {
-      console.error("New Gama product sync failed:", err);
-    }
+  async function getCategories() {
+    const r = await sb.from('new_gama_categories').select('*').order('name');
+    if (r.error) throw r.error;
+    return r.data || [];
   }
 
-  // Edit protection: capture the original UUID directly before opening the form.
-  const originalEditItem = window.editItem;
-  window.editItem = function(index) {
-    const item = items[index];
-    if (item && item.id) {
-      window.__editingProductId = item.id;
-    } else {
-      window.__editingProductId = null;
-    }
-    return originalEditItem(index);
-  };
+  async function refreshCategorySelect() {
+    const cats = await getCategories();
+    const select = document.getElementById('category');
+    const current = select.value;
+    select.innerHTML = '<option value="">Select category</option>' +
+      cats.map(c => '<option value="'+c.id+'">'+String(c.name).replace(/</g,'&lt;')+'</option>').join('');
+    if (current) select.value=current;
 
-  // Run after the page's original initialization.
-  window.addEventListener("load", function() {
-    setTimeout(syncProductsFromSupabase, 300);
-  });
+    const chips=document.getElementById('categoryChips');
+    if(chips) chips.innerHTML=cats.length ? cats.map(c=>'<span class="chip">'+String(c.name).replace(/</g,'&lt;')+'</span>').join('') : '<span style="color:#777;font-size:13px">No categories created yet.</span>';
+    const count=document.getElementById('categoryCount');
+    if(count) count.textContent=cats.length;
+  }
 
-  // Also refresh whenever dashboard/manage page is opened.
-  const originalOpenPage = window.openPage;
-  window.openPage = function(id) {
-    const result = originalOpenPage(id);
-    if (id === "dashboard" || id === "manage-items") syncProductsFromSupabase();
-    return result;
-  };
-})();
+  // Replace legacy category button completely.
+  const oldCatBtn=document.getElementById('addCategoryBtn');
+  if(oldCatBtn){
+    const catBtn=oldCatBtn.cloneNode(true);
+    oldCatBtn.replaceWith(catBtn);
+    catBtn.addEventListener('click', async function(){
+      const input=document.getElementById('newCategory');
+      const name=input.value.trim();
+      if(!name) return alert('Please enter a category name.');
+      try{
+        const r=await sb.from('new_gama_categories').insert({name}).select().single();
+        if(r.error) throw r.error;
+        input.value='';
+        await refreshCategorySelect();
+        document.getElementById('category').value=r.data.id;
+        alert('Category created successfully.');
+      }catch(err){
+        console.error(err);
+        alert('Category save error: '+(err.message||'Unknown error'));
+      }
+    });
+  }
+
+  // Replace legacy Add Product button completely.
+  const oldBtn=document.getElementById('addItemBtn');
+  if(oldBtn){
+    const btn=oldBtn.cloneNode(true);
+    oldBtn.replaceWith(btn);
+
+    btn.addEventListener('click', async function(){
+      const name=document.getElementById('itemName').value.trim();
+      const part=document.getElementById('partNumber').value.trim();
+      const category_id=document.getElementById('category').value;
+      const price=document.getElementById('price').value.trim();
+      const currency=document.getElementById('currency').value;
+      const description=document.getElementById('description').value.trim();
+      const images=(window.selectedImages||[]);
+
+      if(!name) return alert('Please enter Product / Part Name.');
+      if(!category_id) return alert('Please create or select a category.');
+      // All five product images are optional.
+      // Product can be saved with 0, 1, 2, 3, 4 or 5 images.
+
+      btn.disabled=true;
+      btn.textContent='Saving...';
+
+      try{
+        const productId=crypto.randomUUID();
+        const urls=[null,null,null,null,null];
+
+        // Image 1 is the main image. Images 2-5 are optional.
+        for(let i=0;i<5;i++){
+          if(!images[i]) continue;
+          const response=await fetch(images[i]);
+          const blob=await response.blob();
+          const ext=(blob.type && blob.type.split('/')[1]) || 'jpg';
+          const path='products/'+productId+'/'+(i+1)+'.'+ext;
+          const up=await sb.storage.from(BUCKET).upload(path,blob,{
+            upsert:true,
+            contentType:blob.type || 'image/jpeg'
+          });
+          if(up.error) throw up.error;
+          const pub=sb.storage.from(BUCKET).getPublicUrl(path);
+          urls[i]=pub.data.publicUrl;
+        }
+
+        const insert=await sb.from('new_gama_products').insert({
+          id:productId,
+          name:name,
+          part_number:part||null,
+          category_id:category_id,
+          price:Number(price||0),
+          currency:currency,
+          description:description||null,
+          main_image_url:urls[0],
+          image_2_url:urls[1],
+          image_3_url:urls[2],
+          image_4_url:urls[3],
+          image_5_url:urls[4]
+        }).select();
+
+        if(insert.error) throw insert.error;
+
+        alert('Product saved to Supabase successfully.');
+
+        // Immediately reload products from Supabase and update the Dashboard.
+        const fresh = await sb.from('new_gama_products').select('*').order('created_at',{ascending:false});
+        const cats = await sb.from('new_gama_categories').select('*');
+        if (fresh.error) throw fresh.error;
+        if (cats.error) throw cats.error;
+
+        const catMap = Object.fromEntries((cats.data||[]).map(c=>[c.id,c.name]));
+        items = (fresh.data||[]).map(p=>({
+          id:p.id,
+          name:p.name||'',
+          part:p.part_number||'',
+          category_id:p.category_id||'',
+          category:catMap[p.category_id]||'',
+          price:p.price??0,
+          currency:p.currency||'INR',
+          description:p.description||'',
+          images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
+        }));
+        if(typeof renderItems==='function') renderItems();
+
+        if(typeof clearProductForm==='function') clearProductForm();
+        if(typeof openPage==='function') openPage('dashboard');
+      }catch(err){
+        console.error('SUPABASE PRODUCT SAVE ERROR:',err);
+        alert('Supabase save error: '+(err.message||JSON.stringify(err)));
+      }finally{
+        btn.disabled=false;
+        btn.textContent='Add Product';
+      }
+    });
+  }
+
+  refreshCategorySelect().catch(console.error);
+});
 </script>
 
 
-<script>
+<script id="ng-owner-order-notification-script">
 (function(){
-  const KEY = "new_gama_owner_payment_settings";
-
-  function readSettings(){
-    try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return {}}
-  }
-  function show(){
-    const s=readSettings();
-    const a=document.getElementById("ownerUpiId");
-    const b=document.getElementById("ownerUpiName");
-    const c=document.getElementById("ownerPaymentNote");
-    const p=document.getElementById("upiPreview");
-    if(!a)return;
-    a.value=s.upi_id||"";
-    b.value=s.upi_name||"";
-    c.value=s.payment_note||"";
-    p.textContent=s.upi_id ? ("UPI: "+s.upi_id+(s.upi_name?" • Receiver: "+s.upi_name:"")) : "UPI details not added yet.";
-  }
-  function save(){
-    const upi_id=(document.getElementById("ownerUpiId").value||"").trim();
-    const upi_name=(document.getElementById("ownerUpiName").value||"").trim();
-    const payment_note=(document.getElementById("ownerPaymentNote").value||"").trim();
-    const status=document.getElementById("upiSaveStatus");
-    if(!upi_id){alert("Please enter your UPI ID.");return;}
-    if(!/^[A-Za-z0-9._-]+@[A-Za-z0-9._-]+$/.test(upi_id)){alert("Please enter a valid UPI ID.");return;}
-    const settings={upi_id,upi_name,payment_note,updated_at:new Date().toISOString()};
-    localStorage.setItem(KEY,JSON.stringify(settings));
-    window.NEW_GAMA_PAYMENT_SETTINGS=settings;
-    if(status)status.textContent="✓ Saved successfully";
-    show();
-  }
-  function init(){
-    const btn=document.getElementById("saveUpiSettingsBtn");
-    if(btn)btn.addEventListener("click",save);
-    show();
-  }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-})();
-</script>
-
-
-<script>
-/* ===== NEW GAMA REAL-TIME ORDER NOTIFICATIONS ===== */
-(function(){
- const URL="https://gozvchqatiyebpnycubl.supabase.co";
- const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
- let known=new Set(), client;
- function get(){client=client||window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});return client}
- function bell(){
-   if(document.getElementById("ngBell"))return;
-   document.body.insertAdjacentHTML("beforeend",`<button id="ngBell" style="position:fixed;right:22px;top:22px;z-index:9999;border:0;background:#fff;border-radius:50%;width:52px;height:52px;font-size:23px;box-shadow:0 5px 20px #0002;cursor:pointer">🔔<b id="ngBadge" style="display:none;position:absolute;right:-4px;top:-4px;background:#e53935;color:#fff;border-radius:20px;min-width:20px;padding:2px 5px;font-size:12px">0</b></button><div id="ngOrdersPanel" style="display:none;position:fixed;right:18px;top:82px;width:min(430px,calc(100vw - 36px));max-height:70vh;overflow:auto;z-index:9999;background:#fff;border:1px solid #e3e6ea;border-radius:16px;padding:16px;box-shadow:0 15px 45px #0003"><h2 style="margin:0 0 12px">📦 New Orders</h2><div id="ngOrdersList">Loading...</div></div>`);
-   document.getElementById("ngBell").onclick=()=>{const p=document.getElementById("ngOrdersPanel");p.style.display=p.style.display==="none"?"block":"none";load()};
- }
- async function load(){
+ const URL='https://gozvchqatiyebpnycubl.supabase.co';
+ const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+ const bell=document.getElementById('ngOwnerBell'), badge=document.getElementById('ngOwnerBellBadge'), panel=document.getElementById('ngOwnerNoticePanel'), list=document.getElementById('ngOwnerNoticeList');
+ let unread=0, sb;
+ function isOwner(){
    try{
-     const {data,error}=await get().from("new_gama_orders").select("*").order("created_at",{ascending:false});
-     if(error)throw error;
-     const fresh=(data||[]).filter(x=>x.status==="new");
-     document.getElementById("ngBadge").textContent=fresh.length;
-     document.getElementById("ngBadge").style.display=fresh.length?"block":"none";
-     document.getElementById("ngOrdersList").innerHTML=(data||[]).length?(data||[]).map(x=>`<div style="border:1px solid #eee;border-radius:12px;padding:12px;margin:8px 0"><b>${x.product_name||"Product"}</b><br>Customer: ${x.customer_name||""}<br>Mobile: ${x.customer_phone||""}<br>Qty: ${x.quantity||1} • Amount: ₹${x.total_amount||0}<br><small>${new Date(x.created_at).toLocaleString()}</small></div>`).join(""):"No orders yet.";
-     (data||[]).forEach(x=>known.add(x.id));
-   }catch(e){console.error("Orders:",e)}
+     const q=new URLSearchParams(location.search);
+     return q.get('owner')==='1' || location.pathname.toLowerCase().includes('owner') ||
+       sessionStorage.getItem('new_gama_owner_logged_in')==='true' ||
+       localStorage.getItem('new_gama_owner_logged_in')==='true';
+   }catch(e){return location.pathname.toLowerCase().includes('owner')}
  }
- function notify(row){
-   if(known.has(row.id))return; known.add(row.id);
-   if(Notification && Notification.permission==="granted") new Notification("New Gama: New Order",{body:(row.product_name||"Product")+" • Qty "+(row.quantity||1)});
-   alert("🔔 New Order Received!\n"+(row.product_name||"Product")+"\nQty: "+(row.quantity||1)+"\nAmount: ₹"+(row.total_amount||0));
-   load();
+ function showOwnerUI(){ if(isOwner()) bell.classList.add('show'); }
+ function add(o, fresh){
+   if(!isOwner()) return;
+   const pay=o.payment_method==='upi'?'📱 UPI':'💵 Cash';
+   const status=o.payment_status||'Pending';
+   const d=document.createElement('div'); d.className='ng-owner-notice'+(fresh?' new':'');
+   d.innerHTML=`<b>🔔 NEW PICKUP ORDER</b><br><br><b>Customer:</b> ${o.customer_name||''}<br><b>Mobile:</b> ${o.customer_phone||''}<br><b>Products:</b> ${o.product_name||''}<br><b>Quantity:</b> ${o.quantity||''}<br><b>Total:</b> ₹${o.total_amount||0}<br><b>Payment:</b> ${pay}<br><b>Status:</b> ${status}<br><b>Order Type:</b> 🏪 Shop Pickup Only`;
+   list.prepend(d);
+   if(fresh){unread++;badge.textContent=unread; bell.classList.add('show'); if('Notification'in window&&Notification.permission==='granted') new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});}
  }
- function init(){
-   if(!window.supabase)return setTimeout(init,200);
-   bell(); load();
-   if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-   get().channel("new-gama-orders").on("postgres_changes",{event:"INSERT",schema:"public",table:"new_gama_orders"},payload=>notify(payload.new)).subscribe();
-   setInterval(load,15000);
+ async function init(){
+   showOwnerUI(); if(!isOwner()) return;
+   if('Notification'in window&&Notification.permission==='default') Notification.requestPermission();
+   if(!window.supabase||!window.supabase.createClient) return;
+   sb=window.__ngOwnerNotifySB||window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+   const {data}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(20);
+   (data||[]).reverse().forEach(o=>add(o,false));
+   sb.channel('ng-owner-order-notifications').on('postgres_changes',{event:'INSERT',schema:'public',table:'new_gama_orders'},p=>add(p.new,true)).subscribe();
  }
- document.readyState==="loading"?document.addEventListener("DOMContentLoaded",init):init();
+ bell.onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';unread=0;badge.textContent='0';};
+ document.addEventListener('DOMContentLoaded',init);
 })();
 </script>
 </body>
