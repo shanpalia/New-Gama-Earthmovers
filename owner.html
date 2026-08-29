@@ -41,7 +41,15 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 .preview-title{font-size:22px;margin-bottom:8px;word-break:break-word}.preview-part{font-size:13px;color:var(--muted);margin-bottom:12px}
 .preview-price{font-size:26px;font-weight:bold;margin:10px 0}.preview-description{color:#666;font-size:14px;white-space:pre-wrap}
 .image-upload-box{border:2px dashed #d2d2d2;border-radius:9px;padding:18px;background:#fafafa}.image-help{font-size:12px;color:#777;margin-top:8px}
-    .multi-image-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+    .multi-image-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+    .upload-slot{aspect-ratio:1;border:2px dashed #cfcfcf;border-radius:9px;background:#fafafa;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+    .upload-slot.main-slot{border-color:#f5b400;background:#fffaf0}
+    .upload-slot img{width:100%;height:100%;object-fit:cover;display:none}
+    .upload-slot .slot-empty{text-align:center;color:#888;font-size:12px;padding:8px}
+    .upload-slot .slot-empty b{display:block;font-size:20px;color:#555;margin-bottom:5px}
+    .upload-slot .main-tag{position:absolute;top:5px;left:5px;background:#f5b400;color:#171717;font-size:10px;font-weight:bold;padding:4px 6px;border-radius:5px}
+    .upload-slot input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .slot-remove{position:absolute;right:5px;top:5px;border:0;background:#fff;color:#c33;width:24px;height:24px;border-radius:50%;font-weight:bold;display:none;z-index:3}
     .multi-image-thumb{aspect-ratio:1;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:#fafafa;position:relative}
     .multi-image-thumb img{width:100%;height:100%;object-fit:cover}
     .thumb-remove{position:absolute;right:3px;top:3px;border:0;background:#fff;color:#c33;width:22px;height:22px;border-radius:50%;font-weight:bold}
@@ -130,8 +138,15 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 
       <label>Product Image</label>
       <div class="image-upload-box">
-        <input id="productImage" type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif">
-        <div class="image-help">Upload 4 to 5 product images. The first image will be the main store image.</div><div id="multiImagePreview" class="multi-image-preview"></div><div class="gallery-note">0 / 5 images selected</div>
+        <div class="image-help"><b>Upload 5 product images.</b> Box 1 is the Main Image and will appear on the customer homepage. Click any box to choose its image.</div>
+      <div id="multiImagePreview" class="multi-image-preview">
+        <label class="upload-slot main-slot" data-slot="0"><span class="main-tag">MAIN</span><span class="slot-empty"><b>📷</b>Main Image</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="1"><span class="slot-empty"><b>＋</b>Image 2</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="2"><span class="slot-empty"><b>＋</b>Image 3</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="3"><span class="slot-empty"><b>＋</b>Image 4</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label class="upload-slot" data-slot="4"><span class="slot-empty"><b>＋</b>Image 5</span><img><input type="file" accept="image/png,image/jpeg,image/webp"></label>
+      </div>
+      <div class="gallery-note">5 image boxes: <b>Box 1 = Homepage Main Image</b>. All images will open on the customer product details page.</div>
       </div>
 
       <label>Item / Part Name</label>
@@ -310,30 +325,45 @@ function removeCategory(index){
 document.getElementById('addCategoryBtn').addEventListener('click',addCategory);
 document.getElementById('newCategory').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCategory()}});
 
-const productImageInput=document.getElementById('productImage');
+const imageSlots=[...document.querySelectorAll('.upload-slot')];
 const previewImage=document.getElementById('previewImage');
 const previewPlaceholder=document.getElementById('previewPlaceholder');
 
 function renderSelectedImages(){
-  const box=document.getElementById('multiImagePreview');
-  const note=document.querySelector('.gallery-note');
-  box.innerHTML=selectedImages.map((src,i)=>`<div class="multi-image-thumb"><img src="${src}" alt=""><button type="button" class="thumb-remove" onclick="removeSelectedImage(${i})">×</button></div>`).join('');
-  note.textContent=selectedImages.length+' / 5 images selected';
+  imageSlots.forEach((slot,index)=>{
+    const img=slot.querySelector('img');
+    const empty=slot.querySelector('.slot-empty');
+    const existing=selectedImages[index];
+    if(existing){
+      img.src=existing;img.style.display='block';empty.style.display='none';
+    }else{
+      img.removeAttribute('src');img.style.display='none';empty.style.display='block';
+    }
+  });
   if(selectedImages[0]){
-    previewImage.src=selectedImages[0];previewImage.style.display='block';previewPlaceholder.style.display='none';
+    previewImage.src=selectedImages[0];
+    previewImage.style.display='block';
+    previewPlaceholder.style.display='none';
   }else{
-    previewImage.removeAttribute('src');previewImage.style.display='none';previewPlaceholder.style.display='block';
+    previewImage.removeAttribute('src');
+    previewImage.style.display='none';
+    previewPlaceholder.style.display='block';
   }
 }
-function removeSelectedImage(index){selectedImages.splice(index,1);renderSelectedImages()}
 
-productImageInput.addEventListener('change',function(){
-  const files=[...this.files];
-  if(files.length+selectedImages.length>5){alert('Maximum 5 images allowed.');this.value='';return}
-  const readers=files.map(file=>new Promise((resolve,reject)=>{
-    const r=new FileReader();r.onload=e=>resolve(e.target.result);r.onerror=reject;r.readAsDataURL(file);
-  }));
-  Promise.all(readers).then(results=>{selectedImages.push(...results);this.value='';renderSelectedImages()});
+imageSlots.forEach((slot,index)=>{
+  const input=slot.querySelector('input');
+  input.addEventListener('change',function(){
+    const file=this.files&&this.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      selectedImages[index]=e.target.result;
+      renderSelectedImages();
+      this.value='';
+    };
+    reader.readAsDataURL(file);
+  });
 });
 
 function updateProductPreview(){
@@ -357,7 +387,7 @@ function updateProductPreview(){
 function clearProductForm(){
   ['itemName','partNumber','price','description'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('category').value='';
-  productImageInput.value='';selectedImages=[];editingIndex=null;
+  selectedImages=[];editingIndex=null;
   document.getElementById('addItemBtn').textContent='Add Product';
   renderSelectedImages();updateProductPreview();
 }
@@ -372,7 +402,7 @@ document.getElementById('addItemBtn').addEventListener('click',()=>{
 
   if(!name){alert('Please enter Product / Part Name.');return}
   if(!category){alert('Please create or select a category.');return}
-  if(selectedImages.length<4||selectedImages.length>5){alert('Please upload minimum 4 and maximum 5 images.');return}
+  if(selectedImages.filter(Boolean).length!==5){alert('Please upload all 5 product images. Box 1 is the main homepage image.');return}
 
   const product={name,part,category,price,currency,description,images:[...selectedImages]};
   if(editingIndex===null){items.push(product);alert('Product added successfully.')}
@@ -417,7 +447,7 @@ function editItem(index){
   document.getElementById('price').value=item.price||'';
   document.getElementById('currency').value=item.currency||'INR';
   document.getElementById('description').value=item.description||'';
-  selectedImages=[...(item.images||[])];
+  selectedImages=[...(item.images||[])]; while(selectedImages.length<5) selectedImages.push('');
   document.getElementById('addItemBtn').textContent='Save Changes';
   renderSelectedImages();updateProductPreview();openPage('add-items');
 }
