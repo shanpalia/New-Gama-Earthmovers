@@ -166,10 +166,10 @@ document.getElementById('changeSecurityBtn').addEventListener('click', async () 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-title">OWNER MENU</div>
 
-    <button class="nav-item active" data-page="home">
+    <button class="nav-item" data-page="home">
       <span class="nav-icon">⌂</span> Home
     </button>
-    <button class="nav-item" data-page="dashboard">
+    <button class="nav-item active" data-page="dashboard">
       <span class="nav-icon">▦</span> Dashboard
     </button>
     <button class="nav-item" data-page="add-items">
@@ -187,7 +187,7 @@ document.getElementById('changeSecurityBtn').addEventListener('click', async () 
 
   <main>
     <!-- HOME -->
-    <section class="page active" id="home">
+    <section class="page" id="home">
       <div class="page-header">
         <h1>Welcome, Shop Owner 👋</h1>
         <p>Manage your New Gama Earthmovers store from one place.</p>
@@ -212,7 +212,7 @@ document.getElementById('changeSecurityBtn').addEventListener('click', async () 
     </section>
 
     <!-- DASHBOARD -->
-    <section class="page" id="dashboard">
+    <section class="page active" id="dashboard">
       <div class="page-header">
         <h1>Dashboard</h1>
         <p>Overview of your store activity.</p>
@@ -424,5 +424,12 @@ function removeItem(index){
   renderItems();
 }
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof openPage === 'function') openPage('dashboard');
+});
+</script>
+
 </body>
 </html>
