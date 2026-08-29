@@ -116,6 +116,16 @@
 })();
 </script>
 
+
+<style id="ng-user-avatar-style">
+.nav-user{display:flex;align-items:center;gap:10px;margin-left:12px}
+.user-avatar{width:38px;height:38px;border-radius:50%;border:2px solid #f5b400;background:#171717;color:#fff;
+display:grid;place-items:center;text-decoration:none;font-size:18px;font-weight:800;cursor:pointer}
+.user-avatar:hover{transform:scale(1.05)}
+.user-name{font-size:12px;color:#555;max-width:95px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ngOwnerBell{display:inline-flex!important;align-items:center;justify-content:center}
+</style>
+
 </head>
 <body>
 
@@ -134,6 +144,10 @@
       </div>
 
       <div class="links">
+        <a href="users.html" class="nav-user" id="ngUserAvatar" title="User Login">
+          <span class="user-avatar" id="ngUserAvatarIcon">👤</span>
+          <span class="user-name" id="ngUserAvatarName">Login</span>
+        </a>
         <a href="#parts">Parts</a>
         <a href="#categories">Categories</a>
         <a href="#contact">Contact Us</a>
@@ -323,283 +337,153 @@
   </div>
 </div>
 
-<script>
-(function(){
-  const KEY='newGamaStoreDataV2';
 
-  function getItems(){
-    try{
-      const raw=localStorage.getItem(KEY);
-      const data=raw?JSON.parse(raw):{};
-      return Array.isArray(data.items)?data.items:[];
-    }catch(e){
-      console.error('Customer product load error',e);
-      return [];
-    }
+<script id="ng-home-unified-supabase">
+(function(){
+  const URL='https://gozvchqatiyebpnycubl.supabase.co';
+  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+
+  function getClient(){
+    if(window.NG_SUPABASE) return window.NG_SUPABASE;
+    if(!window.supabase || !window.supabase.createClient) throw new Error('Supabase SDK failed to load');
+    window.NG_SUPABASE=window.supabase.createClient(URL,KEY,{
+      auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+    });
+    return window.NG_SUPABASE;
   }
 
   function esc(v){
-    const d=document.createElement('div');
-    d.textContent=v||'';
-    return d.innerHTML;
+    const d=document.createElement('div'); d.textContent=v??''; return d.innerHTML;
   }
 
-  function price(item){
-    return (item.currency==='NPR'?'रु ':'₹ ')+(item.price||'0');
+  function currency(p){
+    return String(p.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ';
   }
 
-  function showProduct(item){
-    const images=(item.images||[]).filter(Boolean);
-    if(!images.length)return;
+  let products=[];
 
-    document.getElementById('modalCategory').textContent=item.category||'';
-    document.getElementById('modalName').textContent=item.name||'Product';
-    document.getElementById('modalPart').textContent=item.part?'Part No: '+item.part:'';
-    document.getElementById('modalPrice').textContent=price(item);
-    document.getElementById('modalDescription').textContent=item.description||'';
-
-    const main=document.getElementById('galleryMain');
-    const thumbs=document.getElementById('galleryThumbs');
-    main.src=images[0];
-
-    thumbs.innerHTML=images.map((src,i)=>
-      '<img src="'+src+'" data-index="'+i+'" class="'+(i===0?'active':'')+'" alt="Product image '+(i+1)+'">'
-    ).join('');
-
-    thumbs.querySelectorAll('img').forEach(function(img){
-      img.addEventListener('click',function(){
-        main.src=images[Number(this.dataset.index)];
-        thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
-
-    document.getElementById('productModal').classList.add('show');
-  }
-
-  function renderCustomerProducts(){
-    const list=document.getElementById('customerProductList');
-    if(!list)return;
-
-    const items=getItems();
-
-    if(!items.length){
-      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
-      return;
-    }
-
-    list.innerHTML=items.map(function(item,index){
-      const images=(item.images||[]).filter(Boolean);
-      const mainImage=images[0]||'';
-      return '<article class="customer-card" data-product-index="'+index+'">'+
-        '<img src="'+mainImage+'" alt="'+esc(item.name)+'">'+
-        '<div class="customer-card-body">'+
-        '<span class="customer-badge">'+esc(item.category)+'</span>'+
-        '<h3>'+esc(item.name)+'</h3>'+
-        (item.part?'<div style="color:#777;font-size:13px">Part No: '+esc(item.part)+'</div>':'')+
-        '<div class="customer-price">'+price(item)+'</div>'+
-        '</div></article>';
-    }).join('');
-
-    list.querySelectorAll('.customer-card').forEach(function(card){
-      card.addEventListener('click',function(){
-        const items=getItems();
-        const item=items[Number(this.dataset.productIndex)];
-        if(item)showProduct(item);
-      });
-    });
-  }
-
-  document.getElementById('productClose').addEventListener('click',function(){
-    document.getElementById('productModal').classList.remove('show');
-  });
-
-  document.getElementById('productModal').addEventListener('click',function(e){
-    if(e.target===this)this.classList.remove('show');
-  });
-
-  // Load products immediately and again when returning from owner dashboard.
-  document.addEventListener('DOMContentLoaded',renderCustomerProducts);
-  window.addEventListener('focus',renderCustomerProducts);
-  window.addEventListener('pageshow',renderCustomerProducts);
-  window.addEventListener('storage',renderCustomerProducts);
-
-  // Also refresh periodically so products saved in another open tab appear automatically.
-  setInterval(renderCustomerProducts,2000);
-})();
-</script>
-
-
-<script>
-(() => {
-  const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  function esc(v) {
-    const d=document.createElement('div'); d.textContent=v||''; return d.innerHTML;
-  }
-  function price(item) {
-    return (String(item.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ')+(item.price ?? 0);
-  }
-
-  async function loadProducts() {
+  async function loadProducts(){
     const list=document.getElementById('customerProductList');
     if(!list) return;
     list.innerHTML='<div class="customer-empty">Loading products...</div>';
-
-    const [catRes, prodRes] = await Promise.all([
-      sb.from('new_gama_categories').select('id,name'),
-      sb.from('new_gama_products').select('*').order('created_at',{ascending:false})
-    ]);
-    if(catRes.error) throw catRes.error;
-    if(prodRes.error) throw prodRes.error;
-
-    const catMap = Object.fromEntries((catRes.data||[]).map(c=>[c.id,c.name]));
-    const items=(prodRes.data||[]).map(p=>({
-      ...p,
-      category:catMap[p.category_id]||'',
-      images:[p.main_image_url,p.image_2_url,p.image_3_url,p.image_4_url,p.image_5_url].filter(Boolean)
-    }));
-
-    if(!items.length) {
-      list.innerHTML='<div class="customer-empty">No products available yet.</div>';
-      return;
-    }
-
-    list.innerHTML=items.map((item,i)=>{
-      const image=item.images[0]||'new-gama-logo.png';
-      return `<article class="customer-card" data-index="${i}">
-        <img src="${image}" alt="${esc(item.name)}" loading="lazy">
-        <div class="customer-card-body">
-          <span class="customer-badge">${esc(item.category)}</span>
-          <h3>${esc(item.name)}</h3>
-          ${item.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(item.part_number)}</div>`:''}
-          <div class="customer-price">${price(item)}</div>
-        </div>
-      </article>`;
-    }).join('');
-
-    list.querySelectorAll('.customer-card').forEach(card=>card.addEventListener('click',()=>showProduct(items[Number(card.dataset.index)])));
-  }
-
-  function showProduct(item) {
-    const modal=document.getElementById('productModal');
-    const main=document.getElementById('galleryMain');
-    const thumbs=document.getElementById('galleryThumbs');
-    const images=item.images||[];
-
-    document.getElementById('modalCategory').textContent=item.category||'';
-    document.getElementById('modalName').textContent=item.name||'Product';
-    document.getElementById('modalPart').textContent=item.part_number?'Part No: '+item.part_number:'';
-    document.getElementById('modalPrice').textContent=price(item);
-    document.getElementById('modalDescription').textContent=item.description||'';
-
-    main.src=images[0]||'';
-    thumbs.innerHTML=images.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}" data-i="${i}">`).join('');
-    thumbs.querySelectorAll('img').forEach(img=>img.addEventListener('click',()=>{
-      main.src=images[Number(img.dataset.i)];
-      thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('active'));
-      img.classList.add('active');
-    }));
-    modal.classList.add('show');
-  }
-
-  document.addEventListener('DOMContentLoaded',()=>{
-    loadProducts().catch(err=>{
-      console.error(err);
-      const list=document.getElementById('customerProductList');
-      if(list) list.innerHTML='<div class="customer-empty">Could not load products.</div>';
-    });
-    document.getElementById('productClose')?.addEventListener('click',()=>document.getElementById('productModal').classList.remove('show'));
-    document.getElementById('productModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show')});
-  });
-})();
-</script>
-
-
-<script>
-/* Reliable homepage product loader */
-(async function(){
-  const URL="https://gozvchqatiyebpnycubl.supabase.co";
-  const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
-  function esc(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
-  async function reloadProducts(){
-    const list=document.getElementById('customerProductList');
-    if(!list || !window.supabase) return;
     try{
-      const sb=window.supabase.createClient(URL,KEY);
+      const sb=getClient();
       const [pr,cr]=await Promise.all([
         sb.from('new_gama_products').select('*').order('created_at',{ascending:false}),
         sb.from('new_gama_categories').select('id,name')
       ]);
       if(pr.error) throw pr.error;
       if(cr.error) throw cr.error;
-      const cm=Object.fromEntries((cr.data||[]).map(c=>[c.id,c.name]));
-      const rows=pr.data||[];
-      if(!rows.length){
+
+      const cats=Object.fromEntries((cr.data||[]).map(c=>[c.id,c.name]));
+      products=(pr.data||[]).map(x=>({
+        ...x,
+        category_name:cats[x.category_id]||'',
+        images:[x.main_image_url,x.image_2_url,x.image_3_url,x.image_4_url,x.image_5_url].filter(Boolean)
+      }));
+
+      if(!products.length){
         list.innerHTML='<div class="customer-empty">No products available yet.</div>';
         return;
       }
-      list.innerHTML=rows.map((p,i)=>{
-        const image=p.main_image_url||p.image_2_url||p.image_3_url||p.image_4_url||p.image_5_url||'new-gama-logo.png';
-        const symbol=String(p.currency||'INR').toUpperCase()==='NPR'?'रु ':'₹ ';
-        return `<article class="customer-card" data-cloud-index="${i}">
-          <img src="${image}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='new-gama-logo.png'">
+
+      list.innerHTML=products.map((p,i)=>{
+        const img=p.images[0]||'new-gama-logo.png';
+        return `<article class="customer-card" data-product-id="${i}">
+          <img src="${img}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='new-gama-logo.png'">
           <div class="customer-card-body">
-            <span class="customer-badge">${esc(cm[p.category_id]||'')}</span>
+            <span class="customer-badge">${esc(p.category_name)}</span>
             <h3>${esc(p.name)}</h3>
             ${p.part_number?`<div style="color:#777;font-size:13px">Part No: ${esc(p.part_number)}</div>`:''}
-            <div class="customer-price">${symbol}${p.price??0}</div>
+            <div class="customer-price">${currency(p)}${p.price??0}</div>
           </div>
         </article>`;
       }).join('');
+
+      list.querySelectorAll('.customer-card').forEach(card=>card.addEventListener('click',()=>{
+        const product=products[Number(card.dataset.productId)];
+        if(product && product.id) location.href='product.html?id='+encodeURIComponent(product.id);
+      }));
     }catch(err){
-      console.error('Homepage Supabase error:',err);
-      if(list) list.innerHTML='<div class="customer-empty">Products could not be loaded. Please refresh the page.</div>';
+      console.error('Homepage product load error:',err);
+      list.innerHTML='<div class="customer-empty">Products could not be loaded. Please refresh the page.</div>';
     }
   }
-  document.addEventListener('DOMContentLoaded',reloadProducts);
-  window.addEventListener('pageshow',reloadProducts);
+
+  async function loadUser(){
+    const avatar=document.getElementById('ngUserAvatar');
+    const name=document.getElementById('ngUserAvatarName');
+    if(!avatar||!name) return;
+    try{
+      const sb=getClient();
+      const {data}=await sb.auth.getUser();
+      const user=data?.user;
+      if(user){
+        const n=user.user_metadata?.full_name || user.email || 'Account';
+        name.textContent=n.split('@')[0];
+        avatar.href='users.html';
+        avatar.title='My Account';
+      } else {
+        name.textContent='Login';
+        avatar.href='users.html';
+      }
+    }catch(e){ name.textContent='Login'; avatar.href='users.html'; }
+  }
+
+  const bell=document.getElementById('ngOwnerBell');
+  const badge=document.getElementById('ngOwnerBellBadge');
+  const panel=document.getElementById('ngOwnerNoticePanel');
+  const noticeList=document.getElementById('ngOwnerNoticeList');
+  let orderRows=[];
+
+  function renderOrders(){
+    const pending=orderRows.filter(o=>String(o.status||'new').toLowerCase()!=='completed');
+    badge.textContent=pending.length>99?'99+':pending.length;
+    noticeList.innerHTML=pending.length ? pending.map(o=>`<div class="ng-owner-notice" data-id="${o.id}">
+      <b>🔔 NEW PICKUP ORDER</b><br>
+      <b>${esc(o.customer_name||'Customer')}</b> — ${esc(o.product_name||'Product')}<br>
+      ₹${esc(o.total_amount||0)} · ${o.payment_method==='upi'?'UPI':'Cash'}
+    </div>`).join('') : '<div class="ng-owner-notice">No pending orders.</div>';
+
+    noticeList.querySelectorAll('[data-id]').forEach(x=>x.addEventListener('click',()=>{
+      const id=x.dataset.id;
+      const isAdmin=sessionStorage.getItem('newGamaOwnerAuthorized')==='true' || localStorage.getItem('new_gama_owner_logged_in')==='true';
+      location.href=isAdmin ? 'order.html?order='+encodeURIComponent(id) : 'owner.html';
+    }));
+  }
+
+  async function loadNotifications(){
+    try{
+      const sb=getClient();
+      const {data,error}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(100);
+      if(error) throw error;
+      orderRows=data||[];
+      renderOrders();
+      if(!window.NG_HOME_ORDER_CHANNEL){
+        window.NG_HOME_ORDER_CHANNEL=sb.channel('ng-home-order-bell')
+          .on('postgres_changes',{event:'*',schema:'public',table:'new_gama_orders'},payload=>{
+            const row=payload.new||payload.old;
+            if(!row) return;
+            const idx=orderRows.findIndex(x=>x.id===row.id);
+            if(payload.eventType==='DELETE'){ if(idx>=0) orderRows.splice(idx,1); }
+            else if(idx>=0) orderRows[idx]=row;
+            else orderRows.unshift(row);
+            renderOrders();
+          }).subscribe();
+      }
+    }catch(err){ console.error('Homepage notification error:',err); }
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    loadProducts();
+    loadUser();
+    loadNotifications();
+    bell?.addEventListener('click',()=>{
+      panel.style.display=panel.style.display==='block'?'none':'block';
+    });
+  });
 })();
 </script>
 
-
-<script id="ng-owner-order-notification-script">
-(function(){
- const URL='https://gozvchqatiyebpnycubl.supabase.co';
- const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
- const bell=document.getElementById('ngOwnerBell'), badge=document.getElementById('ngOwnerBellBadge'), panel=document.getElementById('ngOwnerNoticePanel'), list=document.getElementById('ngOwnerNoticeList');
- let unread=0,sb,orders=[];
- function isOwner(){try{return location.pathname.toLowerCase().includes('owner')||sessionStorage.getItem('new_gama_owner_logged_in')==='true'||localStorage.getItem('new_gama_owner_logged_in')==='true'}catch(e){return location.pathname.toLowerCase().includes('owner')}}
- function updateCount(){const pending=orders.filter(o=>String(o.status||'new').toLowerCase()!=='completed').length;badge.textContent=pending>99?'99+':pending; const c=document.getElementById('orderCount');if(c)c.textContent=pending;}
- function add(o,fresh){
-   if(!isOwner())return;
-   orders=orders.filter(x=>x.id!==o.id);orders.unshift(o);updateCount();
-   const pay=o.payment_method==='upi'?'📱 UPI':'💵 Cash';
-   const d=document.createElement('div');d.className='ng-owner-notice'+(fresh?' new':'');
-   d.dataset.orderId=o.id;
-   d.innerHTML=`<b>${String(o.status||'new').toLowerCase()==='completed'?'✓ COMPLETED ORDER':'🔔 NEW PICKUP ORDER'}</b><br><b>${o.customer_name||''}</b> — ${o.product_name||''}<br><b>Total:</b> ₹${o.total_amount||0} · ${pay}`;
-   d.onclick=()=>{location.href='order.html?order='+encodeURIComponent(o.id)};
-   list.prepend(d);
-   if(fresh&&String(o.status||'new').toLowerCase()!=='completed'){
-     if('Notification'in window&&Notification.permission==='granted')new Notification('New Pickup Order',{body:(o.customer_name||'Customer')+' placed a new order'});
-   }
- }
- async function init(){
-   if(!isOwner())return;
-   bell.classList.add('show');
-   if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
-   if(!window.supabase||!window.supabase.createClient)return;
-   sb=window.__ngOwnerNotifySB||window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-   const {data}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(100);
-   list.innerHTML='';orders=[];(data||[]).forEach(o=>add(o,false));updateCount();
-   sb.channel('ng-owner-order-notifications-v2').on('postgres_changes',{event:'INSERT',schema:'public',table:'new_gama_orders'},p=>add(p.new,true)).on('postgres_changes',{event:'UPDATE',schema:'public',table:'new_gama_orders'},p=>{add(p.new,false)}).subscribe();
- }
- window.NGOwnerOrderNotificationRefresh=updateCount;
- bell.onclick=()=>{panel.style.display=panel.style.display==='block'?'none':'block';};
- document.addEventListener('DOMContentLoaded',init);
-})();
-</script>
 </body>
 </html>

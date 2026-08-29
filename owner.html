@@ -73,6 +73,13 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script id="ng-supabase-singleton">
+window.NG_SUPABASE = window.NG_SUPABASE || window.supabase.createClient('https://gozvchqatiyebpnycubl.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40',{
+  auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
+});
+</script>
+
+
 <style id="ng-owner-order-notification-style">
 #ngOwnerBell{position:relative;background:transparent;border:0;font-size:25px;cursor:pointer;padding:7px;display:none}
 #ngOwnerBell.show{display:inline-block}
@@ -147,7 +154,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
     <div class="stat"><span>Total Items</span><b id="itemCount">0</b></div>
     <div class="stat"><span>Total Categories</span><b id="categoryCount">0</b></div>
     <div class="stat order-stat-card" id="totalOrdersCard" title="Click to view all orders">
-        <span>Total Orders</span><b id="orderCount">0</b>
+        <span>Total Orders</span><b id="totalOrderCount">0</b>
         <small>Click to view orders</small>
       </div>
     <div class="stat"><span>Store Status</span><b style="font-size:18px;color:#159447">Active</b></div>
@@ -581,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
   const BUCKET = 'new-gama-product-images';
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.NG_SUPABASE;
 
   let cloudItems = [];
   let cloudCategories = [];
@@ -837,7 +844,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
   const BUCKET = "new-gama-product-images";
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.NG_SUPABASE;
 
   async function getCategories() {
     const r = await sb.from('new_gama_categories').select('*').order('name');
@@ -988,7 +995,7 @@ document.addEventListener('DOMContentLoaded', function () {
  const bell=document.getElementById('ngOwnerBell'), badge=document.getElementById('ngOwnerBellBadge'), panel=document.getElementById('ngOwnerNoticePanel'), list=document.getElementById('ngOwnerNoticeList');
  let unread=0,sb,orders=[];
  function isOwner(){try{return location.pathname.toLowerCase().includes('owner')||sessionStorage.getItem('new_gama_owner_logged_in')==='true'||localStorage.getItem('new_gama_owner_logged_in')==='true'}catch(e){return location.pathname.toLowerCase().includes('owner')}}
- function updateCount(){const pending=orders.filter(o=>String(o.status||'new').toLowerCase()!=='completed').length;badge.textContent=pending>99?'99+':pending; const c=document.getElementById('orderCount');if(c)c.textContent=pending;}
+ function updateCount(){const pending=orders.filter(o=>String(o.status||'new').toLowerCase()!=='completed').length;badge.textContent=pending>99?'99+':pending; }
  function add(o,fresh){
    if(!isOwner())return;
    orders=orders.filter(x=>x.id!==o.id);orders.unshift(o);updateCount();
@@ -1007,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', function () {
    bell.classList.add('show');
    if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
    if(!window.supabase||!window.supabase.createClient)return;
-   sb=window.__ngOwnerNotifySB||window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+   sb=window.__ngOwnerNotifySB||window.NG_SUPABASE;
    const {data}=await sb.from('new_gama_orders').select('*').order('created_at',{ascending:false}).limit(100);
    list.innerHTML='';orders=[];(data||[]).forEach(o=>add(o,false));updateCount();
    sb.channel('ng-owner-order-notifications-v2').on('postgres_changes',{event:'INSERT',schema:'public',table:'new_gama_orders'},p=>add(p.new,true)).on('postgres_changes',{event:'UPDATE',schema:'public',table:'new_gama_orders'},p=>{add(p.new,false)}).subscribe();
@@ -1018,33 +1025,32 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
+
 <script id="ng-dashboard-total-order-count">
 (function(){
-  const URL='https://gozvchqatiyebpnycubl.supabase.co';
-  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
-
   async function updateTotalOrders(){
-    const countEl=document.getElementById('orderCount');
-    if(!countEl || !window.supabase || !window.supabase.createClient) return;
+    const el=document.getElementById('totalOrderCount');
+    if(!el || !window.NG_SUPABASE) return;
     try{
-      const sb=window.__ngDashboardCountSB || (window.__ngDashboardCountSB=
-        window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})
-      );
-      const {count,error}=await sb
+      const {count,error}=await window.NG_SUPABASE
         .from('new_gama_orders')
         .select('*',{count:'exact',head:true});
-      if(!error) countEl.textContent=count || 0;
-    }catch(e){ console.error('Total order count error',e); }
+      if(error) throw error;
+      el.textContent=count || 0;
+    }catch(e){ console.error('Total order count error:',e); }
   }
-
   document.addEventListener('DOMContentLoaded',()=>{
-    const card=document.getElementById('totalOrdersCard');
-    if(card) card.addEventListener('click',()=>location.href='orders.html');
+    document.getElementById('totalOrdersCard')?.addEventListener('click',()=>location.href='orders.html');
     updateTotalOrders();
-    setInterval(updateTotalOrders,30000);
+    if(window.NG_SUPABASE && !window.NG_DASH_ORDER_COUNT_CHANNEL){
+      window.NG_DASH_ORDER_COUNT_CHANNEL=window.NG_SUPABASE.channel('ng-dashboard-total-orders')
+        .on('postgres_changes',{event:'*',schema:'public',table:'new_gama_orders'},updateTotalOrders)
+        .subscribe();
+    }
   });
 })();
 </script>
+
 
 </body>
 </html>
