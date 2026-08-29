@@ -214,6 +214,30 @@ input:focus,textarea:focus,select:focus{border-color:var(--yellow)}textarea{min-
     <div class="card"><h2>Contact Information</h2><label>Contact Number</label><input placeholder="Enter contact number"><label>WhatsApp Number</label><input placeholder="Enter WhatsApp number"><label>Email Address</label><input type="email" placeholder="Enter email address"></div>
   </div>
 </section>
+
+<!-- UPI ONLINE PAYMENT SETTINGS -->
+<div class="upi-settings-card" style="margin-top:24px;padding:22px;border:1px solid #e3e6ea;border-radius:16px;background:#fff">
+  <h2 style="margin:0 0 8px">💳 Online Payment Settings</h2>
+  <p style="margin:0 0 18px;color:#68717c">Apna UPI ID yahan save karein. Customer online payment choose karega to payment isi UPI account par jayega.</p>
+
+  <label style="display:block;font-weight:700;margin-bottom:7px">UPI ID</label>
+  <input id="ownerUpiId" type="text" placeholder="yourname@upi" style="width:100%;box-sizing:border-box;padding:13px;border:1px solid #dfe4e9;border-radius:10px;margin-bottom:14px">
+
+  <label style="display:block;font-weight:700;margin-bottom:7px">UPI Receiver / Shop Name</label>
+  <input id="ownerUpiName" type="text" placeholder="New Gama Earthmovers" style="width:100%;box-sizing:border-box;padding:13px;border:1px solid #dfe4e9;border-radius:10px;margin-bottom:14px">
+
+  <label style="display:block;font-weight:700;margin-bottom:7px">Payment Note (optional)</label>
+  <textarea id="ownerPaymentNote" rows="3" placeholder="Payment ke baad order confirmation karein." style="width:100%;box-sizing:border-box;padding:13px;border:1px solid #dfe4e9;border-radius:10px;margin-bottom:16px"></textarea>
+
+  <button type="button" id="saveUpiSettingsBtn" style="padding:13px 22px;border:0;border-radius:10px;background:#f5ad00;color:#222;font-weight:800;cursor:pointer">Save Payment Settings</button>
+  <span id="upiSaveStatus" style="margin-left:10px;font-weight:700"></span>
+
+  <div style="margin-top:18px;padding:14px;background:#f7f8fa;border-radius:12px">
+    <b>Customer Payment Preview</b>
+    <div id="upiPreview" style="margin-top:7px;color:#59616b">UPI details not added yet.</div>
+  </div>
+</div>
+
 </main>
 
 <script>
@@ -785,6 +809,48 @@ document.addEventListener('DOMContentLoaded', function () {
     if (id === "dashboard" || id === "manage-items") syncProductsFromSupabase();
     return result;
   };
+})();
+</script>
+
+
+<script>
+(function(){
+  const KEY = "new_gama_owner_payment_settings";
+
+  function readSettings(){
+    try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return {}}
+  }
+  function show(){
+    const s=readSettings();
+    const a=document.getElementById("ownerUpiId");
+    const b=document.getElementById("ownerUpiName");
+    const c=document.getElementById("ownerPaymentNote");
+    const p=document.getElementById("upiPreview");
+    if(!a)return;
+    a.value=s.upi_id||"";
+    b.value=s.upi_name||"";
+    c.value=s.payment_note||"";
+    p.textContent=s.upi_id ? ("UPI: "+s.upi_id+(s.upi_name?" • Receiver: "+s.upi_name:"")) : "UPI details not added yet.";
+  }
+  function save(){
+    const upi_id=(document.getElementById("ownerUpiId").value||"").trim();
+    const upi_name=(document.getElementById("ownerUpiName").value||"").trim();
+    const payment_note=(document.getElementById("ownerPaymentNote").value||"").trim();
+    const status=document.getElementById("upiSaveStatus");
+    if(!upi_id){alert("Please enter your UPI ID.");return;}
+    if(!/^[A-Za-z0-9._-]+@[A-Za-z0-9._-]+$/.test(upi_id)){alert("Please enter a valid UPI ID.");return;}
+    const settings={upi_id,upi_name,payment_note,updated_at:new Date().toISOString()};
+    localStorage.setItem(KEY,JSON.stringify(settings));
+    window.NEW_GAMA_PAYMENT_SETTINGS=settings;
+    if(status)status.textContent="✓ Saved successfully";
+    show();
+  }
+  function init(){
+    const btn=document.getElementById("saveUpiSettingsBtn");
+    if(btn)btn.addEventListener("click",save);
+    show();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
 </script>
 
