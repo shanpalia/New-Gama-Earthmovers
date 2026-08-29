@@ -170,15 +170,6 @@ body{background:#f7f8fa!important}
 .zoom-help{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#000000aa;color:#fff;padding:8px 13px;border-radius:20px;font-size:13px;z-index:5;white-space:nowrap}
 
 </style>
-
-<style id="ng-payment-owner-styles">
-.ng-pay-box{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin:14px 0}
-.ng-pay-title{font-weight:900;margin-bottom:8px}
-.ng-pay-option{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #e5e7eb;border-radius:9px;margin-top:8px;cursor:pointer}
-.ng-pay-option input{width:auto}
-.ng-upi-note{display:none;margin-top:10px;padding:10px;background:#f8fafc;border-radius:8px;font-size:13px}
-</style>
-
 </head>
 <body>
 <div class="top">New Gama Earthmovers • Heavy Equipment Spare Parts</div>
@@ -676,43 +667,5 @@ async function init() {
 init();
 })();
 </script>
-
-<script>
-/* ===== NEW GAMA ORDERS + OWNER NOTIFICATION ===== */
-(function(){
- const URL="https://gozvchqatiyebpnycubl.supabase.co";
- const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
- function sb(){return window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})}
- async function saveOrder(){
-   const name=(document.getElementById("ngCustomerName")?.value||"").trim();
-   const phone=(document.getElementById("ngCustomerPhone")?.value||"").trim();
-   if(!name||!phone){alert("Please enter your name and mobile number.");return}
-   const qty=Number(window.qty||document.getElementById("qtyInput")?.value||1);
-   const price=Number(product?.price||0);
-   const row={product_id:product?.id||null,product_name:product?.name||"",customer_name:name,customer_phone:phone,quantity:qty,total_amount:price*qty,status:"new",payment_status:"pending",pickup_only:true,created_at:new Date().toISOString()};
-   const {error}=await sb().from("new_gama_orders").insert(row);
-   if(error){alert("Order could not be placed: "+error.message);return}
-   alert("Order placed successfully! The shop owner has been notified.");
-   const m=document.getElementById("ngOrderModal"); if(m)m.remove();
- }
- window.ngPlaceOrder=function(){
-   if(document.getElementById("ngOrderModal"))return;
-   document.body.insertAdjacentHTML("beforeend",`<div id="ngOrderModal" style="position:fixed;inset:0;background:#0008;z-index:99999;display:grid;place-items:center;padding:16px"><div style="background:#fff;max-width:460px;width:100%;padding:24px;border-radius:18px"><h2 style="margin-top:0">Complete Your Order</h2><p>Shop Pickup Only</p><input id="ngCustomerName" placeholder="Your full name" style="width:100%;box-sizing:border-box;padding:13px;margin:7px 0;border:1px solid #ddd;border-radius:9px"><input id="ngCustomerPhone" placeholder="Mobile number" inputmode="numeric" style="width:100%;box-sizing:border-box;padding:13px;margin:7px 0;border:1px solid #ddd;border-radius:9px"><div style="display:flex;gap:10px;margin-top:15px"><button onclick="document.getElementById('ngOrderModal').remove()" style="flex:1;padding:13px;border:1px solid #ddd;background:#fff;border-radius:9px">Cancel</button><button id="ngConfirmOrder" style="flex:1;padding:13px;border:0;background:#f5ad00;border-radius:9px;font-weight:800">Place Order</button></div></div></div>`);
-   document.getElementById("ngConfirmOrder").onclick=saveOrder;
- }
- function hook(){
-   [...document.querySelectorAll("button,a")].filter(x=>/order this product|place order/i.test(x.textContent||"")).forEach(x=>{
-     if(x.dataset.ngOrderHook)return; x.dataset.ngOrderHook="1";
-     x.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();window.ngPlaceOrder()},true);
-   });
- }
- document.addEventListener("DOMContentLoaded",hook); setTimeout(hook,800);
-})();
-</script>
-<script>/* payment patch applied */</script><script>
-if(window.NGCheckout){window.NGCheckout.paymentChanged=function(){
- const m=(document.querySelector('input[name="ngPaymentMethod"]:checked')||{}).value||'cash';
- const n=document.getElementById('ngUpiNote'); if(n)n.style.display=m==='upi'?'block':'none';
-};}
-</script></body>
+</body>
 </html>
