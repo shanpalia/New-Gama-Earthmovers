@@ -604,14 +604,16 @@ function renderProduct() {
   // =====================================================
   const ORDER_CART_KEY = "ng_order_cart";
 
-  function getOrderCart() {
+  window.getOrderCart = function getOrderCart() {
     try {
       const raw = JSON.parse(localStorage.getItem(ORDER_CART_KEY) || "[]");
       return Array.isArray(raw) ? raw : [];
     } catch (_) {
       return [];
     }
-  }
+  };
+
+  const getOrderCart = window.getOrderCart;
 
   function saveOrderCart(items) {
     localStorage.setItem(ORDER_CART_KEY, JSON.stringify(items));
@@ -840,7 +842,7 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
     msg.textContent = "Sending order...";
 
     // Every product shown in Product Summary is sent as its own order row.
-    const orderItems = getOrderCart();
+    const orderItems = (window.getOrderCart ? window.getOrderCart() : []);
     if (!orderItems.length) {
       msg.textContent = "Your product summary is empty.";
       return;
