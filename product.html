@@ -226,42 +226,69 @@ body{background:#f7f8fa!important}
 <div class="modal" id="orderModal">
   <div class="modal-card">
     <button class="close" id="closeOrder" type="button">×</button>
-    <h2>Place Your Order</h2>
-    <p id="orderProductText" style="color:#666;margin:8px 0 18px"></p>
-    <form id="orderForm" class="review-form" style="border-top:0;padding-top:0">
-      <div class="form-grid">
-        <input id="customerName" placeholder="Full name" required>
-        <input id="customerPhone" placeholder="Mobile / WhatsApp number" required>
-        <small style="grid-column:1/-1;color:#777;margin-top:-2px">Your saved name and mobile number are filled automatically. You can change them or enter new details.</small>
+
+    <!-- STEP 1: PRODUCT SUMMARY -->
+    <section id="checkoutSummaryStep">
+      <h2>Product Summary</h2>
+      <p id="orderProductText" style="color:#666;margin:8px 0 14px"></p>
+
+      <div id="orderSummaryBox" style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin:0 0 16px;background:#fafafa">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px">
+          <strong>Order Summary</strong>
+          <button type="button" id="clearOrderCart" style="border:0;background:transparent;color:#b42318;font-weight:700;cursor:pointer">Clear added products</button>
+        </div>
+        <div id="orderSummaryItems"></div>
+        <div style="border-top:1px solid #e5e7eb;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:800">
+          <span>Grand Total</span><span id="orderSummaryTotal">₹0</span>
+        </div>
       </div>
 
-      <div class="pickup-info">
-        <strong>🏪 Shop Pickup Only</strong>
-        <small>Customer will collect the product directly from the shop.</small>
-      </div>
+      <button type="button" id="addMoreProducts" style="width:100%;border:1px dashed #f5b400;background:#fff8df;color:#222;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;margin-bottom:10px">＋ Add More Products</button>
 
-      <h3 style="margin-top:8px">Payment Method</h3>
-      <div class="choice-grid">
-        <label class="choice-card">
-          <input type="radio" name="paymentMethod" value="cash" checked>
-          <span><strong>Cash</strong><small>Pay in cash</small></span>
-        </label>
-        <label class="choice-card">
-          <input type="radio" name="paymentMethod" value="upi">
-          <span><strong>UPI</strong><small>Pay using UPI</small></span>
-        </label>
-      </div>
+      <button type="button" id="proceedToPayment" class="primary" style="width:100%;margin-top:0">Proceed</button>
+    </section>
 
-      <div id="upiInfo" class="upi-box" style="display:none">
-        <strong>UPI Payment</strong>
-        <div id="upiAmount" style="margin-top:6px"></div>
-        <small>After confirming, payment details/QR can be configured for your shop.</small>
-      </div>
+    <!-- STEP 2: PAYMENT METHOD -->
+    <section id="checkoutPaymentStep" style="display:none">
+      <button type="button" id="backToSummary" style="border:0;background:transparent;padding:0;margin:0 0 12px;color:#555;font-weight:700;cursor:pointer">← Back to Product Summary</button>
+      <h2>Payment Method</h2>
+      <p style="color:#666;margin:8px 0 18px">Confirm your details and select a payment method.</p>
 
-      <textarea id="customerNote" placeholder="Order note (optional)"></textarea>
-      <button class="primary" type="submit">Confirm Order</button>
-      <div id="orderMessage" class="note"></div>
-    </form>
+      <form id="orderForm" class="review-form" style="border-top:0;padding-top:0">
+        <div class="form-grid">
+          <input id="customerName" placeholder="Full name" required>
+          <input id="customerPhone" placeholder="Mobile / WhatsApp number" required>
+          <small style="grid-column:1/-1;color:#777;margin-top:-2px">Your saved name and mobile number are filled automatically. You can change them or enter new details.</small>
+        </div>
+
+        <div class="pickup-info">
+          <strong>🏪 Shop Pickup Only</strong>
+          <small>Customer will collect the product directly from the shop.</small>
+        </div>
+
+        <h3 style="margin-top:8px">Select Payment Method</h3>
+        <div class="choice-grid">
+          <label class="choice-card">
+            <input type="radio" name="paymentMethod" value="cash" checked>
+            <span><strong>Cash</strong><small>Pay in cash</small></span>
+          </label>
+          <label class="choice-card">
+            <input type="radio" name="paymentMethod" value="upi">
+            <span><strong>UPI</strong><small>Pay using UPI</small></span>
+          </label>
+        </div>
+
+        <div id="upiInfo" class="upi-box" style="display:none">
+          <strong>UPI Payment</strong>
+          <div id="upiAmount" style="margin-top:6px"></div>
+          <small>After confirming, payment details/QR can be configured for your shop.</small>
+        </div>
+
+        <textarea id="customerNote" placeholder="Order note (optional)"></textarea>
+        <button class="primary" type="submit">Place Order</button>
+        <div id="orderMessage" class="note"></div>
+      </form>
+    </section>
   </div>
 </div><footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
 
@@ -525,6 +552,123 @@ function renderProduct() {
   document.getElementById("plusQty").onclick = () => setQty(quantity + 1);
   qtyInput.onchange = () => setQty(qtyInput.value);
 
+  // =====================================================
+  // MULTI-PRODUCT ORDER CART
+  // Products added with "Add More Products" are stored in
+  // this browser until the customer confirms the order.
+  // =====================================================
+  const ORDER_CART_KEY = "ng_order_cart";
+
+  function getOrderCart() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(ORDER_CART_KEY) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function saveOrderCart(items) {
+    localStorage.setItem(ORDER_CART_KEY, JSON.stringify(items));
+  }
+
+  function currentOrderItem() {
+    return {
+      product_id: productId,
+      product_name: product.name || "Product",
+      part_number: product.part_number || "",
+      quantity: Number(quantity) || 1,
+      currency: product.currency || "INR",
+      unit_price: Number(product.price || 0)
+    };
+  }
+
+  function mergeCurrentIntoCart() {
+    const cart = getOrderCart();
+    const item = currentOrderItem();
+    const index = cart.findIndex(x => String(x.product_id) === String(item.product_id));
+
+    if (index >= 0) {
+      cart[index].quantity = Number(cart[index].quantity || 0) + Number(item.quantity || 1);
+      cart[index].unit_price = item.unit_price;
+      cart[index].product_name = item.product_name;
+      cart[index].part_number = item.part_number;
+      cart[index].currency = item.currency;
+    } else {
+      cart.push(item);
+    }
+
+    saveOrderCart(cart);
+    return cart;
+  }
+
+  function orderItemsForSummary() {
+    const cart = getOrderCart();
+    const current = currentOrderItem();
+    const existing = cart.find(x => String(x.product_id) === String(current.product_id));
+
+    // Current product is included in the preview even before it is
+    // permanently added to the cart.
+    return existing ? cart : cart.concat([current]);
+  }
+
+  function moneyValue(v) {
+    return "₹" + Number(v || 0).toLocaleString("en-IN");
+  }
+
+  function renderOrderSummary() {
+    const box = document.getElementById("orderSummaryBox");
+    const itemsEl = document.getElementById("orderSummaryItems");
+    const totalEl = document.getElementById("orderSummaryTotal");
+    const items = orderItemsForSummary();
+
+    box.style.display = "block";
+    itemsEl.innerHTML = items.map((item, index) => {
+      const lineTotal = Number(item.unit_price || 0) * Number(item.quantity || 1);
+      return `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0">
+        <div><strong>${esc(item.product_name || "Product")}</strong><br>
+        <small style="color:#777">Qty: ${Number(item.quantity || 1)}</small></div>
+        <div style="text-align:right"><strong>${moneyValue(lineTotal)}</strong></div>
+      </div>`;
+    }).join("");
+
+    const total = items.reduce(
+      (sum, item) => sum + Number(item.unit_price || 0) * Number(item.quantity || 1),
+      0
+    );
+    totalEl.textContent = moneyValue(total);
+  }
+
+  document.getElementById("addMoreProducts").onclick = function () {
+    mergeCurrentIntoCart();
+    location.href = "index.html#parts";
+  };
+
+  document.getElementById("clearOrderCart").onclick = function () {
+    localStorage.removeItem(ORDER_CART_KEY);
+    renderOrderSummary();
+  };
+
+  document.getElementById("proceedToPayment").onclick = async function () {
+    const user = await requireCustomerLogin();
+    if (!user) return;
+
+    // Current product is added to the checkout cart before payment.
+    mergeCurrentIntoCart();
+    renderOrderSummary();
+    fillCustomerOrderDetails(user);
+
+    document.getElementById("checkoutSummaryStep").style.display = "none";
+    document.getElementById("checkoutPaymentStep").style.display = "block";
+    updateOrderOptions();
+  };
+
+  document.getElementById("backToSummary").onclick = function () {
+    document.getElementById("checkoutPaymentStep").style.display = "none";
+    document.getElementById("checkoutSummaryStep").style.display = "block";
+    renderOrderSummary();
+  };
+
   document.getElementById("buyNow").onclick = async () => {
     const button = document.getElementById("buyNow");
     const originalText = button.textContent;
@@ -538,6 +682,11 @@ function renderProduct() {
 
       document.getElementById("orderProductText").textContent =
         (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
+
+      renderOrderSummary();
+
+      document.getElementById("checkoutSummaryStep").style.display = "block";
+      document.getElementById("checkoutPaymentStep").style.display = "none";
 
       // Name and mobile come from the logged-in customer's profile.
       // The customer can still edit them or enter new details.
@@ -644,32 +793,55 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
     }
 
     msg.textContent = "Sending order...";
-    const createdOrders = await post("new_gama_orders", {
-      product_id: productId,
-      product_name: product.name || "",
-      part_number: product.part_number || "",
-      quantity: quantity,
-      customer_name: customerName,
-      customer_phone: customerPhone,
-      customer_address: "",
-      customer_note: document.getElementById("customerNote").value.trim(),
-      fulfillment_method: fulfillment,
-      payment_method: paymentMethod,
-      payment_status: paymentMethod === "cash" ? "pending_cash" : "pending_upi",
-      currency: product.currency || "INR",
-      unit_price: product.price ?? 0,
-      total_amount: totalPrice(),
-      order_status: "new"
-    });
 
-    // Keep this customer's order IDs in the browser so My Orders can
-    // securely show only orders created from this customer session.
-    if (Array.isArray(createdOrders) && createdOrders[0] && createdOrders[0].id) {
+    // Every product shown in Product Summary is sent as its own order row.
+    const orderItems = getOrderCart();
+    if (!orderItems.length) {
+      msg.textContent = "Your product summary is empty.";
+      return;
+    }
+    const note = document.getElementById("customerNote").value.trim();
+
+    const createdOrderIds = [];
+
+    for (const item of orderItems) {
+      const itemTotal =
+        Number(item.unit_price || 0) * Number(item.quantity || 1);
+
+      const createdOrders = await post("new_gama_orders", {
+        product_id: item.product_id,
+        product_name: item.product_name || "",
+        part_number: item.part_number || "",
+        quantity: Number(item.quantity || 1),
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        customer_address: "",
+        customer_note: note,
+        fulfillment_method: fulfillment,
+        payment_method: paymentMethod,
+        payment_status: paymentMethod === "cash" ? "pending_cash" : "pending_upi",
+        currency: item.currency || "INR",
+        unit_price: Number(item.unit_price || 0),
+        total_amount: itemTotal,
+        order_status: "new"
+      });
+
+      if (Array.isArray(createdOrders) && createdOrders[0] && createdOrders[0].id) {
+        createdOrderIds.push(String(createdOrders[0].id));
+      }
+    }
+
+    // Keep all created order IDs for the customer's My Orders page.
+    if (createdOrderIds.length) {
       const ids = JSON.parse(localStorage.getItem("ng_customer_order_ids") || "[]");
-      const id = String(createdOrders[0].id);
-      if (!ids.includes(id)) ids.unshift(id);
+      createdOrderIds.reverse().forEach(id => {
+        if (!ids.includes(id)) ids.unshift(id);
+      });
       localStorage.setItem("ng_customer_order_ids", JSON.stringify(ids.slice(0, 100)));
     }
+
+    // Order is sent successfully, so clear the temporary multi-product cart.
+    localStorage.removeItem(ORDER_CART_KEY);
 
     // Remember newly entered name/mobile in the customer's account for the next order.
     // Existing profile fields remain unchanged.
@@ -681,16 +853,20 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
       }
     });
 
+    const orderCount = orderItems.length;
+    const productWord = orderCount === 1 ? "product" : "products";
+
     if (paymentMethod === "upi") {
-      msg.textContent = "Order placed. Please complete the UPI payment as instructed by the shop.";
+      msg.textContent = orderCount + " " + productWord + " ordered. Please complete the UPI payment as instructed by the shop.";
     } else {
-      msg.textContent = "Order placed successfully. Please pay cash when you pick up the product from the shop.";
+      msg.textContent = orderCount + " " + productWord + " ordered successfully. Please pay cash when you pick up the products from the shop.";
     }
 
     setTimeout(() => {
       document.getElementById("orderModal").classList.remove("show");
       this.reset();
       updateOrderOptions();
+      renderOrderSummary();
     }, 1800);
 
   } catch (err) {
