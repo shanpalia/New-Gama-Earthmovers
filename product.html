@@ -378,13 +378,58 @@ async function get(path) {
   return text ? JSON.parse(text) : [];
 }
 async function post(table, payload) {
+  // IMPORTANT: customer orders must use the logged-in customer's
+  // Supabase access token, not the public anon token.
+  let accessToken = "";
+
+  try {
+    const sessionResult = await customerAuth.auth.getSession();
+    accessToken =
+      sessionResult &&
+      sessionResult.data &&
+      sessionResult.data.session
+        ? sessionResult.data.session.access_token
+        : "";
+  } catch (_) {}
+
+  if (!accessToken) {
+    throw new Error("You are not logged in. Please login again before placing the order.");
+  }
+
   const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
     method:"POST",
-    headers:{...headers(), "Prefer":"return=representation"},
+    headers:{
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + accessToken,
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Prefer":"return=representation"
+    },
     body:JSON.stringify(payload)
   });
+
   const text = await r.text();
-  if (!r.ok) throw new Error("HTTP " + r.status + ": " + text);
+
+  if (!r.ok) {
+    let message = "";
+
+    try {
+      const errorData = JSON.parse(text);
+      message =
+        errorData.message ||
+        errorData.details ||
+        errorData.hint ||
+        text;
+    } catch (_) {
+      message = text;
+    }
+
+    throw new Error(
+      "Order insert failed (HTTP " + r.status + "): " +
+      (message || "Unknown database error")
+    );
+  }
+
   return text ? JSON.parse(text) : [];
 }
 function imagesOf(p) {
@@ -870,8 +915,15 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
     }, 1800);
 
   } catch (err) {
-    msg.textContent = "Order could not be sent. Please update the orders table SQL.";
-    console.error(err);
+    // Show the real Supabase error instead of the old generic message.
+    // This makes any remaining database issue immediately identifiable.
+    const realError =
+      (err && err.message)
+        ? err.message
+        : "Unknown order error.";
+
+    msg.textContent = "Order could not be sent: " + realError;
+    console.error("NEW GAMA ORDER ERROR:", err);
   }
 });
 
