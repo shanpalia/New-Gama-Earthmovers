@@ -551,7 +551,7 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
   msg.textContent = "Sending order...";
 
   try {
-    await post("new_gama_orders", {
+    const createdOrders = await post("new_gama_orders", {
       product_id: productId,
       product_name: product.name || "",
       part_number: product.part_number || "",
@@ -568,6 +568,15 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
       total_amount: totalPrice(),
       order_status: "new"
     });
+
+    // Keep this customer's order IDs in the browser so My Orders can
+    // securely show only orders created from this customer session.
+    if (Array.isArray(createdOrders) && createdOrders[0] && createdOrders[0].id) {
+      const ids = JSON.parse(localStorage.getItem("ng_customer_order_ids") || "[]");
+      const id = String(createdOrders[0].id);
+      if (!ids.includes(id)) ids.unshift(id);
+      localStorage.setItem("ng_customer_order_ids", JSON.stringify(ids.slice(0, 100)));
+    }
 
     if (paymentMethod === "upi") {
       msg.textContent = "Order placed. Please complete the UPI payment as instructed by the shop.";
