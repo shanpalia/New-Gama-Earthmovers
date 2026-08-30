@@ -638,59 +638,42 @@ header, .header, nav, .navbar, .topbar {
   const URL_='https://gozvchqatiyebpnycubl.supabase.co';
   const KEY_='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
 
-  function client(){
+  // IMPORTANT: this storage key is exactly the same one used by users.html.
+  const AUTH_OPTIONS={
+    auth:{
+      persistSession:true,
+      autoRefreshToken:true,
+      detectSessionInUrl:true,
+      storageKey:'new-gama-auth'
+    }
+  };
+
+  function getClient(){
     if(window.__ngAuthClient) return window.__ngAuthClient;
-    window.__ngAuthClient=window.supabase.createClient(URL_,KEY_,{
-      auth:{
-        persistSession:true,
-        autoRefreshToken:true,
-        detectSessionInUrl:true,
-        
-      }
-    });
+    if(!window.supabase || !window.supabase.createClient){
+      throw new Error('Supabase library did not load');
+    }
+    window.__ngAuthClient=window.supabase.createClient(URL_,KEY_,AUTH_OPTIONS);
     return window.__ngAuthClient;
   }
 
-  async function init(){
-    const avatar=document.getElementById('ngUserAvatar');
-    const icon=document.getElementById('ngUserAvatarIcon');
-    const name=document.getElementById('ngUserAvatarName');
-    const bell=document.getElementById('ngOwnerBell');
-    if(!avatar) return;
+  function initials(text){
+    const chars=String(text||'').match(/[A-Za-z0-9]/g)||['U'];
+    return chars.join('').slice(0,2).toUpperCase();
+  }
 
-    const sb=client();
+  function setLoggedOut(avatar,icon,name,bell){
+    avatar.href='users.html';
+    avatar.onclick=null;
+    avatar.title='User Login';
+    if(icon) icon.textContent='👤';
+    if(name) name.textContent='Login';
+    if(bell) bell.style.display='none';
+    const menu=document.getElementById('ngUserDropdown');
+    if(menu) menu.hidden=true;
+  }
 
-    // Always prevent old markup href from winning once JS runs.
-    avatar.addEventListener('click', async function(e){
-      const {data:{session}}=await sb.auth.getSession();
-      if(session?.user){
-        e.preventDefault();
-        e.stopPropagation();
-        const menu=document.getElementById('ngUserDropdown');
-        if(menu) menu.hidden=!menu.hidden;
-      }
-    }, true);
-
-    const {data:{session}}=await sb.auth.getSession();
-    const user=session?.user;
-
-    if(!user){
-      avatar.href='users.html';
-      if(icon) icon.textContent='👤';
-      if(name) name.textContent='Login';
-      if(bell) bell.style.display='none';
-      return;
-    }
-
-    const email=(user.email||'').trim();
-    const base=(user.user_metadata?.full_name || email.split('@')[0] || 'User').trim();
-    const initials=(base.match(/[A-Za-z0-9]/g)||['U']).join('').slice(0,2).toUpperCase();
-
-    avatar.removeAttribute('href');
-    if(icon) icon.textContent=initials;
-    if(name) name.textContent=base;
-
-    // One dropdown, attached to body so header/grid CSS cannot hide it.
+  function ensureMenu(sb,user,avatar){
     let menu=document.getElementById('ngUserDropdown');
     if(!menu){
       menu=document.createElement('div');
@@ -710,30 +693,87 @@ header, .header, nav, .navbar, .topbar {
       document.addEventListener('click',function(e){
         if(!avatar.contains(e.target) && !menu.contains(e.target)) menu.hidden=true;
       });
+      document.getElementById('ngLogoutBtn').onclick=async function(){
+        await sb.auth.signOut();
+        location.replace('index.html');
+      };
     }
-    menu.querySelector('.ng-user-email').textContent=email || base;
+    menu.querySelector('.ng-user-email').textContent=user.email||'';
+    return menu;
+  }
 
-    document.getElementById('ngLogoutBtn').onclick=async function(){
-      await sb.auth.signOut();
-      location.href='index.html';
+  async function setLoggedIn(sb,user,avatar,icon,name,bell){
+    const email=(user.email||'').trim();
+    const label=(user.user_metadata?.full_name || email.split('@')[0] || 'User').trim();
+
+    avatar.removeAttribute('href');
+    avatar.title='My Account';
+    if(icon) icon.textContent=initials(label);
+    if(name) name.textContent=label;
+
+    const menu=ensureMenu(sb,user,avatar);
+
+    // Replace the click behavior directly. No other homepage script controls it.
+    avatar.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      menu.hidden=!menu.hidden;
+      return false;
     };
 
-    // Owner bell only after logged-in role check.
     if(bell){
       bell.style.display='none';
       bell.onclick=function(){
         location.href='orders.html?from=index.html';
       };
       try{
-        const {data:profile}=await sb.from('profiles').select('role').eq('id',user.id).maybeSingle();
-        if(String(profile?.role||'').toLowerCase()==='owner') bell.style.display='flex';
+        const {data:profile,error}=await sb
+          .from('profiles')
+          .select('role')
+          .eq('id',user.id)
+          .maybeSingle();
+        if(!error && String(profile?.role||'').toLowerCase()==='owner'){
+          bell.style.display='flex';
+        }
       }catch(_){}
     }
   }
 
+  async function start(){
+    const avatar=document.getElementById('ngUserAvatar');
+    const icon=document.getElementById('ngUserAvatarIcon');
+    const name=document.getElementById('ngUserAvatarName');
+    const bell=document.getElementById('ngOwnerBell');
+    if(!avatar) return;
+
+    let sb;
+    try{
+      sb=getClient();
+
+      // First render from the already persisted browser session.
+      const {data:{session}}=await sb.auth.getSession();
+      if(session?.user) await setLoggedIn(sb,session.user,avatar,icon,name,bell);
+      else setLoggedOut(avatar,icon,name,bell);
+
+      // Also update immediately when Supabase finishes restoring or changes the session.
+      sb.auth.onAuthStateChange(function(_event,sessionNow){
+        if(sessionNow?.user){
+          setLoggedIn(sb,sessionNow.user,avatar,icon,name,bell);
+        }else{
+          setLoggedOut(avatar,icon,name,bell);
+        }
+      });
+    }catch(err){
+      console.warn('New Gama auth controller:',err);
+      setLoggedOut(avatar,icon,name,bell);
+    }
+  }
+
   if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',init,{once:true});
-  }else init();
+    document.addEventListener('DOMContentLoaded',start,{once:true});
+  }else{
+    start();
+  }
 })();
 </script>
 

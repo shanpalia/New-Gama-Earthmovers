@@ -291,7 +291,8 @@
             auth: {
               persistSession: true,
               autoRefreshToken: true,
-              detectSessionInUrl: true
+              detectSessionInUrl: true,
+              storageKey: 'new-gama-auth'
             }
           }
         );
@@ -424,7 +425,7 @@
               }
 
 
-             window.location.href = 'index.html';
+             window.location.replace('index.html');
 
 
             } else {
@@ -440,9 +441,13 @@
                 throw result.error;
               }
 
+              // Wait until Supabase has written the session to the shared browser storage.
+              const sessionCheck = await supabase.auth.getSession();
+              if (!sessionCheck.data.session) {
+                throw new Error('Login session could not be saved. Please try again.');
+              }
 
-              window.location.href =
-                'index.html';
+              window.location.replace('index.html');
 
             }
 
