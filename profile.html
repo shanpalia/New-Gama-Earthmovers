@@ -6,59 +6,198 @@
 <title>My Profile | New Gama Earthmovers</title>
 <link rel="icon" type="image/png" href="new-gama-logo.png">
 <style>
-:root{--yellow:#f5b400;--dark:#181818;--bg:#f5f6f8;--card:#fff;--border:#e5e7eb;--muted:#737883}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#20242a}
+:root{--yellow:#f5b400;--dark:#171717;--bg:#f5f6f8;--card:#fff;--border:#e4e7eb;--muted:#737983;--ok:#176b39;--err:#a22}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#20242a}
 header{height:74px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
-header a{color:#fff;text-decoration:none;font-weight:700}.brand{font-weight:800}
-main{width:min(900px,calc(100% - 28px));margin:30px auto}
-.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:18px;box-shadow:0 10px 28px rgba(0,0,0,.04)}
-.profile{display:flex;gap:18px;align-items:center}.avatar{width:78px;height:78px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;font-size:28px;font-weight:900}
-h1{margin:0 0 7px}.muted{color:var(--muted);margin:0}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
-.btn{border:0;border-radius:10px;padding:13px 18px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
-.primary{background:var(--yellow);color:#181818}.secondary{background:#fff;border:1px solid var(--border);color:#222}.danger{background:#222;color:#fff}
-.info{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.item{border:1px solid var(--border);border-radius:12px;padding:15px}.item b{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}
-@media(max-width:600px){header{padding:0 14px}.profile{align-items:flex-start}.info{grid-template-columns:1fr}}
+header a{color:#fff;text-decoration:none;font-weight:700}
+.brand{font-weight:800}
+main{width:min(760px,calc(100% - 28px));margin:30px auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;box-shadow:0 10px 28px rgba(0,0,0,.04)}
+.profile-head{display:flex;align-items:center;gap:16px;padding-bottom:22px;border-bottom:1px solid var(--border);margin-bottom:22px}
+.avatar{width:68px;height:68px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;font-size:24px;font-weight:900;flex:0 0 auto}
+h1{margin:0 0 6px}
+.muted{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field.full{grid-column:1/-1}
+label{display:block;font-size:13px;font-weight:800;margin:0 0 7px}
+input,textarea{width:100%;border:1px solid #d8dce2;border-radius:10px;padding:13px;font:inherit;outline:none;background:#fff}
+textarea{min-height:110px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,180,0,.12)}
+input[readonly]{background:#f4f5f7;color:#6f747c;cursor:not-allowed}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
+button{border:0;border-radius:10px;padding:13px 20px;font-weight:800;cursor:pointer;font:inherit}
+.save{background:var(--yellow);color:#181818}
+.back{background:#fff;border:1px solid var(--border);color:#222;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:800}
+.msg{display:none;margin-top:18px;padding:12px;border-radius:10px;font-size:14px}
+.msg.ok{display:block;background:#effaf2;color:var(--ok)}
+.msg.err{display:block;background:#fff0ef;color:var(--err)}
+.note{margin:18px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+@media(max-width:620px){header{padding:0 14px}.brand{font-size:12px}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.card{padding:18px}}
 </style>
 </head>
 <body>
-<header><a href="index.html">← Back to Homepage</a><div class="brand">NEW GAMA EARTHMOVERS</div></header>
+
+<header>
+  <a href="index.html">← Back</a>
+  <div class="brand">NEW GAMA EARTHMOVERS</div>
+</header>
+
 <main>
-<section class="card">
-  <div class="profile">
-    <div class="avatar" id="avatar">U</div>
-    <div><h1 id="name">Loading...</h1><p class="muted" id="email">Loading...</p></div>
-  </div>
-  <div class="actions">
-    <a class="btn primary" href="myorders.html">📦 My Orders & Tracking</a>
-    <button class="btn danger" id="logout">Logout</button>
-  </div>
-</section>
-<section class="card">
-  <h2>Account Details</h2>
-  <div class="info">
-    <div class="item"><b>DISPLAY NAME</b><span id="detailName">—</span></div>
-    <div class="item"><b>EMAIL</b><span id="detailEmail">—</span></div>
-  </div>
-</section>
+  <section class="card">
+    <div class="profile-head">
+      <div class="avatar" id="avatar">U</div>
+      <div>
+        <h1>My Profile</h1>
+        <p class="muted">Update your personal contact and delivery details.</p>
+      </div>
+    </div>
+
+    <form id="profileForm">
+      <div class="grid">
+
+        <div class="field full">
+          <label for="fullName">Full Name</label>
+          <input id="fullName" type="text" placeholder="Enter your full name" required>
+        </div>
+
+        <div class="field full">
+          <label for="email">Email</label>
+          <input id="email" type="email" readonly>
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone Number</label>
+          <input id="phone" type="tel" inputmode="tel" placeholder="Enter phone number">
+        </div>
+
+        <div class="field">
+          <label for="pincode">PIN Code</label>
+          <input id="pincode" type="text" inputmode="numeric" maxlength="10" placeholder="Enter PIN code">
+        </div>
+
+        <div class="field full">
+          <label for="address">Address</label>
+          <textarea id="address" placeholder="House / shop number, street, area"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="city">City</label>
+          <input id="city" type="text" placeholder="Enter city">
+        </div>
+
+        <div class="field">
+          <label for="state">State</label>
+          <input id="state" type="text" placeholder="Enter state">
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button class="save" id="saveBtn" type="submit">Save Changes</button>
+        <a class="back" href="index.html">Cancel</a>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <p class="note">
+        Your phone number and address are saved to your secure account profile and can be used for your future orders.
+      </p>
+    </form>
+  </section>
 </main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://gozvchqatiyebpnycubl.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-(async()=>{
- const {data:{session}}=await sb.auth.getSession();
- if(!session){location.href='users.html';return;}
- const u=session.user;
- const email=u.email||'';
- const name=(u.user_metadata?.full_name||email.split('@')[0]||'Customer').trim();
- const initials=(name.match(/[A-Za-z0-9]/g)||['U']).join('').slice(0,2).toUpperCase();
- document.getElementById('avatar').textContent=initials;
- document.getElementById('name').textContent=name;
- document.getElementById('email').textContent=email;
- document.getElementById('detailName').textContent=name;
- document.getElementById('detailEmail').textContent=email;
-})();
-document.getElementById('logout').onclick=async()=>{localStorage.removeItem('ng_customer_identity');await sb.auth.signOut();location.href='index.html';};
+
+const sb=window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
+);
+
+let currentUser=null;
+
+function show(text,type){
+  const el=document.getElementById('msg');
+  el.className='msg '+type;
+  el.textContent=text;
+}
+
+function initials(name,email){
+  const base=(name||email.split('@')[0]||'U').trim();
+  return (base.match(/[A-Za-z0-9]/g)||['U']).join('').slice(0,2).toUpperCase();
+}
+
+async function loadProfile(){
+  const {data:{session},error}=await sb.auth.getSession();
+
+  if(error || !session){
+    location.href='users.html';
+    return;
+  }
+
+  currentUser=session.user;
+
+  const meta=currentUser.user_metadata||{};
+  const email=currentUser.email||'';
+
+  const name=(meta.full_name||email.split('@')[0]||'').trim();
+
+  document.getElementById('fullName').value=name;
+  document.getElementById('email').value=email;
+  document.getElementById('phone').value=meta.phone||'';
+  document.getElementById('address').value=meta.address||'';
+  document.getElementById('city').value=meta.city||'';
+  document.getElementById('state').value=meta.state||'';
+  document.getElementById('pincode').value=meta.pincode||'';
+  document.getElementById('avatar').textContent=initials(name,email);
+}
+
+document.getElementById('profileForm').addEventListener('submit',async function(e){
+  e.preventDefault();
+
+  if(!currentUser) return;
+
+  const btn=document.getElementById('saveBtn');
+  btn.disabled=true;
+  btn.textContent='Saving...';
+
+  const full_name=document.getElementById('fullName').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const address=document.getElementById('address').value.trim();
+  const city=document.getElementById('city').value.trim();
+  const state=document.getElementById('state').value.trim();
+  const pincode=document.getElementById('pincode').value.trim();
+
+  try{
+    const {data,error}=await sb.auth.updateUser({
+      data:{full_name,phone,address,city,state,pincode}
+    });
+
+    if(error) throw error;
+
+    const email=currentUser.email||'';
+    localStorage.setItem('ng_customer_identity',JSON.stringify({
+      email:email,
+      name:full_name
+    }));
+
+    document.getElementById('avatar').textContent=initials(full_name,email);
+    show('Profile updated successfully.','ok');
+
+    currentUser=data.user||currentUser;
+  }catch(error){
+    show(error.message||'Profile could not be updated.','err');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Save Changes';
+  }
+});
+
+loadProfile();
 </script>
-</body></html>
+</body>
+</html>
