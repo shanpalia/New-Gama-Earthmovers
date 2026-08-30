@@ -813,6 +813,40 @@ async function ngGetRole(){
   window.addEventListener('pageshow',applyBellRole);
 })();
 </script>
+<script>
+/* FORCE USER AVATAR -> CUSTOMER LOGIN */
+
+(function () {
+
+  function openUserLogin() {
+    const avatar = document.getElementById('ngUserAvatar');
+
+    if (!avatar) return;
+
+    avatar.style.cursor = 'pointer';
+
+    /* Always keep correct link */
+    avatar.setAttribute('href', 'users.html');
+
+    /*
+      onclick replaces any old inline onclick.
+      Do not block the normal anchor behavior.
+    */
+    avatar.onclick = function () {
+      window.location.assign('users.html');
+      return false;
+    };
+
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', openUserLogin);
+  } else {
+    openUserLogin();
+  }
+
+})();
+</script>
 
 </body>
 </html>
