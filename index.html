@@ -323,18 +323,6 @@ header, .header, nav, .navbar, .topbar {
 
 }
 </style>
-
-<style id="ng-user-profile-menu">
-.nav-user-wrap{position:relative;justify-self:end;display:flex;align-items:center}
-.nav-user-wrap .nav-user{border:0;cursor:pointer;font:inherit}
-.user-dropdown{display:none;position:absolute;right:0;top:calc(100% + 10px);width:220px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.18);padding:8px;z-index:999999}
-.user-dropdown.show{display:block}
-.user-menu-head{padding:10px 12px 9px;font-size:12px;font-weight:800;color:#6b7280;border-bottom:1px solid #eef0f3;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.user-dropdown a,.user-dropdown button{width:100%;display:block;text-align:left;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:#222;text-decoration:none;font:inherit;font-size:14px;cursor:pointer}
-.user-dropdown a:hover,.user-dropdown button:hover{background:#f3f4f6}
-#ngUserAvatarIcon{font-weight:900!important}
-</style>
-
 </head>
 <body>
 <div id="ngOwnerNoticePanel"><b>New Order Notifications</b><div id="ngOwnerNoticeList"></div></div>
@@ -359,18 +347,10 @@ header, .header, nav, .navbar, .topbar {
         
       </div>
     
-<div class="nav-user-wrap" id="ngUserMenu">
-  <button type="button" class="nav-user" id="ngUserAvatar" title="User Account">
-    <span class="user-avatar" id="ngUserAvatarIcon">👤</span>
-    <span class="user-name" id="ngUserAvatarName">Login</span>
-  </button>
-  <div class="user-dropdown" id="ngUserDropdown">
-    <div class="user-menu-head" id="ngUserMenuHead">My Account</div>
-    <a href="userprofile.html">👤 My Profile</a>
-    <a href="userprofile.html#orders">📦 My Orders</a>
-    <button type="button" id="ngLogoutBtn">🚪 Logout</button>
-  </div>
-</div>
+<a href="users.html" class="nav-user" id="ngUserAvatar" title="User Login">
+          <span class="user-avatar" id="ngUserAvatarIcon">👤</span>
+          <span class="user-name" id="ngUserAvatarName">Login</span>
+        </a>
 </nav>
   </header>
 
@@ -834,87 +814,118 @@ async function ngGetRole(){
 })();
 </script>
 
-<script id="ng-user-profile-menu-controller">
+<script id="ng-user-avatar-login-fix">
+/* User avatar opens Customer Login only */
+(function () {
+  function setupUserAvatarLogin() {
+    const avatar = document.getElementById('ngUserAvatar');
+    if (!avatar) return;
+
+    avatar.setAttribute('href', 'users.html');
+    avatar.style.cursor = 'pointer';
+
+    avatar.onclick = function (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.location.assign('users.html');
+      return false;
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupUserAvatarLogin, { once: true });
+  } else {
+    setupUserAvatarLogin();
+  }
+})();
+</script>
+
+
+<script id="ng-avatar-final-override">
 (function(){
-  function initials(user){
-    const v=(user.email || user.user_metadata?.full_name || 'U').trim();
-    return v.replace(/[^a-zA-Z0-9]/g,'').slice(0,2).toUpperCase() || 'U';
-  }
-
-  async function getClient(){
-    if(window.NG_SUPABASE) return window.NG_SUPABASE;
-    if(!window.supabase || !window.supabase.createClient) return null;
-    if(typeof API_KEY==='undefined' || !API_KEY) return null;
-    window.NG_SUPABASE=window.supabase.createClient(
-      'https://gozvchqatiyebpnycubl.supabase.co',
-      API_KEY,
-      {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
-    );
-    return window.NG_SUPABASE;
-  }
-
-  async function setup(){
+  async function run(){
     const avatar=document.getElementById('ngUserAvatar');
     const icon=document.getElementById('ngUserAvatarIcon');
-    const name=document.getElementById('ngUserAvatarName');
-    const dropdown=document.getElementById('ngUserDropdown');
-    const head=document.getElementById('ngUserMenuHead');
-    const logout=document.getElementById('ngLogoutBtn');
-    if(!avatar||!icon||!name) return;
+    const label=document.getElementById('ngUserAvatarName');
+    if(!avatar || !icon || !label) return;
 
-    const client=await getClient();
+    // Build dropdown once.
+    let wrap=avatar.parentElement;
+    let menu=document.getElementById('ngUserDropdown');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='ngUserDropdown';
+      menu.style.cssText='display:none;position:absolute;right:0;top:calc(100% + 10px);min-width:210px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.18);padding:8px;z-index:999999;';
+      menu.innerHTML='<a href="userprofile.html">👤 My Profile</a><a href="userprofile.html#orders">📦 My Orders</a><button type="button" id="ngLogoutBtn">🚪 Logout</button>';
+      [...menu.querySelectorAll('a,button')].forEach(el=>{
+        el.style.cssText='display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:#222;text-decoration:none;font:inherit;font-size:14px;cursor:pointer;';
+      });
+      wrap.style.position='relative';
+      wrap.appendChild(menu);
+    }
 
-    async function render(){
-      let user=null;
+    // Use the same Supabase session/client as the existing page.
+    let client=window.NG_SUPABASE;
+    if(!client && window.supabase && window.supabase.createClient && typeof API_KEY!=='undefined'){
+      client=window.supabase.createClient(
+        'https://gozvchqatiyebpnycubl.supabase.co',
+        API_KEY,
+        {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
+      );
+      window.NG_SUPABASE=client;
+    }
+
+    let user=null;
+    try{
       if(client){
-        const r=await client.auth.getUser();
-        user=r.data && r.data.user ? r.data.user : null;
+        const {data:{session}}=await client.auth.getSession();
+        user=session?.user || null;
       }
+    }catch(e){ console.warn('Avatar session error',e); }
 
-      if(!user){
-        icon.textContent='👤';
-        name.textContent='Login';
-        if(dropdown) dropdown.classList.remove('show');
-        avatar.onclick=function(){
-          window.location.href='users.html';
-        };
-        return;
-      }
+    // Remove href so an old anchor cannot navigate after login.
+    if(user){
+      avatar.removeAttribute('href');
 
-      const display=user.user_metadata?.full_name || user.email?.split('@')[0] || 'Account';
-      icon.textContent=initials(user);
-      name.textContent=display;
-      if(head) head.textContent=user.email || display;
+      const email=user.email || '';
+      const raw=(email.split('@')[0] || user.user_metadata?.full_name || 'U')
+        .replace(/[^a-zA-Z0-9]/g,'');
+      const initials=(raw.slice(0,2) || 'U').toUpperCase();
 
-      avatar.onclick=function(e){
+      icon.textContent=initials;
+      icon.style.cssText='display:inline-flex!important;align-items:center;justify-content:center;width:38px;height:38px;min-width:38px;border-radius:50%;font-weight:800;';
+      label.textContent=user.user_metadata?.full_name || email.split('@')[0] || 'Account';
+
+      // CAPTURE listener prevents older handlers and anchor navigation.
+      avatar.addEventListener('click',function(e){
         e.preventDefault();
-        e.stopPropagation();
-        if(dropdown) dropdown.classList.toggle('show');
-      };
+        e.stopImmediatePropagation();
+        menu.style.display=(menu.style.display==='block')?'none':'block';
+      },true);
+
+      document.addEventListener('click',function(e){
+        if(!wrap.contains(e.target)) menu.style.display='none';
+      });
+
+      const logout=document.getElementById('ngLogoutBtn');
+      if(logout && client){
+        logout.onclick=async function(e){
+          e.preventDefault();
+          await client.auth.signOut();
+          location.href='index.html';
+        };
+      }
+    }else{
+      icon.textContent='👤';
+      label.textContent='Login';
+      avatar.setAttribute('href','users.html');
     }
-
-    await render();
-
-    document.addEventListener('click',function(e){
-      const wrap=document.getElementById('ngUserMenu');
-      if(wrap && !wrap.contains(e.target) && dropdown) dropdown.classList.remove('show');
-    });
-
-    if(logout && client){
-      logout.onclick=async function(){
-        await client.auth.signOut();
-        window.location.href='index.html';
-      };
-    }
-
-    if(client){
-      client.auth.onAuthStateChange(function(){ setTimeout(render,0); });
-    }
-    window.addEventListener('pageshow',render);
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',setup);
-  else setup();
+  // Run after every existing page script.
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(run,0));
+  else setTimeout(run,0);
+  window.addEventListener('pageshow',()=>setTimeout(run,0));
 })();
 </script>
 
