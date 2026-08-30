@@ -62,6 +62,14 @@
 .customer-card:hover{transform:translateY(-3px)}
 .customer-card img{width:100%;height:210px;object-fit:contain;background:#fafafa}
 .customer-card-body{padding:15px}.customer-card-body h3{margin:0 0 8px;font-size:18px}
+/* Homepage Categories */
+#customerCategoryList .category-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;cursor:pointer;transition:.2s;min-height:130px;display:flex;align-items:center;gap:14px;padding:14px}
+#customerCategoryList .category-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.09)}
+#customerCategoryList .category-card img{width:92px;height:92px;object-fit:contain;background:#fafafa;border-radius:10px;flex:0 0 auto}
+#customerCategoryList .category-icon{width:92px;height:92px;border-radius:10px;background:#fff8df;display:grid;place-items:center;font-size:38px;flex:0 0 auto}
+#customerCategoryList .category-card h3{margin:0 0 6px;font-size:18px}
+#customerCategoryList .category-card p{margin:0;color:#777;font-size:13px}
+
 .customer-badge{display:inline-block;background:#fff3c9;padding:5px 8px;border-radius:12px;font-size:11px;font-weight:bold;margin-bottom:8px}
 .customer-price{font-size:22px;font-weight:bold;margin-top:10px}
 .customer-empty{padding:35px;border:1px dashed #ccc;border-radius:10px;text-align:center;color:#777}
@@ -381,7 +389,9 @@ header, .header, nav, .navbar, .topbar {
 
     <section id="categories" class="container">
       <div class="title"><h2>Categories</h2><p>Browse parts by category.</p></div>
-      <div class="empty"><strong>No categories available yet.</strong><br>Categories will appear after the shop owner adds them.</div>
+      <div class="customer-grid" id="customerCategoryList">
+        <div class="customer-empty">Loading categories...</div>
+      </div>
     </section>
 
     <section id="contact" class="contact">
@@ -591,6 +601,44 @@ header, .header, nav, .navbar, .topbar {
     }
   }
 
+  async function loadCategories(){
+    const list=document.getElementById('customerCategoryList');
+    if(!list) return;
+    list.innerHTML='<div class="customer-empty">Loading categories...</div>';
+
+    try{
+      const categories=await api('new_gama_categories?select=*&order=name.asc');
+      if(!Array.isArray(categories) || categories.length===0){
+        list.innerHTML='<div class="customer-empty"><strong>No categories available yet.</strong><br>Categories added by the shop owner will appear here.</div>';
+        return;
+      }
+
+      list.innerHTML=categories.map(c=>{
+        const image=c.image_url||c.main_image_url||c.image||c.category_image_url||'';
+        const name=c.name||c.title||'Unnamed Category';
+        const description=c.description||c.details||'Browse available parts';
+        return `<article class="category-card" data-category-id="${esc(c.id)}" data-category-name="${esc(name)}">
+          ${image?`<img src="${esc(image)}" alt="${esc(name)}" onerror="this.outerHTML='<div class=\'category-icon\'>📦</div>'">`:`<div class="category-icon">📦</div>`}
+          <div><h3>${esc(name)}</h3><p>${esc(description)}</p></div>
+        </article>`;
+      }).join('');
+
+      list.querySelectorAll('.category-card').forEach(card=>{
+        card.addEventListener('click',()=>{
+          const name=card.dataset.categoryName||'';
+          const input=document.getElementById('searchInput');
+          if(input){ input.value=name; input.removeAttribute('readonly'); }
+          location.hash='parts';
+          const parts=document.getElementById('parts');
+          if(parts) parts.scrollIntoView({behavior:'smooth',block:'start'});
+        });
+      });
+    }catch(err){
+      console.error('Homepage categories error:',err);
+      list.innerHTML='<div class="customer-empty"><strong>Categories could not be loaded.</strong><br><span style="font-size:12px;color:#999">'+esc(err.message||'Unknown error')+'</span></div>';
+    }
+  }
+
   function clearSearch(){
     const search=document.getElementById('searchInput');
     if(!search) return;
@@ -604,6 +652,7 @@ header, .header, nav, .navbar, .topbar {
     setTimeout(clearSearch,100);
     setTimeout(clearSearch,500);
     loadProducts();
+    loadCategories();
 
   }
 
@@ -612,7 +661,7 @@ header, .header, nav, .navbar, .topbar {
   else boot();
 
   // Refresh product cards when the homepage is kept open.
-  setInterval(loadProducts,30000);
+  setInterval(()=>{ loadProducts(); loadCategories(); },30000);
 })();
 </script>
 <script id="ng-search-autofill-hard-fix">
