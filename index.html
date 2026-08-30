@@ -299,7 +299,30 @@ header, .header, nav, .navbar, .topbar {
   }
 }
 </style>
+<style>
+/* HEADER ALIGNMENT ONLY */
+@media (min-width:769px){
 
+  header nav{
+    grid-template-columns:auto 1fr auto !important;
+    width:100% !important;
+  }
+
+  .brand{
+    justify-self:start !important;
+  }
+
+  .links{
+    justify-self:center !important;
+  }
+
+  .nav-user{
+    justify-self:end !important;
+    margin-left:0 !important;
+  }
+
+}
+</style>
 </head>
 <body>
 <div id="ngOwnerNoticePanel"><b>New Order Notifications</b><div id="ngOwnerNoticeList"></div></div>
