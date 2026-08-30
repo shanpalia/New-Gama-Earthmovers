@@ -232,6 +232,7 @@ body{background:#f7f8fa!important}
       <div class="form-grid">
         <input id="customerName" placeholder="Full name" required>
         <input id="customerPhone" placeholder="Mobile / WhatsApp number" required>
+        <small style="grid-column:1/-1;color:#777;margin-top:-2px">Your saved name and mobile number are filled automatically. You can change them or enter new details.</small>
       </div>
 
       <div class="pickup-info">
@@ -264,10 +265,65 @@ body{background:#f7f8fa!important}
   </div>
 </div><footer>© <span id="year"></span> New Gama Earthmovers. All rights reserved.</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
 const SUPABASE_URL = "https://gozvchqatiyebpnycubl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40";
+
+const customerAuth = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  }
+);
+
+let loggedInCustomer = null;
+
+function customerDisplayName(user) {
+  const meta = (user && user.user_metadata) || {};
+  return String(
+    meta.full_name ||
+    meta.name ||
+    ((user && user.email) ? user.email.split("@")[0] : "")
+  ).trim();
+}
+
+function customerPhone(user) {
+  const meta = (user && user.user_metadata) || {};
+  return String(meta.phone || "").trim();
+}
+
+async function requireCustomerLogin() {
+  const result = await customerAuth.auth.getSession();
+  const session = result && result.data ? result.data.session : null;
+
+  if (!session || !session.user) {
+    // Return to this exact product after the customer logs in.
+    location.href = "users.html?next=" + encodeURIComponent(location.pathname.split("/").pop() + location.search);
+    return null;
+  }
+
+  loggedInCustomer = session.user;
+  return session.user;
+}
+
+function fillCustomerOrderDetails(user) {
+  if (!user) return;
+
+  const nameInput = document.getElementById("customerName");
+  const phoneInput = document.getElementById("customerPhone");
+
+  // Auto-fill from the customer's saved profile.
+  // Inputs stay editable so the customer can enter new details when needed.
+  if (nameInput) nameInput.value = customerDisplayName(user);
+  if (phoneInput) phoneInput.value = customerPhone(user);
+}
 const productId = new URLSearchParams(location.search).get("id");
 let product = null;
 let categoryMap = {};
@@ -469,11 +525,33 @@ function renderProduct() {
   document.getElementById("plusQty").onclick = () => setQty(quantity + 1);
   qtyInput.onchange = () => setQty(qtyInput.value);
 
-  document.getElementById("buyNow").onclick = () => {
-    document.getElementById("orderProductText").textContent =
-      (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
-    updateOrderOptions();
-    document.getElementById("orderModal").classList.add("show");
+  document.getElementById("buyNow").onclick = async () => {
+    const button = document.getElementById("buyNow");
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = "Checking login...";
+
+    try {
+      const user = await requireCustomerLogin();
+      if (!user) return;
+
+      document.getElementById("orderProductText").textContent =
+        (product.name || "Product") + " • Quantity: " + quantity + " • Total: " + totalPriceText();
+
+      // Name and mobile come from the logged-in customer's profile.
+      // The customer can still edit them or enter new details.
+      fillCustomerOrderDetails(user);
+
+      updateOrderOptions();
+      document.getElementById("orderModal").classList.add("show");
+    } catch (err) {
+      alert("Login check failed. Please try again.");
+      console.error(err);
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
   };
 }
 async function loadReviews() {
@@ -548,16 +626,31 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
   const fulfillment = "shop_pickup";
   const paymentMethod = selectedValue("paymentMethod");
 
-  msg.textContent = "Sending order...";
+  msg.textContent = "Checking login...";
 
   try {
+    // Mandatory second check: no order can be placed from this page without login.
+    const user = await requireCustomerLogin();
+    if (!user) return;
+
+    loggedInCustomer = user;
+
+    const customerName = document.getElementById("customerName").value.trim();
+    const customerPhone = document.getElementById("customerPhone").value.trim();
+
+    if (!customerName || !customerPhone) {
+      msg.textContent = "Please enter your name and mobile number.";
+      return;
+    }
+
+    msg.textContent = "Sending order...";
     const createdOrders = await post("new_gama_orders", {
       product_id: productId,
       product_name: product.name || "",
       part_number: product.part_number || "",
       quantity: quantity,
-      customer_name: document.getElementById("customerName").value.trim(),
-      customer_phone: document.getElementById("customerPhone").value.trim(),
+      customer_name: customerName,
+      customer_phone: customerPhone,
       customer_address: "",
       customer_note: document.getElementById("customerNote").value.trim(),
       fulfillment_method: fulfillment,
@@ -577,6 +670,16 @@ document.getElementById("orderForm").addEventListener("submit", async function(e
       if (!ids.includes(id)) ids.unshift(id);
       localStorage.setItem("ng_customer_order_ids", JSON.stringify(ids.slice(0, 100)));
     }
+
+    // Remember newly entered name/mobile in the customer's account for the next order.
+    // Existing profile fields remain unchanged.
+    await customerAuth.auth.updateUser({
+      data: {
+        ...((loggedInCustomer && loggedInCustomer.user_metadata) || {}),
+        full_name: customerName,
+        phone: customerPhone
+      }
+    });
 
     if (paymentMethod === "upi") {
       msg.textContent = "Order placed. Please complete the UPI payment as instructed by the shop.";
