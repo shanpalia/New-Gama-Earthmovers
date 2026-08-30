@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>My Profile | New Gama Earthmovers</title>
+
+<link
+  rel="icon"
+  type="image/png"
+  href="new-gama-logo.png"
+>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f5f6f8;
+  color:#222;
+}
+
+.header{
+  background:#fff;
+  padding:16px 20px;
+  border-bottom:1px solid #e5e7eb;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.header a{
+  text-decoration:none;
+  color:#222;
+  font-weight:700;
+}
+
+.container{
+  width:min(900px,calc(100% - 30px));
+  margin:30px auto;
+}
+
+.profile-card,
+.orders-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  padding:25px;
+  margin-bottom:22px;
+}
+
+.profile-top{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.avatar{
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:#f5b400;
+  display:grid;
+  place-items:center;
+  font-size:25px;
+  font-weight:800;
+}
+
+h1{
+  margin:0 0 5px;
+}
+
+.email{
+  color:#777;
+  margin:0;
+}
+
+.section-title{
+  margin:0 0 18px;
+}
+
+.order{
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:12px;
+}
+
+.order-top{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+}
+
+.status{
+  padding:6px 10px;
+  border-radius:20px;
+  background:#f3f4f6;
+  font-size:12px;
+  font-weight:700;
+}
+
+.empty{
+  color:#777;
+  text-align:center;
+  padding:30px;
+}
+
+.logout{
+  border:0;
+  background:#222;
+  color:#fff;
+  padding:12px 18px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<header class="header">
+
+  <a href="index.html">
+    ← Back to Homepage
+  </a>
+
+  <strong>
+    New Gama Earthmovers
+  </strong>
+
+</header>
+
+
+<main class="container">
+
+
+<section class="profile-card">
+
+  <div class="profile-top">
+
+    <div
+      class="avatar"
+      id="profileAvatar"
+    >
+      U
+    </div>
+
+
+    <div>
+
+      <h1 id="profileName">
+        Customer
+      </h1>
+
+      <p
+        class="email"
+        id="profileEmail"
+      >
+        Loading...
+      </p>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<section
+  class="orders-card"
+  id="orders"
+>
+
+  <h2 class="section-title">
+    📦 My Orders
+  </h2>
+
+
+  <div id="ordersList">
+
+    <div class="empty">
+      Loading your orders...
+    </div>
+
+  </div>
+
+</section>
+
+
+<button
+  class="logout"
+  id="logoutBtn"
+>
+  Logout
+</button>
+
+
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script>
+
+const SUPABASE_URL =
+  'https://gozvchqatiyebpnycubl.supabase.co';
+
+const SUPABASE_KEY =
+  'YOUR_EXISTING_SUPABASE_ANON_KEY';
+
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+async function loadProfile(){
+
+  const {
+    data:{ session }
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  if(!session){
+
+    window.location.href =
+      'users.html';
+
+    return;
+
+  }
+
+
+  const user =
+    session.user;
+
+
+  const email =
+    user.email || '';
+
+
+  const displayName =
+    user.user_metadata?.full_name ||
+    email.split('@')[0] ||
+    'Customer';
+
+
+  document
+    .getElementById('profileName')
+    .textContent =
+      displayName;
+
+
+  document
+    .getElementById('profileEmail')
+    .textContent =
+      email;
+
+
+  document
+    .getElementById('profileAvatar')
+    .textContent =
+      email
+        .split('@')[0]
+        .substring(0,2)
+        .toUpperCase();
+
+}
+
+loadProfile();
+
+
+document
+  .getElementById('logoutBtn')
+  .onclick =
+    async function(){
+
+      await supabaseClient.auth.signOut();
+
+      window.location.href =
+        'index.html';
+
+    };
+
+</script>
+
+</body>
+</html>
