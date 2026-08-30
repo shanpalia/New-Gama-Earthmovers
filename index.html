@@ -323,6 +323,22 @@ header, .header, nav, .navbar, .topbar {
 
 }
 </style>
+
+<script id="ng-supabase-singleton">
+window.NG_SUPABASE_URL='https://gozvchqatiyebpnycubl.supabase.co';
+window.NG_SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+window.NG_GET_SUPABASE=function(){
+  if(window.NG_SUPABASE) return window.NG_SUPABASE;
+  if(!window.supabase || !window.supabase.createClient) return null;
+  window.NG_SUPABASE=window.supabase.createClient(
+    window.NG_SUPABASE_URL,
+    window.NG_SUPABASE_KEY,
+    {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
+  );
+  return window.NG_SUPABASE;
+};
+</script>
+
 </head>
 <body>
 <div id="ngOwnerNoticePanel"><b>New Order Notifications</b><div id="ngOwnerNoticeList"></div></div>
@@ -592,24 +608,35 @@ header, .header, nav, .navbar, .topbar {
 
   async function loadUserAvatar(){
     const avatar=document.getElementById('ngUserAvatar');
+    const icon=document.getElementById('ngUserAvatarIcon');
     const name=document.getElementById('ngUserAvatarName');
     if(!avatar||!name) return;
-    name.textContent='Login';
-    avatar.href='users.html';
-    if(!window.supabase || !window.supabase.createClient) return;
+
+    const client=window.NG_GET_SUPABASE ? window.NG_GET_SUPABASE() : null;
+    if(!client){
+      avatar.href='users.html';
+      name.textContent='Login';
+      if(icon) icon.textContent='👤';
+      return;
+    }
 
     try{
-      window.NG_SUPABASE=window.NG_SUPABASE || window.supabase.createClient(
-        'https://gozvchqatiyebpnycubl.supabase.co',
-        API_KEY,
-        {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
-      );
-      const {data}=await window.NG_SUPABASE.auth.getUser();
-      if(data && data.user){
-        const u=data.user;
-        const n=u.user_metadata?.full_name || u.email || 'Account';
-        name.textContent=n.split('@')[0];
+      const {data:{session}}=await client.auth.getSession();
+      const u=session?.user || null;
+
+      if(!u){
+        avatar.href='users.html';
+        name.textContent='Login';
+        if(icon) icon.textContent='👤';
+        return;
       }
+
+      const username=(u.user_metadata?.full_name || u.email?.split('@')[0] || 'Account').trim();
+      const letters=(username.replace(/[^A-Za-z0-9]/g,'').slice(0,2)||'U').toUpperCase();
+
+      avatar.removeAttribute('href');
+      name.textContent=username;
+      if(icon) icon.textContent=letters;
     }catch(e){
       console.warn('User avatar error:',e);
     }
@@ -640,21 +667,6 @@ header, .header, nav, .navbar, .topbar {
   // Refresh product cards when the homepage is kept open.
   setInterval(loadProducts,30000);
 })();
-</script>
-
-
-<script id="ng-role-access">
-const NG_ROLE_KEY='new_gama_user_role';
-async function ngGetRole(){
-  if(!window.NG_SUPABASE || !window.NG_SUPABASE.auth) return null;
-  const {data:{user}}=await window.NG_SUPABASE.auth.getUser();
-  if(!user){ localStorage.removeItem(NG_ROLE_KEY); return null; }
-  const {data,error}=await window.NG_SUPABASE.from('profiles').select('role').eq('id',user.id).maybeSingle();
-  if(error) throw error;
-  const role=(data?.role||'customer').toLowerCase();
-  localStorage.setItem(NG_ROLE_KEY,role);
-  return role;
-}
 </script>
 <script id="ng-search-autofill-hard-fix">
 (function(){
@@ -730,167 +742,111 @@ async function ngGetRole(){
 })();
 </script>
 
-<script id="ng-index-role-controller">
+<script id="ng-single-auth-avatar-controller">
 (function(){
-  const PROJECT_URL='https://gozvchqatiyebpnycubl.supabase.co';
-
-  async function start(){
-    const bell=document.getElementById('ngOwnerBell');
+  async function init(){
     const avatar=document.getElementById('ngUserAvatar');
-    const avatarIcon=document.getElementById('ngUserAvatarIcon');
-    const avatarName=document.getElementById('ngUserAvatarName');
+    const icon=document.getElementById('ngUserAvatarIcon');
+    const name=document.getElementById('ngUserAvatarName');
+    const bell=document.getElementById('ngOwnerBell');
     if(!avatar) return;
 
-    // Bell: hidden by default and only shown to the real owner.
     if(bell){
       bell.style.display='none';
       bell.onclick=function(){
-        const current=(location.pathname.split('/').pop()||'index.html');
-        location.href='orders.html?from='+encodeURIComponent(current);
+        const from=location.pathname.split('/').pop()||'index.html';
+        location.href='orders.html?from='+encodeURIComponent(from);
       };
     }
 
-    // Prevent login email from appearing inside the search box.
-    const search=document.getElementById('searchInput');
-    if(search){
-      search.value='';
-      search.setAttribute('autocomplete','off');
-    }
-
-    let client=window.NG_SUPABASE || null;
-    try{
-      if(!client && window.supabase && window.supabase.createClient && typeof API_KEY!=='undefined'){
-        client=window.supabase.createClient(
-          PROJECT_URL,
-          API_KEY,
-          {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}
-        );
-        window.NG_SUPABASE=client;
-      }
-
-      if(!client){
-        setLoggedOut();
-        return;
-      }
-
-      const {data:{session}}=await client.auth.getSession();
-      const user=session && session.user ? session.user : null;
-
-      if(!user){
-        setLoggedOut();
-        return;
-      }
-
-      setLoggedIn(user,client);
-
-      // Owner bell role check.
-      if(bell){
-        const {data:profile,error}=await client
-          .from('profiles')
-          .select('role')
-          .eq('id',user.id)
-          .maybeSingle();
-
-        if(!error && String(profile?.role||'customer').toLowerCase()==='owner'){
-          bell.style.display='flex';
-        }
-      }
-
-    }catch(err){
-      console.warn('Homepage session check:',err.message||err);
-      setLoggedOut();
-    }
-
-    function setLoggedOut(){
+    const client=window.NG_GET_SUPABASE ? window.NG_GET_SUPABASE() : null;
+    if(!client){
       avatar.href='users.html';
-      avatar.setAttribute('title','User Login');
-      if(avatarIcon) avatarIcon.textContent='👤';
-      if(avatarName) avatarName.textContent='Login';
-
-      // Use a normal direct link when the customer is not logged in.
       avatar.onclick=null;
+      if(icon) icon.textContent='👤';
+      if(name) name.textContent='Login';
+      return;
     }
 
-    function setLoggedIn(user,client){
-      const email=(user.email||'').trim();
-      const username=(email.split('@')[0] || user.user_metadata?.full_name || 'U').trim();
-      const initials=(username.replace(/[^A-Za-z0-9]/g,'').slice(0,2) || 'U').toUpperCase();
+    const {data:{session}}=await client.auth.getSession();
+    const user=session?.user || null;
 
-      // Remove login link completely after successful login.
-      avatar.removeAttribute('href');
-      avatar.setAttribute('title','My Account');
-
-      if(avatarIcon) avatarIcon.textContent=initials;
-      if(avatarName) avatarName.textContent=username;
-
-      // Build one dropdown only.
-      let menu=document.getElementById('ngUserDropdown');
-      let wrap=document.getElementById('ngUserMenu');
-
-      if(!wrap){
-        wrap=document.createElement('span');
-        wrap.id='ngUserMenu';
-        wrap.style.position='relative';
-        avatar.parentNode.insertBefore(wrap,avatar);
-        wrap.appendChild(avatar);
-      }else{
-        wrap.style.position='relative';
-      }
-
-      if(!menu){
-        menu=document.createElement('div');
-        menu.id='ngUserDropdown';
-        menu.innerHTML=
-          '<div class="ng-menu-email"></div>'+
-          '<a href="userprofile.html">👤 My Profile</a>'+
-          '<a href="userprofile.html#orders">📦 My Orders</a>'+
-          '<button type="button" id="ngLogoutBtn">🚪 Logout</button>';
-
-        menu.style.cssText=
-          'display:none;position:absolute;right:0;top:calc(100% + 10px);min-width:220px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.18);padding:8px;z-index:999999;';
-        wrap.appendChild(menu);
-
-        const emailRow=menu.querySelector('.ng-menu-email');
-        emailRow.style.cssText='padding:9px 12px;font-size:12px;font-weight:700;color:#6b7280;border-bottom:1px solid #eef0f3;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-
-        menu.querySelectorAll('a,button').forEach(function(el){
-          el.style.cssText='display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:#222;text-decoration:none;font:inherit;font-size:14px;cursor:pointer;';
-          el.addEventListener('mouseenter',function(){el.style.background='#f3f4f6';});
-          el.addEventListener('mouseleave',function(){el.style.background='transparent';});
-        });
-
-        document.addEventListener('click',function(e){
-          if(!wrap.contains(e.target)) menu.style.display='none';
-        });
-      }
-
-      const emailRow=menu.querySelector('.ng-menu-email');
-      if(emailRow) emailRow.textContent=email || username;
-
-      // This is the ONLY avatar click handler after login.
-      avatar.onclick=function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        menu.style.display=(menu.style.display==='block')?'none':'block';
-        return false;
-      };
-
-      const logout=document.getElementById('ngLogoutBtn');
-      if(logout){
-        logout.onclick=async function(e){
-          e.preventDefault();
-          await client.auth.signOut();
-          location.href='index.html';
-        };
-      }
+    if(!user){
+      avatar.href='users.html';
+      avatar.onclick=null;
+      if(icon) icon.textContent='👤';
+      if(name) name.textContent='Login';
+      return;
     }
+
+    const username=(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Account').trim();
+    const letters=(username.replace(/[^A-Za-z0-9]/g,'').slice(0,2)||'U').toUpperCase();
+
+    // Logged-in customer: remove the login link permanently.
+    avatar.removeAttribute('href');
+    avatar.onclick=null;
+    if(icon) icon.textContent=letters;
+    if(name) name.textContent=username;
+
+    // Create one dropdown.
+    let wrap=document.getElementById('ngUserMenu');
+    if(!wrap){
+      wrap=document.createElement('span');
+      wrap.id='ngUserMenu';
+      wrap.style.cssText='position:relative;display:inline-flex;align-items:center;';
+      avatar.parentNode.insertBefore(wrap,avatar);
+      wrap.appendChild(avatar);
+    }
+
+    let menu=document.getElementById('ngUserDropdown');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='ngUserDropdown';
+      menu.innerHTML=
+        '<div class="ng-menu-email"></div>'+
+        '<a href="userprofile.html">👤 My Profile</a>'+
+        '<a href="userprofile.html#orders">📦 My Orders</a>'+
+        '<button type="button" id="ngLogoutBtn">🚪 Logout</button>';
+
+      menu.style.cssText='display:none;position:absolute;right:0;top:calc(100% + 8px);width:220px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.18);padding:8px;z-index:999999;';
+      wrap.appendChild(menu);
+
+      menu.querySelector('.ng-menu-email').style.cssText='padding:9px 12px;font-size:12px;font-weight:700;color:#6b7280;border-bottom:1px solid #eee;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      menu.querySelectorAll('a,button').forEach(function(el){
+        el.style.cssText='display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:#222;text-decoration:none;font:inherit;font-size:14px;cursor:pointer;';
+      });
+    }
+
+    menu.querySelector('.ng-menu-email').textContent=user.email||username;
+
+    // Capture phase prevents any old page listener from sending the logged-in user to users.html.
+    avatar.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      menu.style.display=menu.style.display==='block'?'none':'block';
+    },true);
+
+    document.addEventListener('click',function(e){
+      if(!wrap.contains(e.target)) menu.style.display='none';
+    });
+
+    document.getElementById('ngLogoutBtn').onclick=async function(){
+      await client.auth.signOut();
+      location.href='index.html';
+    };
+
+    // Owner bell check.
+    try{
+      const {data:profile,error}=await client.from('profiles').select('role').eq('id',user.id).maybeSingle();
+      if(!error && String(profile?.role||'customer').toLowerCase()==='owner' && bell){
+        bell.style.display='flex';
+      }
+    }catch(e){}
   }
 
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',start,{once:true});
-  }else{
-    start();
-  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
 })();
 </script>
 
