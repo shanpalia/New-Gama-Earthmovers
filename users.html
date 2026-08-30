@@ -1,193 +1,468 @@
-<script>
-/* =========================================
-   NEW GAMA EARTHMOVERS
-   TOTAL ORDERS CARD DIRECT FIX
-   ========================================= */
+<!DOCTYPE html>
+<html lang="en">
 
-(function () {
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
-    /* Owner access save */
-    function saveOwnerAccess() {
-        sessionStorage.setItem(
-            'newGamaOwnerAuthorized',
-            'true'
-        );
+  <title>Login | New Gama Earthmovers</title>
 
-        localStorage.setItem(
-            'newGamaOwnerAuthorized',
-            'true'
-        );
+  <link rel="icon" type="image/png" href="new-gama-logo.png">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f6f8;
+      color: #222;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: min(440px, calc(100% - 20px));
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      padding: 30px;
+      box-shadow: 0 18px 50px #00000012;
+    }
+
+    .logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #f5b400;
+      display: block;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 15px 0 5px;
+    }
+
+    .sub {
+      text-align: center;
+      color: #777;
+      margin: 0 0 25px;
+    }
+
+    .tabs {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      padding: 11px;
+      border-radius: 9px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: #fff;
+      box-shadow: 0 2px 8px #00000012;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 13px 0 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #d8dce2;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #f5b400;
+    }
+
+    button.submit {
+      width: 100%;
+      border: 0;
+      background: #f5b400;
+      padding: 14px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 15px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 17px;
+      color: #555;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .msg {
+      display: none;
+      margin: 14px 0 0;
+      padding: 11px;
+      border-radius: 9px;
+      font-size: 13px;
+    }
+
+    .msg.err {
+      background: #fff0ef;
+      color: #a22;
+    }
+
+    .msg.ok {
+      background: #effaf2;
+      color: #176b39;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="card">
+
+    <img
+      class="logo"
+      src="new-gama-logo.png"
+      alt="New Gama Earthmovers"
+      onerror="this.style.display='none'"
+    >
+
+    <h1 id="title">Customer Login</h1>
+
+    <p class="sub">
+      Login to continue shopping and ordering
+    </p>
+
+
+    <div class="tabs">
+
+      <button
+        class="tab active"
+        id="loginTab"
+        type="button"
+      >
+        Login
+      </button>
+
+      <button
+        class="tab"
+        id="signupTab"
+        type="button"
+      >
+        Create Account
+      </button>
+
+    </div>
+
+
+    <form id="authForm" autocomplete="off">
+
+      <div id="nameBox" style="display:none">
+
+        <label for="name">Full Name</label>
+
+        <input
+          id="name"
+          name="new-gama-full-name"
+          autocomplete="off"
+          placeholder="Enter full name"
+        >
+
+      </div>
+
+
+      <label for="email">Email</label>
+
+      <input
+        id="email"
+        name="new-gama-email"
+        type="email"
+        autocomplete="off"
+        placeholder="Enter email"
+        required
+      >
+
+
+      <label for="password">Password</label>
+
+      <input
+        id="password"
+        name="new-gama-password"
+        type="password"
+        autocomplete="new-password"
+        placeholder="Enter password"
+        minlength="6"
+        required
+      >
+
+
+      <button
+        class="submit"
+        id="submitBtn"
+        type="submit"
+      >
+        Login
+      </button>
+
+
+      <div
+        class="msg"
+        id="msg"
+      ></div>
+
+    </form>
+
+
+    <a class="back" href="index.html">
+      ← Back to Homepage
+    </a>
+
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+  <script>
+
+    const SUPABASE_URL =
+      'https://gozvchqatiyebpnycubl.supabase.co';
+
+    const SUPABASE_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvenZjaHFhdGl5ZWJwbnljdWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Nzk0MjksImV4cCI6MjEwMzU1NTQyOX0.dkmoWjirh_J8L4c4x9QTisyMQy3lrWe4HQdZiHKAF40';
+
+
+    let client = null;
+    let mode = 'login';
+
+
+    function show(text, kind) {
+
+      const message =
+        document.getElementById('msg');
+
+      message.className =
+        'msg ' + kind;
+
+      message.textContent =
+        text;
+
+      message.style.display =
+        'block';
+
     }
 
 
-    /* Open Orders Page */
-    function openOrders(event) {
+    function getClient() {
 
-        if (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-        }
+      if (client) {
+        return client;
+      }
 
-        /* Keep owner authorization */
-        saveOwnerAccess();
+      client =
+        window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY,
+          {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true
+            }
+          }
+        );
 
-        /* Direct Orders Page */
-        window.location.href =
-            'orders.html?owner_access=1&from=owner.html';
+      return client;
 
-        return false;
     }
 
 
-    /* Find Total Orders Card */
-    function setupTotalOrdersCard() {
+    function setMode(newMode) {
 
-        /* Common dashboard card selectors */
-        const allCards = document.querySelectorAll(
-            `
-            .stat-card,
-            .dashboard-card,
-            .card,
-            .stats-card,
-            .total-card,
-            [id="totalOrdersCard"],
-            [id="ordersCard"],
-            [id="total-orders"],
-            [id="totalOrders"],
-            [class*="order"]
-            `
+      mode = newMode;
+
+      document
+        .getElementById('loginTab')
+        .classList.toggle(
+          'active',
+          mode === 'login'
         );
 
+      document
+        .getElementById('signupTab')
+        .classList.toggle(
+          'active',
+          mode === 'signup'
+        );
 
-        allCards.forEach(function (card) {
+      document
+        .getElementById('nameBox')
+        .style.display =
+          mode === 'signup'
+            ? 'block'
+            : 'none';
 
-            const text = (
-                card.innerText ||
-                card.textContent ||
-                ''
-            )
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLowerCase();
+      document
+        .getElementById('submitBtn')
+        .textContent =
+          mode === 'signup'
+            ? 'Create Account'
+            : 'Login';
 
+      document
+        .getElementById('title')
+        .textContent =
+          mode === 'signup'
+            ? 'Create Customer Account'
+            : 'Customer Login';
 
-            /* Only Total Orders Card */
-            if (
-                text.includes('total orders') ||
-                text.includes('click to view orders')
-            ) {
-
-                console.log(
-                    'Total Orders Card Found'
-                );
-
-
-                /* Make clickable */
-                card.style.cursor = 'pointer';
-
-
-                /* Remove inline old onclick */
-                card.onclick = null;
-
-
-                /*
-                 Capture mode true:
-                 This runs before old click
-                 handlers which may redirect
-                 to users.html
-                */
-                card.addEventListener(
-                    'click',
-                    function (event) {
-
-                        openOrders(event);
-
-                    },
-                    true
-                );
+    }
 
 
-                /*
-                 If card is inside a link,
-                 disable parent link behavior
-                */
-                const parentLink =
-                    card.closest('a');
-
-                if (parentLink) {
-
-                    parentLink.href =
-                        'orders.html?owner_access=1&from=owner.html';
-
-                    parentLink.onclick =
-                        function (event) {
-
-                            openOrders(event);
-
-                        };
-
-                }
+    document
+      .getElementById('loginTab')
+      .onclick =
+        function () {
+          setMode('login');
+        };
 
 
-                /*
-                 Also check buttons inside card
-                */
-                const buttons =
-                    card.querySelectorAll(
-                        'button, a'
-                    );
+    document
+      .getElementById('signupTab')
+      .onclick =
+        function () {
+          setMode('signup');
+        };
 
-                buttons.forEach(
-                    function (button) {
 
-                        button.onclick =
-                            function (event) {
+    window.addEventListener(
+      'pageshow',
+      function () {
 
-                                openOrders(event);
+        document
+          .getElementById('email')
+          .value = '';
 
-                            };
+        document
+          .getElementById('password')
+          .value = '';
 
+      }
+    );
+
+
+    document
+      .getElementById('authForm')
+      .onsubmit =
+        async function (event) {
+
+          event.preventDefault();
+
+          try {
+
+            const supabase =
+              getClient();
+
+            const email =
+              document
+                .getElementById('email')
+                .value
+                .trim();
+
+            const password =
+              document
+                .getElementById('password')
+                .value;
+
+            const name =
+              document
+                .getElementById('name')
+                .value
+                .trim();
+
+
+            if (mode === 'signup') {
+
+              const result =
+                await supabase.auth.signUp({
+                  email,
+                  password,
+                  options: {
+                    data: {
+                      full_name: name
                     }
-                );
+                  }
+                });
+
+
+              if (result.error) {
+                throw result.error;
+              }
+
+
+              show(
+                'Account created successfully. Please check your email if confirmation is required.',
+                'ok'
+              );
+
+
+            } else {
+
+              const result =
+                await supabase.auth.signInWithPassword({
+                  email,
+                  password
+                });
+
+
+              if (result.error) {
+                throw result.error;
+              }
+
+
+              window.location.href =
+                'index.html';
 
             }
 
-        });
 
-    }
+          } catch (error) {
 
+            show(
+              error.message ||
+              'Login failed',
+              'err'
+            );
 
-    /* Page Ready */
-    if (
-        document.readyState === 'loading'
-    ) {
+          }
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            setupTotalOrdersCard
-        );
+        };
 
-    } else {
+  </script>
 
-        setupTotalOrdersCard();
-
-    }
-
-
-    /*
-      Run again because dashboard
-      cards may load dynamically
-    */
-    setTimeout(
-        setupTotalOrdersCard,
-        500
-    );
-
-    setTimeout(
-        setupTotalOrdersCard,
-        1500
-    );
-
-})();
-</script>
+</body>
+</html>
